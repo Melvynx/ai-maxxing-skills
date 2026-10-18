@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TOOL CLI: one file, Python 3 standard library only. Made with create-cli-skills."""
+"""TOOL CLI: one file, Python 3 standard library only. Made with connect-tool."""
 
 import getpass, json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
