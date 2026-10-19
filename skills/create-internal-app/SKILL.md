@@ -49,7 +49,7 @@ Always run the `grill-me` skill first. For an internal tool, the money question 
 1. **Scaffold**: TanStack Start + Tailwind + `npx shadcn@latest init` (Base UI flavor). Add a Node server build (TanStack Start hosting docs, Nitro preset for Node) and a `Dockerfile` that builds and runs it on port 3000. `git init`, `gh repo create <name> --private --source . --push`.
 2. **Convex self-hosted**: deploy the Dokploy Convex template once per VPS (backend + dashboard), give it `convex-api.<domain>` and `convex-site.<domain>`, generate the admin key in the backend container, then point the CLI at it with `CONVEX_SELF_HOSTED_URL` and `CONVEX_SELF_HOSTED_ADMIN_KEY` in `.env.local`. Schema with an index per query, `.take(n)` or `.paginate()` on growing tables. See the `convex` skill.
 3. **Server-side check**: one helper every public Convex function calls first (a shared secret set with `npx convex env set`, or Better Auth with email OTP if several people use it). Anything only the server calls is `internal*`.
-4. **Screens**: data through `useSuspenseQuery(convexQuery(...))` so it updates live, lists in TanStack Table, forms in TanStack Form, `cmd+k` and `j`/`k` with TanStack Hotkeys (internal tools are used all day, shortcuts matter).
+4. **Screens**: data through `useSuspenseQuery(convexQuery(...))` so it updates live, lists in TanStack Table, forms in TanStack Form, `cmd+k` and `j`/`k` with TanStack Hotkeys (internal tools are used all day, shortcuts matter). Every route gets its skeleton and preload (see `references/fast-app.md`).
 
 ## 3. Deploy and lock
 
@@ -78,6 +78,7 @@ Fix every error you see, then run `audit-safety` on the Convex functions and the
 
 ## Rules
 
+- **Fast app is mandatory**: follow [references/fast-app.md](references/fast-app.md) on every page: `defaultPreload: "intent"`, a 30 s query cache, a loader on detail pages, a custom `pendingComponent` skeleton on EVERY route that matches the real layout, a loading state on every async button, indexed and bounded Convex reads. An app without these is not done.
 - "Fais-le toi-même": use every CLI and API before asking the user to click something.
 - Never print, commit or log the password, the admin key or tokens.
 - Never open a port on the VPS for the app: everything goes through Dokploy's proxy behind Cloudflare.

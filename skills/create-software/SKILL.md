@@ -58,7 +58,7 @@ Always run the `grill-me` skill before writing any code, even when the brief loo
 2. **Convex**: `npx convex dev --once` creates the project and writes `.env.local`. One `schema.ts` with an index for every query. Every public function checks the signed-in user and ownership server-side; anything only the server calls is `internal*`. Bound reads with `.take(n)` or `.paginate()`. See the `convex` skill.
 3. **Better Auth**: register both components in `convex/convex.config.ts` (`app.use(betterAuth)`, `app.use(lumail)`), `createAuth` with `authComponent.adapter(ctx)`, the `emailOTP` plugin and the `convex({ authConfig })` plugin, routes via `authComponent.registerRoutes(http, createAuth)`. `BETTER_AUTH_SECRET` and `SITE_URL` as Convex env vars. Protect `/app` in the route `beforeLoad`, and again in every Convex function.
 4. **Lumail**: see the next section.
-5. **Data on screen**: queries through `useSuspenseQuery(convexQuery(...))` so the UI updates live, lists in TanStack Table, forms in TanStack Form calling Convex mutations, toasts on success and error.
+5. **Data on screen**: queries through `useSuspenseQuery(convexQuery(...))` so the UI updates live, lists in TanStack Table, forms in TanStack Form calling Convex mutations, toasts on success and error. Every route gets its skeleton and preload (see `references/fast-app.md`).
 6. **Payments** (only if the app sells): start with a fake checkout until the user gives Stripe test keys, then real Checkout + a signed webhook in `convex/http.ts` that grants access. Test card `4242 4242 4242 4242`, live keys only once the test flow works. See the `stripe-checkout` skill.
 7. Clean error page and 404 page, a favicon, page titles.
 
@@ -94,6 +94,7 @@ Open the live URL and walk the real flows: landing, sign in with a real OTP emai
 
 ## Rules
 
+- **Fast app is mandatory**: follow [references/fast-app.md](references/fast-app.md) on every page: `defaultPreload: "intent"`, a 30 s query cache, a loader on detail pages, a custom `pendingComponent` skeleton on EVERY route that matches the real layout, a loading state on every async button, indexed and bounded Convex reads. An app without these is not done.
 - "Fais-le toi-même": use every CLI and API before asking the user to click something.
 - Never print, commit or log secrets.
 - Reply with what is live, the URL, and what is left to do.
