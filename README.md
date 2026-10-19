@@ -2,7 +2,7 @@
 
 Les skills Claude Code que j'utilise dans la formation gratuite **"Comment créer ton SaaS personnel en moins de 30 minutes"**. Tu les installes une fois, et Claude sait créer, déployer, sécuriser et vendre ton application tout seul, avec la stack Cloudflare, Convex, Lumail et Stripe.
 
-- La formation et la ressource complète (stack, étapes, prompts) : [codelynx.dev/fx](https://codelynx.dev/fx)
+- La formation et la ressource complète (stack, étapes, prompts) : [codelynx.dev/aimaxxing/get](https://codelynx.dev/aimaxxing/get)
 - Le lien court à partager : [mlv.sh/fx](https://mlv.sh/fx)
 - La plateforme créée en direct dans la vidéo : [formations.ai-maxxing.pro](https://formations.ai-maxxing.pro)
 
