@@ -1,6 +1,6 @@
 ---
 name: grill-me
-description: Grill the user in rapid batches to sharpen a plan, decision, or idea, including the app they want to build before any code is written. Use when the user asks for Grill Me, wants a rigorous interview, uses a grill trigger phrase, or when another skill (like create-software or create-internal-app) needs a validated app brief.
+description: Grill the user in rapid batches to sharpen a plan, decision, or idea, including the app they want to build before any code is written. Use when the user asks for Grill Me, wants a rigorous interview, uses a grill trigger phrase, or when another skill (like create-software, create-internal-app or create-landing) needs a validated brief.
 ---
 
 # Grill Me
@@ -51,6 +51,23 @@ Then go deeper wherever an answer opens a new branch.
 Before the final brief, restate the app as a story in plain words ("A visitor lands on..., signs up with..., sees..., the admin opens... and edits..."), screen by screen, and ask the user to correct anything that is wrong or missing. Loop until they say it is exactly what they want.
 
 The recommended answers follow the stack defaults: email code sign-in, landing at `/` and app at `/app`, the user as the only admin, Stripe Checkout when it sells, signups added to Lumail as subscribed with a tag per app. The final brief ends with the user story, the screens list (every screen from batch 2) and the data objects, so building can start right away.
+
+## When the plan is a landing page
+
+For `create-landing`, ask about the sale, not the code. One or two batches are enough:
+
+1. **Who**: the exact person the page is for, and where they come from (YouTube, ads, an email).
+2. **The problem**: what hurts for them today, in their own words.
+3. **The promise**: the result they get, in one sentence.
+4. **The offer**: what they get, the price, any bonus, or "just leave your email".
+5. **The proof**: testimonials, numbers, screenshots, logos the user already has (never invented).
+6. **Objections**: the 3 reasons someone would not sign up or buy.
+7. **The call to action**: the one button text, and what happens after the click.
+8. **Emails**: the Lumail tag, and the email they get right after (welcome, lead magnet).
+9. **Address**: the domain or subdomain, and whether it is already in Cloudflare.
+10. **Look and language**: 1 or 2 pages they like, the language, photos or video of them.
+
+The brief ends with the sections in order and the copy for each one, so writing can start right away.
 
 ## Question quality
 
