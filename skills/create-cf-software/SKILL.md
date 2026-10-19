@@ -50,9 +50,9 @@ npx lumail@latest auth test           # Lumail (npx lumail@latest setup --authen
 
 Fix what fails first. When a login needs the browser, give the exact link or code and wait for "done". Secrets go only in `.env.local`, `npx convex env set` or Cloudflare secrets, never in a committed file.
 
-## 2. Clarify, then build
+## 2. Grill, then build
 
-If the brief is vague, run the `grill-me` skill: who uses it, what they do on the first screen, public or private, paid access, admin needs, language, design direction. Defaults: landing at `/`, app at `/app`, English UI, OTP sign-in, the user is the only admin.
+Always run the `grill-me` skill before writing any code, even when the brief looks clear: it asks the user about the app they want (who it is for, the main action, the data, who sees what, money, emails, domain, look, v1 scope, what "done" means), with a recommended answer for each question. Build only once the user has confirmed the final brief. Skip it only if the user already confirmed a brief in this conversation. Defaults: landing at `/`, app at `/app`, English UI, OTP sign-in, the user is the only admin.
 
 1. **Scaffold**: TanStack Start + Tailwind + `npx shadcn@latest init` (Base UI flavor), add the components you need with `npx shadcn@latest add`. `git init`, `gh repo create <name> --private --source . --push`.
 2. **Convex**: `npx convex dev --once` creates the project and writes `.env.local`. One `schema.ts` with an index for every query. Every public function checks the signed-in user and ownership server-side; anything only the server calls is `internal*`. Bound reads with `.take(n)` or `.paginate()`. See the `convex` skill.
