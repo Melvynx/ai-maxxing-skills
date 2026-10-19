@@ -34,9 +34,23 @@ The user is often not technical. Ask about the product, never about the code: th
 9. **First version**: what is in v1, and what waits for later (keep v1 shippable in one session).
 10. **Done means**: the 2 or 3 things that must work live for them to say "it's good".
 
-Then go deeper where the answers open new branches: lists that need search or filters, keyboard shortcuts for power users, imports from a tool they already use, files or videos to host.
+An app grill is long on purpose: a missed need now is a rebuild later. Ask at least 3 batches (about 30 questions) before the brief, even when the user answers fast or says "fais comme tu veux". Stop early only if they explicitly ask to skip.
 
-The recommended answers follow the stack defaults: email code sign-in, landing at `/` and app at `/app`, the user as the only admin, Stripe Checkout when it sells, signups added to Lumail as subscribed with a tag per app. The final brief ends with the screens list and the data objects, so building can start right away.
+**Batch 2: walk every screen.** Take the user through the app as a visitor, then as a signed-in user, then as the admin. For each screen ask what is on it, what they click, and what happens next:
+
+- First visit: the landing, what convinces someone to sign up, the sign-in screen (a look they like, a screenshot to copy).
+- Signed-in home: what they see first, empty state for a brand new account, the main list and the detail page.
+- Account area: profile photo, name, email change, invoices, plan and cancel, delete account, contact support.
+- Admin: how they add and edit content day to day (inline editing on the real page vs separate admin pages), how often they do it, what must be one click.
+- Navigation: the menu, what sits top left and top right, mobile or desktop first.
+
+**Batch 3: edge cases and the long run.** What happens when a payment fails, a user is refunded, a code expires, a list has 1000 rows, two admins edit at once, content is deleted by mistake. Imports from a tool they already use, files or videos to host, search and filters, keyboard shortcuts for power users, what must feel instant, what they will want in 3 months.
+
+Then go deeper wherever an answer opens a new branch.
+
+Before the final brief, restate the app as a story in plain words ("A visitor lands on..., signs up with..., sees..., the admin opens... and edits..."), screen by screen, and ask the user to correct anything that is wrong or missing. Loop until they say it is exactly what they want.
+
+The recommended answers follow the stack defaults: email code sign-in, landing at `/` and app at `/app`, the user as the only admin, Stripe Checkout when it sells, signups added to Lumail as subscribed with a tag per app. The final brief ends with the user story, the screens list (every screen from batch 2) and the data objects, so building can start right away.
 
 ## Question quality
 
