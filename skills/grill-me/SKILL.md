@@ -1,6 +1,6 @@
 ---
 name: grill-me
-description: Grill the user in rapid batches to sharpen a plan, decision, or idea, including the app they want to build before any code is written. Use when the user asks for Grill Me, wants a rigorous interview, uses a grill trigger phrase, or when another skill (like create-cf-software) needs a validated app brief.
+description: Grill the user in rapid batches to sharpen a plan, decision, or idea, including the app they want to build before any code is written. Use when the user asks for Grill Me, wants a rigorous interview, uses a grill trigger phrase, or when another skill (like create-software or create-internal-app) needs a validated app brief.
 ---
 
 # Grill Me
@@ -21,7 +21,7 @@ Stress-test the user's thinking until both sides share a precise, actionable und
 
 ## When the plan is an app to build
 
-The user is often not technical. Ask about the product, never about the code: the stack is already decided (see `create-cf-software`), so do not ask about frameworks, databases or hosting. Cover these, the first batch on what changes the most:
+The user is often not technical. Ask about the product, never about the code: the stack is already decided (see `create-software` or `create-internal-app`), so do not ask about frameworks, databases or hosting. Cover these, the first batch on what changes the most:
 
 1. **Who and why**: who uses the app, and what problem it solves for them today (what they use instead).
 2. **The main action**: the one thing a person does on the first screen after signing in.

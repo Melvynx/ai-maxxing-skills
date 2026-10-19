@@ -1,6 +1,6 @@
 ---
-name: create-cf-software
-description: Create a new web app hosted on Cloudflare with the AI Maxxing stack - TanStack Start, shadcn/ui on Base UI, Convex for all data and backend, TanStack libraries for every client job (data fetching, lists and tables, forms, markdown, keyboard shortcuts), Better Auth for sign-in and Lumail for marketing emails. Use when the user wants to create, scaffold, deploy or finish a new app, tool or personal SaaS (course platform, membership, internal tool), replace a paid SaaS with their own app, or says "fais-le toi-même".
+name: create-software
+description: Create a new web app hosted on Cloudflare with the AI Maxxing stack - TanStack Start, shadcn/ui on Base UI, Convex for all data and backend, TanStack libraries for every client job (data fetching, lists and tables, forms, markdown, keyboard shortcuts), Better Auth for sign-in and Lumail for marketing emails. Use when the user wants to create, scaffold, deploy or finish a public app or personal SaaS that other people use or pay for (course platform, membership, client portal), replace a paid SaaS with their own app, or says "fais-le toi-même". For a private tool only the user and their agent use, use `create-internal-app` instead.
 argument-hint: "<what the app does, domain or subdomain>"
 disable-model-invocation: true
 user-invocable: true
