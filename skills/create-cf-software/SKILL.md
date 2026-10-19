@@ -1,6 +1,6 @@
 ---
 name: create-cf-software
-description: Create a new web app hosted on Cloudflare with the AI Maxxing stack - TanStack Start, shadcn/ui on Base UI, Convex for all data and backend, TanStack libraries for every client job (data fetching, lists and tables, forms, markdown, keyboard shortcuts), Better Auth for sign-in and Lumail for marketing emails. Use when the user wants to create, scaffold or ship a new app, tool or SaaS on Cloudflare.
+description: Create a new web app hosted on Cloudflare with the AI Maxxing stack - TanStack Start, shadcn/ui on Base UI, Convex for all data and backend, TanStack libraries for every client job (data fetching, lists and tables, forms, markdown, keyboard shortcuts), Better Auth for sign-in and Lumail for marketing emails. Use when the user wants to create, scaffold, deploy or finish a new app, tool or personal SaaS (course platform, membership, internal tool), replace a paid SaaS with their own app, or says "fais-le toi-même".
 argument-hint: "<what the app does, domain or subdomain>"
 disable-model-invocation: true
 user-invocable: true
@@ -17,6 +17,8 @@ Build a working web app on the user's own accounts and put it live on their Clou
 | database, backend, files, crons | Convex, for everything: no other database, no other API server |
 | auth | Better Auth through `@convex-dev/better-auth`, email OTP by default |
 | marketing and login emails | Lumail through `@lumail/convex` |
+| payments (only if the app sells) | Stripe Checkout, see the `stripe-checkout` skill |
+| video | Tella embeds (the user pastes the Tella URL) |
 | hosting, domain, DNS | Cloudflare Workers with the `@cloudflare/vite-plugin`, deployed with `cf` |
 | code | Git + one private GitHub repo |
 
@@ -50,14 +52,15 @@ Fix what fails first. When a login needs the browser, give the exact link or cod
 
 ## 2. Clarify, then build
 
-If the brief is vague, run the `grill-me` skill: who uses it, what they do on the first screen, public or private, admin needs, language, design direction. Defaults: landing at `/`, app at `/app`, English UI, OTP sign-in, the user is the only admin.
+If the brief is vague, run the `grill-me` skill: who uses it, what they do on the first screen, public or private, paid access, admin needs, language, design direction. Defaults: landing at `/`, app at `/app`, English UI, OTP sign-in, the user is the only admin.
 
 1. **Scaffold**: TanStack Start + Tailwind + `npx shadcn@latest init` (Base UI flavor), add the components you need with `npx shadcn@latest add`. `git init`, `gh repo create <name> --private --source . --push`.
 2. **Convex**: `npx convex dev --once` creates the project and writes `.env.local`. One `schema.ts` with an index for every query. Every public function checks the signed-in user and ownership server-side; anything only the server calls is `internal*`. Bound reads with `.take(n)` or `.paginate()`. See the `convex` skill.
 3. **Better Auth**: register both components in `convex/convex.config.ts` (`app.use(betterAuth)`, `app.use(lumail)`), `createAuth` with `authComponent.adapter(ctx)`, the `emailOTP` plugin and the `convex({ authConfig })` plugin, routes via `authComponent.registerRoutes(http, createAuth)`. `BETTER_AUTH_SECRET` and `SITE_URL` as Convex env vars. Protect `/app` in the route `beforeLoad`, and again in every Convex function.
 4. **Lumail**: see the next section.
 5. **Data on screen**: queries through `useSuspenseQuery(convexQuery(...))` so the UI updates live, lists in TanStack Table, forms in TanStack Form calling Convex mutations, toasts on success and error.
-6. Clean error page and 404 page, a favicon, page titles.
+6. **Payments** (only if the app sells): start with a fake checkout until the user gives Stripe test keys, then real Checkout + a signed webhook in `convex/http.ts` that grants access. Test card `4242 4242 4242 4242`, live keys only once the test flow works. See the `stripe-checkout` skill.
+7. Clean error page and 404 page, a favicon, page titles.
 
 ## 3. Lumail, with skip double opt-in by default
 
@@ -87,7 +90,7 @@ await fetch("https://lumail.io/api/v1/subscribers", {
 
 ## 5. Prove it works
 
-Open the live URL and walk the real flows: landing, sign in with a real OTP email, the main action of the app, a list with real rows, a keyboard shortcut, sign out, the 404 page. Check the person shows up in Lumail as subscribed with the right tag. Fix every error you see, then run `audit-safety` on auth and data access before saying it is live.
+Open the live URL and walk the real flows: landing, sign in with a real OTP email, the main action of the app, a list with real rows, a test purchase if the app sells, a keyboard shortcut, sign out, the 404 page. Check the person shows up in Lumail as subscribed with the right tag. Fix every error you see, then run `audit-safety` on auth, data access and payments before saying it is live.
 
 ## Rules
 

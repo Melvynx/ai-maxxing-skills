@@ -30,7 +30,6 @@ Ask these one by one, accept short answers, and move on if they skip one:
 ```text
 <brain>/
 ├── AGENTS.md          The single guide for every agent (written in step 4)
-├── CLAUDE.md          One line: @AGENTS.md
 ├── projects/          Active work. One folder = one project.
 ├── archives/          Finished or abandoned projects. Read-only reference.
 ├── notes/
@@ -53,7 +52,7 @@ Fill it from the interview. Keep it under 120 lines. Use this skeleton:
 ```markdown
 # <First name>'s brain
 
-Personal command center, run by agents. Everything is organised by **project**. `CLAUDE.md` only imports this file, so this is the single guide for every agent.
+Personal command center, run by agents. Everything is organised by **project**. Claude Code and Codex both read this file natively, so it is the single guide for every agent. Never create a `CLAUDE.md`.
 
 ## <First name>
 
@@ -98,8 +97,6 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 
 Every reusable workflow is a skill in `.agents/skills/<name>/SKILL.md`. `.claude/skills/` only holds links to it.
 ```
-
-Then write `CLAUDE.md` with the single line `@AGENTS.md`.
 
 ## Step 5: Create the first projects
 
@@ -154,7 +151,7 @@ Manage projects in `projects/` following the Projects and Hygiene sections of `A
 
 Run a final check and show the result as a short list with a check or a cross:
 
-- `AGENTS.md` and `CLAUDE.md` exist, and `CLAUDE.md` imports `AGENTS.md`
+- `AGENTS.md` exists and there is no `CLAUDE.md`
 - every folder from step 3 exists
 - every project has an `About.md` with a status
 - the `projects` skill is installed and linked

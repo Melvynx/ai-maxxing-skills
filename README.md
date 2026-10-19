@@ -14,7 +14,7 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 13 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 12 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
 Tu préfères demander à Claude ? Colle ce prompt dans une session :
 
@@ -41,8 +41,7 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | [`setup-brain`](skills/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. 5 questions, puis il crée la structure, tes premiers projets et la sauvegarde git. | `/setup-brain` dans une nouvelle session, à faire en premier. |
 | [`connect-tool`](skills/connect-tool/SKILL.md) | Branche n'importe quel outil à Claude : installe son CLI officiel (Notion, Stripe...) ou, s'il n'en a pas (ClickFunnels, Kajabi...), écrit un petit script Python avec ta clé API. Puis crée un skill disponible partout. | `/connect-tool notion` ou `/connect-tool clickfunnels` |
 | [`grill-me`](skills/grill-me/SKILL.md) | Claude te pose 10 questions à la fois, chacune avec une réponse recommandée, puis te donne un brief à valider avant de coder. Le skill promis dans la vidéo. | Ajoute `/grill-me` à la fin de ton prompt de création. |
-| [`personal-saas`](skills/personal-saas/SKILL.md) | Tout le process de la formation dans un skill : vérifie tes accès (GitHub, Cloudflare, Convex, Lumail), construit l'app TanStack Start + Convex + Better Auth, branche Stripe et Lumail, déploie sur ton domaine Cloudflare et teste en vrai. Il fait tout lui-même. | `/personal-saas une plateforme de formation sur formation.mon-domaine.com` |
-| [`create-cf-software`](skills/create-cf-software/SKILL.md) | Crée une nouvelle app web hébergée sur Cloudflare avec toute la stack : TanStack Start, shadcn/ui + Base UI, Convex pour tout, les librairies TanStack (données, listes, formulaires, markdown, raccourcis clavier), Better Auth et Lumail (inscrits directement, sans double opt-in). | `/create-cf-software un CRM perso sur crm.mon-domaine.com` |
+| [`create-cf-software`](skills/create-cf-software/SKILL.md) | Crée une nouvelle app web hébergée sur Cloudflare avec toute la stack : TanStack Start, shadcn/ui + Base UI, Convex pour tout, les librairies TanStack (données, listes, formulaires, markdown, raccourcis clavier), Better Auth et Lumail (inscrits directement, sans double opt-in). | `/create-cf-software une plateforme de formation sur formation.mon-domaine.com` |
 | [`cloudflare`](skills/cloudflare/SKILL.md) | Tout Cloudflare avec le CLI officiel `cf` (jamais Wrangler) : domaines, DNS, déploiement des Workers, secrets, R2, cache. | Automatique dès que tu parles de domaine, DNS ou déploiement. |
 | [`convex`](skills/convex/SKILL.md) | Setup Convex (dev et prod), schéma et index, vérification des droits dans chaque fonction, et optimisation des lectures quand la base grossit. | Automatique sur tout ce qui touche à la base. |
 | [`lumail`](skills/lumail/SKILL.md) | Connexion à Lumail, domaines d'envoi, abonnés, tags, codes de connexion par email, campagnes et workflows automatiques. | "Crée un workflow Lumail qui..." |
