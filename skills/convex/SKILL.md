@@ -3,7 +3,7 @@ name: convex
 description: Set up, secure and optimize a Convex backend. Use for Convex project setup, schema and indexes, queries and mutations, auth checks in Convex functions, env vars, dev vs prod deploys, and reducing bandwidth, Documents Read, .filter/.collect scans or OCC conflicts from live insights.
 ---
 
-## Setup
+Set up a project with two deployments, dev (break anything) and prod (real users), and never point local dev at prod data:
 
 ```bash
 npx convex login                 # the user approves in the browser
@@ -12,9 +12,7 @@ npx convex env set KEY value     # server secrets (dev); add --prod for producti
 npx convex deploy                # production deploy
 ```
 
-Keep two deployments: dev (break anything) and prod (real users). Never point local dev at prod data.
-
-## Write correct functions
+Write every function so it is safe and cheap:
 
 - Every public `query`, `mutation` and `action` is callable by anyone who has the deployment URL. Check the user (`ctx.auth` or the Better Auth helper) and ownership inside each one; use `internalQuery`/`internalMutation` for anything only the server calls.
 - Validate every argument with `v.*` validators.
@@ -23,7 +21,7 @@ Keep two deployments: dev (break anything) and prod (real users). Never point lo
 - Return only the fields the client needs.
 - Secrets live in Convex env vars, never in client code.
 
-## Optimize from live evidence
+To optimize, start from live evidence:
 
 ```bash
 npx convex insights --prod --details

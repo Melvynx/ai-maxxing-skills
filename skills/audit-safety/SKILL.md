@@ -1,6 +1,6 @@
 ---
 name: audit-safety
-description: Audit one feature of a web app (TanStack Start, Next.js, Convex or similar) across pages, loaders, server functions, API routes, webhooks, middleware, and data access. Use for authorization, tenant isolation, ownership, roles, permissions, token scopes, validation, payment webhooks, or sensitive-response reviews before shipping; not live pentesting.
+description: Audit one feature of a web app (TanStack Start, Next.js, Convex) for authorization, tenant isolation, ownership, validation, payment webhooks and sensitive responses. Use before shipping or when the user asks for a security review of a feature; not live pentesting.
 argument-hint: "[feature, URL or folder to audit]"
 ---
 
