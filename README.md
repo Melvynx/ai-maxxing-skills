@@ -14,7 +14,7 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 14 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 16 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
 Tu préfères demander à Claude ? Colle ce prompt dans une session :
 
@@ -40,6 +40,8 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | --- | --- | --- |
 | [`setup-brain`](skills/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. 5 questions, puis il crée la structure, tes premiers projets et la sauvegarde git. | `/setup-brain` dans une nouvelle session, à faire en premier. |
 | [`connect-tool`](skills/connect-tool/SKILL.md) | Branche n'importe quel outil à Claude : installe son CLI officiel (Notion, Stripe...) ou, s'il n'en a pas (ClickFunnels, Kajabi...), écrit un petit script Python avec ta clé API. Puis crée un skill disponible partout. | `/connect-tool notion` ou `/connect-tool clickfunnels` |
+| [`setup-dev-browser`](skills/setup-dev-browser/SKILL.md) | Donne à Claude son propre Chrome : une fenêtre "Chrome AI" séparée de ton Chrome perso, où tu te connectes une fois à tes outils (Google, GitHub, Stripe, Lumail...). Installe le CLI `dev-browser`, le lanceur `chrome-ai`, une app dans Spotlight, et vérifie que tes connexions tiennent après un redémarrage. | `/setup-dev-browser` une fois, après `/setup-brain`. |
+| [`dev-browser`](skills/dev-browser/SKILL.md) | Claude pilote ta fenêtre Chrome AI : ouvre des sites, clique, remplit des formulaires, lit les pages, fait des captures, vérifie ton app en ligne en étant connecté. Il s'arrête pour te laisser te connecter et te demande avant d'envoyer, payer ou supprimer. | "Ouvre mon dashboard Stripe et dis-moi les ventes d'hier." |
 | [`grill-me`](skills/grill-me/SKILL.md) | Claude te pose 10 questions à la fois sur l'app que tu veux (pour qui, l'action principale, les données, qui voit quoi, le prix, les emails, le domaine, le design, la v1), chacune avec une réponse recommandée, puis te donne un brief à valider avant de coder. `create-software`, `create-internal-app` et `create-landing` le lancent tout seuls. | Automatique avec `/create-software`, `/create-internal-app` et `/create-landing`, ou `/grill-me` à la fin de n'importe quel prompt. |
 | [`create-landing`](skills/create-landing/SKILL.md) | Crée une landing page, une page de vente ou une waitlist sur Cloudflare, sans base de données ni connexion : TanStack Start, shadcn/ui + Base UI, formulaire email branché sur Lumail (avec double opt-in, c'est un formulaire à froid), bouton d'achat Stripe ou Codeline en option, copy écrite avec toi avant le code. | `/create-landing une waitlist pour mon app sur mon-domaine.com` |
 | [`create-software`](skills/create-software/SKILL.md) | Crée une app web publique hébergée sur Cloudflare, pour des gens qui s'inscrivent ou paient : TanStack Start, shadcn/ui + Base UI, Convex pour tout, les librairies TanStack (données, listes, formulaires, markdown, raccourcis clavier), Better Auth, Lumail (inscrits directement, sans double opt-in) et Stripe si l'app vend. | `/create-software une plateforme de formation sur formation.mon-domaine.com` |

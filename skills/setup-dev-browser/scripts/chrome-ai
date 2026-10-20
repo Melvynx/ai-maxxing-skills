@@ -1,0 +1,51 @@
+#!/bin/bash
+# Chrome AI: one dedicated, signed-in Chrome window that the agent drives with dev-browser.
+# Usage: chrome-ai [start|status|stop|url|app]
+set -euo pipefail
+
+PORT="${CHROME_AI_PORT:-9333}"
+PROFILE="${CHROME_AI_PROFILE:-$HOME/.chrome-ai-profile}"
+CDP="http://127.0.0.1:$PORT"
+
+find_chrome() {
+  local mac="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  if [ -x "$mac" ]; then echo "$mac"; return; fi
+  if [ -x "$HOME$mac" ]; then echo "$HOME$mac"; return; fi
+  for bin in google-chrome google-chrome-stable chromium chromium-browser; do
+    if command -v "$bin" >/dev/null 2>&1; then command -v "$bin"; return; fi
+  done
+  echo "chrome-ai: Google Chrome not found, install it from https://www.google.com/chrome" >&2
+  exit 1
+}
+
+alive() { curl -fs --max-time 1 "$CDP/json/version" >/dev/null 2>&1; }
+
+case "${1:-start}" in
+  start)
+    if alive; then echo "$CDP"; exit 0; fi
+    CHROME="$(find_chrome)"
+    mkdir -p "$PROFILE"
+    nohup "$CHROME" \
+      --user-data-dir="$PROFILE" \
+      --remote-debugging-port="$PORT" \
+      --remote-debugging-address=127.0.0.1 \
+      --no-first-run --no-default-browser-check \
+      >/dev/null 2>&1 &
+    for _ in $(seq 1 50); do alive && { echo "$CDP"; exit 0; }; sleep 0.2; done
+    echo "chrome-ai: Chrome did not open the debugging port $CDP" >&2; exit 1 ;;
+  status)
+    if alive; then echo "running $CDP (profile $PROFILE)"; else echo "stopped"; exit 1; fi ;;
+  stop)
+    pkill -f -- "--user-data-dir=$PROFILE" && echo "stopped" || echo "not running" ;;
+  url)
+    echo "$CDP" ;;
+  app)
+    # macOS only: a "Chrome AI" app in ~/Applications so the user opens it from Spotlight.
+    SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    mkdir -p "$HOME/Applications"
+    osacompile -o "$HOME/Applications/Chrome AI.app" \
+      -e "do shell script quoted form of \"$SELF\" & \" start >/dev/null 2>&1 &\""
+    echo "$HOME/Applications/Chrome AI.app" ;;
+  *)
+    echo "usage: chrome-ai [start|status|stop|url|app]" >&2; exit 2 ;;
+esac
