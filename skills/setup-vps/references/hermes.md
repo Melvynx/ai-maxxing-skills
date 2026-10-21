@@ -22,3 +22,6 @@ Discord, about 5 minutes:
 Only the IDs in the allowed list can talk to the agent; never set `GATEWAY_ALLOW_ALL_USERS`. If the bot stays silent, read `ssh hermes 'journalctl --user -u hermes-gateway -n 50 --no-pager'` (or without `--user` for a system service) and `ssh hermes 'hermes doctor'`.
 
 The dashboard. `hermes-setup dashboard` runs `hermes dashboard --host 127.0.0.1 --port 9119 --no-open` as the `hermes-dashboard` service, reachable only from the server itself. The dashboard refuses requests whose Host or Origin is not `127.0.0.1`, which is why `expose add` uses `--as-local` for it. Never bind it to `0.0.0.0` and never set `dashboard.public_url`: the gate in front of it is the protection, and a public URL would switch on Hermes' own login on top of it.
+
+The gate. Caddy sends `/.gate/*` to the `vps-gate` service and asks it about every other request: a saved IP or a valid session cookie passes, anything else is redirected to `/.gate/login`. The login sits in `/var/lib/vps-gate/login` (bcrypt), saved IPs in `/var/lib/vps-gate/ips` (one per line, with the date and network name), failure counters in `state.json`. Whether an IP can be saved is checked with ip-api.com (mobile, proxy and hosting flags); if that check fails, saving is refused, signing in still works. Sign-ins and saves are logged: `journalctl -u vps-gate -n 50`.
+

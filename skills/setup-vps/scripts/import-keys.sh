@@ -91,7 +91,7 @@ REMOTE
     ips=()
     [ -n "$ip4" ] && ips+=("$ip4/32")
     # Cloudflare checks the whole /64 an IPv6 server talks from.
-    [ -n "$ip6" ] && ips+=("$(printf '%s' "$ip6" | awk -F: '{print $1":"$2":"$3":"$4"::/64"}')")
+    [ -n "$ip6" ] && ips+=("$(remote "python3 -c 'import ipaddress; print(ipaddress.ip_network(\"$ip6/64\", strict=False))'")")
     groups="$(cf accounts tokens permission-groups list)"
     pick() { # scope, then names
       local scope="$1"; shift
