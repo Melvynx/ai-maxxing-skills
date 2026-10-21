@@ -14,13 +14,23 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 16 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 22 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
-Tu préfères demander à Claude ? Colle ce prompt dans une session :
+Mac ou PC tout neuf, sans Node ni Git ? La commande `npx` ne marchera pas encore. Colle plutôt ce prompt dans une session Claude (onglet **Code**), il n'a besoin de rien d'installé :
 
 ```
-Installe tous les skills du repo https://github.com/Melvynx/ai-maxxing-skills dans ~/.claude/skills (un dossier par skill, avec son SKILL.md et ses références), puis liste-les.
+Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs/heads/main.tar.gz avec curl, extrais-la avec tar dans un dossier temporaire, copie chaque dossier de skills/ dans ~/.claude/skills (avec son SKILL.md, ses scripts et ses références), puis liste les skills installés. N'utilise ni git ni npm.
 ```
+
+## Par où commencer
+
+Dans cet ordre, une seule fois, chacun dans une nouvelle session. Chaque skill s'adapte à ton système (macOS, Linux ou Windows), saute ce qui est déjà prêt et finit par une check-list :
+
+1. `/setup-node` : installe Node.js, sans mot de passe administrateur.
+2. `/setup-github` : Git, le CLI GitHub, la connexion à ton compte et ton nom dans les commits.
+3. `/setup-brain` : ton dossier de travail avec son `AGENTS.md`.
+4. `/setup-dev-browser` : le Chrome dédié à Claude.
+5. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
 
 ### Installation manuelle
 
@@ -38,6 +48,12 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 
 | Skill | Ce qu'il fait | Comment l'utiliser |
 | --- | --- | --- |
+| [`setup-node`](skills/setup-node/SKILL.md) | Installe Node.js (et donc `npm` et `npx`) sans mot de passe administrateur : Homebrew s'il est là, sinon la version officielle dans ton dossier perso, `winget` sur Windows. Les autres skills le lancent tout seuls si Node manque. | `/setup-node`, à faire en premier sur un ordi neuf. |
+| [`setup-github`](skills/setup-github/SKILL.md) | Rend Git utilisable (les outils Apple sur Mac), installe le CLI GitHub, te connecte avec un code à usage unique dans le navigateur, sans mot de passe ni token, et règle ton nom et ton email dans Git. | `/setup-github` |
+| [`setup-cloudflare`](skills/setup-cloudflare/SKILL.md) | Installe le CLI officiel `cf`, te connecte à Cloudflare dans le navigateur, choisit le bon compte et liste tes domaines. | `/setup-cloudflare` |
+| [`setup-convex`](skills/setup-convex/SKILL.md) | Te connecte à Convex depuis le terminal (création du compte avec GitHub ou Google au passage), pour que Claude crée les bases de données de tes apps. | `/setup-convex` |
+| [`setup-lumail`](skills/setup-lumail/SKILL.md) | Connecte ton compte Lumail à Claude dans le navigateur, sans coller de clé API dans le chat. | `/setup-lumail` |
+| [`setup-stripe`](skills/setup-stripe/SKILL.md) | Installe le CLI Stripe et l'associe à ton compte en mode test avec un code de vérification, pour que Claude crée tes produits et teste les paiements. | `/setup-stripe`, seulement si ton app vend. |
 | [`setup-brain`](skills/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. 5 questions, puis il crée la structure, tes premiers projets et la sauvegarde git. | `/setup-brain` dans une nouvelle session, à faire en premier. |
 | [`connect-tool`](skills/connect-tool/SKILL.md) | Branche n'importe quel outil à Claude : installe son CLI officiel (Notion, Stripe...) ou, s'il n'en a pas (ClickFunnels, Kajabi...), écrit un petit script Python avec ta clé API. Puis crée un skill disponible partout. | `/connect-tool notion` ou `/connect-tool clickfunnels` |
 | [`setup-dev-browser`](skills/setup-dev-browser/SKILL.md) | Donne à Claude son propre Chrome : une fenêtre "Chrome AI" séparée de ton Chrome perso, où tu te connectes une fois à tes outils (Google, GitHub, Stripe, Lumail...). Installe le CLI `dev-browser`, le lanceur `chrome-ai`, une app dans Spotlight, et vérifie que tes connexions tiennent après un redémarrage. | `/setup-dev-browser` une fois, après `/setup-brain`. |

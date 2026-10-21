@@ -6,7 +6,7 @@ description: Run every Cloudflare job through the official `cf` CLI - domains, D
 Use the official `cf` CLI (`npm i -g cf`) for every Cloudflare action. Never Wrangler, an S3 SDK script or raw calls to api.cloudflare.com; if `cf` cannot do something, say so and stop. The Cloudflare connector in Claude can help for reads, but changes go through `cf`.
 
 ```bash
-cf --version                 # missing: npm i -g cf
+cf --version                 # missing: run the setup-cloudflare skill
 cf auth whoami               # must say "authenticated": true
 cf auth login                # OAuth in the browser, the user grants every scope, sensitive ones included
 ```

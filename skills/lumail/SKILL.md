@@ -7,7 +7,7 @@ Connect first:
 
 ```bash
 npx lumail@latest setup --authenticate   # installs the Lumail MCP + skills for your agent, opens the browser to authorize
-npx lumail@latest auth test              # checks the saved login
+npx lumail@latest auth test              # checks the saved login, fails: run the setup-lumail skill
 ```
 
 The "copy the prompt" button in the Lumail onboarding does the same. Once connected, prefer the Lumail MCP tools and fall back to the CLI (`lumail --help`, then `lumail <resource> --help`). Never invent flags. Pass `--json` when parsing, and never print API keys.

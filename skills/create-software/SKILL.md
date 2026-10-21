@@ -22,7 +22,7 @@ Keep this stack unless the user asks to swap a layer:
 
 Reach for the TanStack library before any other package for client jobs: `@tanstack/react-query` + `@convex-dev/react-query` (`convexQuery(api.x.y, args)`) for fetching and cache, `@tanstack/react-table` for lists, sorting, filters and pagination, `@tanstack/react-virtual` for long lists, `@tanstack/react-form` + `zod` for forms, `@tanstack/markdown` to render markdown, `@tanstack/react-hotkeys` for shortcuts (`cmd+k`, `j`/`k`, `esc`), `@tanstack/react-pacer` to debounce search and throttle saves, `@tanstack/ai-react` for AI chat or generation. Check each package's current API (`npm view <pkg> version`, then its README or `find-docs`) instead of writing it from memory.
 
-1. Check access and fix what fails before writing code. When a login needs the browser, give the exact link or code and wait for "done".
+1. Check access and fix what fails with the matching setup skill (`setup-github`, `setup-cloudflare`, `setup-convex`, `setup-lumail`, `setup-node` when `npx` is missing) before writing code. When a login needs the browser, give the exact link or code and wait for "done".
 
    ```bash
    git --version && gh auth status       # GitHub

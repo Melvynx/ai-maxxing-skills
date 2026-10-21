@@ -17,7 +17,7 @@ The setup lives in four places: the launcher `~/.local/bin/chrome-ai` (copied fr
    ls "/Applications/Google Chrome.app" 2>/dev/null || command -v google-chrome
    ```
 
-   If Node is missing, install it (`brew install node` on macOS). If Chrome is missing, send the user to https://www.google.com/chrome and wait for "done".
+   If Node is missing, run the `setup-node` skill first. If Chrome is missing, send the user to https://www.google.com/chrome and wait for "done".
 2. Install the CLI and its browser, then check it answers.
 
    ```bash

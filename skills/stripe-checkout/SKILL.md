@@ -11,7 +11,7 @@ Build it in test mode:
 2. Create the product and price (or one per product) with the Stripe API or CLI; keep the price IDs in config, never trust a price sent by the browser.
 3. A server endpoint creates a Checkout Session (`mode: "payment"` or `"subscription"`) with `client_reference_id` / `metadata` = the user id and product id, `customer_email` when known, `success_url` with `{CHECKOUT_SESSION_ID}`, `cancel_url`.
 4. A webhook endpoint handles `checkout.session.completed`, plus `charge.refunded` / `customer.subscription.deleted` when relevant. It reads the raw body and verifies the signature with the webhook secret (`whsec_...`), stores the event or session id to ignore duplicates, grants access from the verified session (never from the success page or a URL parameter), and upserts the buyer in the email tool (subscribed, product tag).
-5. For local or dev webhooks, run `stripe listen --forward-to <url>/api/stripe/webhook` and use the printed secret.
+5. For local or dev webhooks, run `stripe listen --forward-to <url>/api/stripe/webhook` and use the printed secret. If `stripe` is missing or not paired, run the `setup-stripe` skill first.
 6. The success page reads the session server-side and shows "access unlocked" or "payment processing".
 
 Test end to end: logged out, with a new email, pay with `4242 4242 4242 4242`, any future date, any CVC. Check the success page, the login code email, the product unlocked in the member area, the order row in the database, and one webhook delivery marked 200 in Stripe. Also try a declined card (`4000 0000 0000 0002`) and a second delivery of the same event.

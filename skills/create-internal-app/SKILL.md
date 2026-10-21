@@ -21,7 +21,7 @@ Keep this stack:
 - Domain, DNS, lock: Cloudflare with the `cf` CLI, DNS proxied, WAF IP rule.
 - Run and repair: the user's agent (Hermes) with a Dokploy API token.
 
-1. Check access. Dokploy must already be installed on the VPS; if it is not, stop and say so, that is the server setup lesson.
+1. Check access and fix what fails with `setup-github` or `setup-cloudflare`. Dokploy must already be installed on the VPS; if it is not, stop and say so, that is the server setup lesson.
 
    ```bash
    git --version && gh auth status        # GitHub

@@ -18,7 +18,7 @@ Keep this stack, with no Convex, no Better Auth and no database:
 - Hosting, domain, DNS: Cloudflare Workers with `@cloudflare/vite-plugin`, deployed with `cf`.
 - Code: Git and one private GitHub repo.
 
-1. Check access and fix what fails first. When a login needs the browser, give the exact link or code and wait for "done".
+1. Check access and fix what fails with the matching setup skill (`setup-github`, `setup-cloudflare`, `setup-convex`, `setup-lumail`, `setup-node` when `npx` is missing) first. When a login needs the browser, give the exact link or code and wait for "done".
 
    ```bash
    git --version && gh auth status       # GitHub

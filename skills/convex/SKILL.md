@@ -6,7 +6,7 @@ description: Set up, secure and optimize a Convex backend. Use for Convex projec
 Set up a project with two deployments, dev (break anything) and prod (real users), and never point local dev at prod data:
 
 ```bash
-npx convex login                 # the user approves in the browser
+npx convex login                 # the user approves in the browser, or run the setup-convex skill
 npx convex dev --once            # creates the project + dev deployment, writes .env.local
 npx convex env set KEY value     # server secrets (dev); add --prod for production
 npx convex deploy                # production deploy
