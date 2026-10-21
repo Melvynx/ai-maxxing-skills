@@ -14,7 +14,7 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 26 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 27 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
 Mac ou PC tout neuf, sans Node ni Git ? La commande `npx` ne marchera pas encore. Colle plutôt ce prompt dans une session Claude (onglet **Code**), il n'a besoin de rien d'installé :
 
@@ -68,6 +68,7 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | [`setup-stripe`](skills/setup-stripe/SKILL.md) | Installe le CLI Stripe et l'associe à ton compte en mode test avec un code de vérification, pour que Claude crée tes produits et teste les paiements. | `/setup-stripe`, seulement si ton app vend. |
 | [`setup-brain`](skills/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. 5 questions, puis il crée la structure, tes premiers projets et la sauvegarde git. | `/setup-brain` dans une nouvelle session, à faire en premier. |
 | [`connect-tool`](skills/connect-tool/SKILL.md) | Branche n'importe quel outil à Claude : installe son CLI officiel (Notion, Stripe...) ou, s'il n'en a pas (ClickFunnels, Kajabi...), écrit un petit script Python avec ta clé API. Puis crée un skill disponible partout. | `/connect-tool notion` ou `/connect-tool clickfunnels` |
+| [`connect-google`](skills/connect-google/SKILL.md) | Branche ton compte Google (Gmail, Agenda, Drive, Docs, Sheets, Slides, Contacts, Tâches) à tous tes agents avec le CLI `gog`, tout seul : Claude crée le projet Google Cloud et la clé dans Chrome AI, puis t'affiche les pages de connexion Google, tu choisis juste ton compte et tu cliques "Autoriser". | `/connect-google`, après `/setup-dev-browser`. |
 | [`setup-dev-browser`](skills/setup-dev-browser/SKILL.md) | Donne à Claude son propre Chrome : une fenêtre "Chrome AI" séparée de ton Chrome perso, où tu te connectes une fois à tes outils (Google, GitHub, Stripe, Lumail...). Installe le CLI `dev-browser`, le lanceur `chrome-ai`, une app dans Spotlight, et vérifie que tes connexions tiennent après un redémarrage. | `/setup-dev-browser` une fois, après `/setup-brain`. |
 | [`dev-browser`](skills/dev-browser/SKILL.md) | Claude pilote ta fenêtre Chrome AI : ouvre des sites, clique, remplit des formulaires, lit les pages, fait des captures, vérifie ton app en ligne en étant connecté. Il s'arrête pour te laisser te connecter et te demande avant d'envoyer, payer ou supprimer. | "Ouvre mon dashboard Stripe et dis-moi les ventes d'hier." |
 | [`connect-vps`](skills/connect-vps/SKILL.md) | Branche le VPS que tu as acheté (Hostinger, Hetzner, OVH...) : Claude ouvre ton espace client dans Chrome AI, trouve le serveur et l'endroit des clés SSH, crée la clé et le raccourci `ssh hermes` dans ton terminal, sans mot de passe ensuite. Puis il dit à tous tes agents (brain, Claude Code, Codex) que le serveur est là pour tes sites et tes apps. | `/connect-vps hostinger` |
