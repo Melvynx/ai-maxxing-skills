@@ -33,8 +33,8 @@ Dans cet ordre, une seule fois, chacun dans une nouvelle session. Chaque skill s
 5. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
 6. `/connect-vps hostinger` : quand tu as acheté ton VPS, le raccourci `ssh hermes` pour y entrer.
 7. `/setup-vps mon-domaine.com` : ton agent Hermes sur le VPS, joignable sur Telegram ou Discord, avec son dashboard protégé.
-8. `/setup-my-hermes-dashboard mon-domaine.com` : ton dashboard perso, vide au départ, où Hermes ajoute les modules que tu lui demandes.
-9. `/install-skills` : choisis les skills du pack que Hermes peut utiliser sur le serveur (`connect-tool`, `create-landing`, `verify`...). Ensuite tu peux aussi lui écrire directement sur Telegram "installe le skill create-landing".
+8. `/setup-my-hermes-dashboard mon-domaine.com` : ton dashboard perso, vide au départ, où Hermes ajoute les modules que tu lui demandes. Ou écris simplement à Hermes "crée mon dashboard".
+9. `/install-skills` : `/setup-vps` installe déjà le pack par défaut de Hermes sur le serveur (`create-dashboard`, `connect-tool`, `create-landing`, `create-software`, `verify`..., la liste est dans [`skills/setup-vps/hermes-pack`](skills/setup-vps/hermes-pack)). Ce skill ajoute les autres (`lumail`, `stripe-checkout`, `convex`...). Tu peux aussi écrire directement à Hermes sur Telegram "installe le pack par défaut" ou "installe le skill lumail".
 
 Tu n'as pas envie de tout installer ? Lance un seul skill avec son lien, sans rien installer avant. Claude lit le skill et ne télécharge que les fichiers dont il a besoin :
 

@@ -8,7 +8,8 @@
 #   hermes.sh autonomy                     Hermes acts without asking first and shows each tool it uses in the chat
 #   hermes.sh skills <domain> <dir>        install cf and the tool skills of <dir> in ~/.agents/skills, read by Hermes and Claude Code
 #   hermes.sh catalog                      the ai-maxxing skills that work on a server, installed or not, with what each does
-#   hermes.sh add <skill>...               install those skills from the ai-maxxing package (kept up to date in ~/.cache)
+#   hermes.sh add <skill|base|all>...      install those skills from the ai-maxxing package (kept up to date in ~/.cache);
+#                                          base is the default pack, all is every skill of the catalog
 #   hermes.sh update                       reinstall every skill this script installed, from the latest package
 #   hermes.sh remove <skill>...            take out skills this script installed (moved to ~/.cache/removed-skills)
 #   hermes.sh check                        one line per part: claude, hermes, model, gateway, dashboard, autonomy, skills
@@ -26,6 +27,8 @@ PKG="$HOME/.cache/ai-maxxing-skills"
 DOMAIN_FILE="$HOME/.config/hermes-setup/domain"
 # Skills of the package that only make sense on the owner's computer (browser sign-ins, their own Chrome, setting up this server).
 LOCAL_ONLY='^(connect-vps|install-skills|dev-browser|setup-.*)$'
+# The default pack of Hermes: one name per line in skills/setup-vps/hermes-pack of the package.
+base_pack() { sed 's/#.*//' "$PKG/skills/setup-vps/hermes-pack" 2>/dev/null | tr -s ' \t\n' ' '; }
 
 need_hermes() { command -v hermes >/dev/null 2>&1 || { echo "Hermes is missing: run '$0 install'" >&2; exit 3; }; }
 # Hermes rescans ~/.agents/skills when a conversation starts, so adding or removing a skill needs no restart
@@ -199,20 +202,32 @@ EOF
 
   catalog)
     pull_pkg
-    for src in "$PKG"/skills/*/; do
+    base=" $(base_pack) "
+    for src in "$PKG"/skills/*/ "$PKG"/skills/setup-vps/server-skills/*/; do
       name="$(basename "$src")"
       [ -f "$src/SKILL.md" ] && ! [[ "$name" =~ $LOCAL_ONLY ]] || continue
       if [ -f "$SKILLS/$name/$MARK" ]; then state=installed; elif [ -e "$SKILLS/$name" ]; then state=own; else state=available; fi
-      printf '%-20s %-10s %s\n' "$name" "$state" "$(describe "$src")"
+      [[ " $base " == *" $name "* ]] && pack=base || pack=-
+      printf '%-20s %-10s %-5s %s\n' "$name" "$state" "$pack" "$(describe "$src")"
     done
     ;;
 
   add)
     shift
-    [ $# -gt 0 ] || { echo "usage: $0 add <skill>... (see '$0 catalog')" >&2; exit 2; }
+    [ $# -gt 0 ] || { echo "usage: $0 add <skill|base|all>... (see '$0 catalog')" >&2; exit 2; }
     need_hermes; pull_pkg
     domain="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"; unknown=0
+    names=()
     for name in "$@"; do
+      case "$name" in
+        base) names+=($(base_pack)) ;;
+        all) for src in "$PKG"/skills/*/ "$PKG"/skills/setup-vps/server-skills/*/; do
+               n="$(basename "$src")"; [ -f "$src/SKILL.md" ] && ! [[ "$n" =~ $LOCAL_ONLY ]] && names+=("$n")
+             done ;;
+        *) names+=("$name") ;;
+      esac
+    done
+    for name in "${names[@]}"; do
       if [[ "$name" =~ $LOCAL_ONLY ]]; then echo "skipped=$name (runs on the owner's computer, not here)"; continue; fi
       src="$(pkg_dir "$name")" || { echo "unknown=$name (not in '$(basename "$0") catalog')" >&2; unknown=1; continue; }
       install_skill "$src" "$domain" "$name"
@@ -257,7 +272,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,15p' "$0" >&2
+    sed -n '2,16p' "$0" >&2
     exit 2
     ;;
 esac

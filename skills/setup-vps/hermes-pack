@@ -1,0 +1,13 @@
+# The default skills of Hermes, installed by `hermes-setup add base` (and by setup-vps).
+# One skill name per line, then why Hermes needs it. Edit this list to change what every new server gets.
+server-tools         # which command does each job on this server (gh, cf, expose, hermes-setup)
+github-cli           # repos, push, PRs with gh
+cloudflare           # domains, DNS, Workers with cf
+ai-maxxing-skills    # install, update or remove more skills when the owner asks
+create-dashboard     # put the owner's personal dashboard online, then build its modules
+connect-tool         # connect any tool (Notion, Stripe, a CRM...) with a CLI and a skill
+create-internal-app  # private apps on this server, behind the sign-in page
+create-landing       # landing pages, sales pages, waitlists on Cloudflare
+create-software      # public web apps on Cloudflare
+verify               # prove a change, a deploy or a page really works
+grill-me             # sharpen an idea with 10 questions before building it
