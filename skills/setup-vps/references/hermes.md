@@ -1,0 +1,24 @@
+How Hermes Agent works on the VPS, for the steps of the skill that need more than one command. Hermes keeps its settings in `~/.hermes/config.yaml` and its secrets in `~/.hermes/.env` on the server; `hermes config set <key> <value>` edits the first, `hermes config env-path` prints where the second is.
+
+The model. Hermes talks to Claude with the user's own Claude Code login: it reads `~/.claude/.credentials.json`, which `claude` writes when the user signs in on the server. `hermes-setup model <model> <effort>` sets `model.provider` to `anthropic`, `model.default` to the model and `agent.reasoning_effort` to the effort, then asks Hermes for an "OK". The recommended choice is the model Claude Code uses by default (printed by `hermes-setup claude` as `default_model`, `claude-opus-5-5` in October 2026) with effort `medium`. When the user names another model (`claude-sonnet-5-5`, `claude-haiku-5-5`) or effort (`low`, `high`, `xhigh`), use theirs and rerun the command; nothing else changes.
+
+If the test answers with an error about "extra usage" or a 400 from Anthropic, Claude counts Hermes as extra usage on the subscription. Tell the user, in plain words, they have two ways out: turn on extra usage in claude.ai (Settings, Usage) with a monthly cap they choose, or use an Anthropic API key. For the key, they create it at https://console.anthropic.com/settings/keys and type it themselves in their own Terminal with `ssh -t hermes 'read -rsp "Key: " k; echo; printf "ANTHROPIC_API_KEY=%s\n" "$k" >> ~/.hermes/.env'`; then rerun `hermes-setup model`. Never ask them to paste the key in the chat.
+
+Telegram, about 3 minutes:
+
+1. In Telegram (phone or desktop), the user opens a chat with `@BotFather`, sends `/newbot`, picks a display name, then a username that ends in `bot`. BotFather answers with a token: they keep it on screen, not in the chat with you.
+2. They open a chat with `@userinfobot` and send any message: it answers with their numeric ID (for example `123456789`).
+3. In their own Terminal they run `ssh -t hermes 'hermes gateway setup'`, choose Telegram, paste the token and type their ID as the only allowed user. The wizard saves `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_USERS` in `~/.hermes/.env`.
+4. Run `hermes-setup gateway`, then the user sends "hello" to their bot. If the bot answers with a pairing code instead of a reply, approve it with `ssh hermes 'hermes pairing approve telegram <CODE>'`.
+
+Discord, about 5 minutes:
+
+1. Open https://discord.com/developers/applications in Chrome AI (the user signs in if asked). New Application, any name, then the Bot tab: turn on "Message Content Intent" and save. The user clicks "Reset Token" and copies it themselves; never read it from the page.
+2. In the OAuth2 tab, URL Generator: scopes `bot` and `applications.commands`, permissions "Send Messages", "Read Message History", "View Channels" and "Attach Files". The user opens the generated link and adds the bot to their own server.
+3. Their user ID: Discord Settings, Advanced, turn on Developer Mode, then right click their name and "Copy User ID".
+4. In their own Terminal they run `ssh -t hermes 'hermes gateway setup'`, choose Discord, paste the token and their ID. The wizard saves `DISCORD_BOT_TOKEN` and `DISCORD_ALLOWED_USERS`.
+5. Run `hermes-setup gateway`, then the user sends "hello" to the bot in a direct message. A pairing code means `ssh hermes 'hermes pairing approve discord <CODE>'`.
+
+Only the IDs in the allowed list can talk to the agent; never set `GATEWAY_ALLOW_ALL_USERS`. If the bot stays silent, read `ssh hermes 'journalctl --user -u hermes-gateway -n 50 --no-pager'` (or without `--user` for a system service) and `ssh hermes 'hermes doctor'`.
+
+The dashboard. `hermes-setup dashboard` runs `hermes dashboard --host 127.0.0.1 --port 9119 --no-open` as the `hermes-dashboard` service, reachable only from the server itself. The dashboard refuses requests whose Host or Origin is not `127.0.0.1`, which is why `expose add` uses `--as-local` for it. Never bind it to `0.0.0.0` and never set `dashboard.public_url`: the gate in front of it is the protection, and a public URL would switch on Hermes' own login on top of it.
