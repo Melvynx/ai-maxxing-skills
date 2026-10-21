@@ -25,7 +25,7 @@ The setup lives in four places: the launcher `~/.local/bin/chrome-ai` (copied fr
    dev-browser --help | head -5
    ```
 
-3. Install the launcher: copy `scripts/chrome-ai` from this skill to `~/.local/bin/chrome-ai` and make it executable. If `~/.local/bin` is not on the user's PATH, add `export PATH="$HOME/.local/bin:$PATH"` to their `~/.zshrc` (or `~/.bashrc`) once, never twice.
+3. Install the launcher: copy `scripts/chrome-ai` from this skill to `~/.local/bin/chrome-ai` and make it executable. If `~/.local/bin` is not on the user's PATH, add `export PATH="$HOME/.local/bin:$PATH"` once (never twice) to both `~/.zprofile` and `~/.zshrc` (or `~/.bash_profile` and `~/.bashrc`), so new terminals and agent sessions both find it.
 4. On macOS, run `chrome-ai app` to create the "Chrome AI" app in `~/Applications`, so the user can open it from Spotlight.
 5. Run `chrome-ai start`. It opens a new Chrome window and prints `http://127.0.0.1:9333`. Tell the user this window is the AI's Chrome and ask them to pick a different theme color in it (Settings, Appearance) so they never confuse it with their own.
 6. Ask the user to sign in, in that window only, to the tools the agent will use (Google, GitHub, Cloudflare, Lumail, Stripe, their own apps), then say "done". Never type a password, a code or a card number yourself, and never copy cookies from their normal Chrome.

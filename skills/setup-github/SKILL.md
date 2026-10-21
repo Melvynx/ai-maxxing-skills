@@ -7,10 +7,10 @@ Make Git and GitHub work on the user's machine so the agent can create private r
 
 1. Find the OS with `uname -s` (`Darwin` is macOS, `Linux` is Linux); if it fails or PowerShell answers, it is Windows.
 2. Make Git work, then check with `git --version`:
-   - macOS: if `xcode-select -p` fails, Git is only an empty shell until Apple's developer tools are installed. Run `xcode-select --install`, tell the user a window just opened and to click "Install" then accept the licence, and check `xcode-select -p` every 30 seconds (in the background, up to 30 minutes) until it answers.
+   - macOS: if `xcode-select -p` fails, Git is only an empty shell until Apple's developer tools are installed. Homebrew installs them, so if it is missing run the `setup-node` skill first (it installs Homebrew and Node, both needed later anyway). Only if the user cannot install Homebrew (no admin rights), run `xcode-select --install`, tell them a window just opened and to click "Install" then accept the licence, and check `xcode-select -p` every 30 seconds (in the background, up to 30 minutes) until it answers.
    - Linux: if Git is missing, installing it needs the user's password, so ask them to run `sudo apt install -y git` (or `sudo dnf install -y git`) in their own terminal and say "done".
    - Windows: Git comes with Claude Code; if it is missing, `winget install --id Git.Git -e`.
-3. Install `gh`: on macOS and Linux run [scripts/install-gh.sh](scripts/install-gh.sh) (Homebrew if the Mac has it, otherwise the official release into `~/.local/bin`, no admin password); on Windows `winget install --id GitHub.cli -e`. If it went to `~/.local/bin`, prefix your next commands with `export PATH="$HOME/.local/bin:$PATH"`.
+3. Install `gh`: on macOS and Linux run [scripts/install-gh.sh](scripts/install-gh.sh) (Homebrew on macOS, exit code 3 means Homebrew is missing so run `setup-node` first; on Linux or with `--no-brew`, the official release into `~/.local/bin`); on Windows `winget install --id GitHub.cli -e`. The current session does not see it yet: prefix your next commands with `eval "$(/opt/homebrew/bin/brew shellenv)"` (or `/usr/local/bin/brew` on Intel) on macOS, or `export PATH="$HOME/.local/bin:$PATH"` with the `~/.local` install.
 4. If the user has no GitHub account, send them to https://github.com/signup and wait for "done". GitHub asks for two-step verification on new accounts: tell them it is normal and to follow it to the end.
 5. If `gh auth status` already says logged in, skip to step 6. Otherwise start the login in the background, with the output in a file you can read:
 
@@ -21,6 +21,6 @@ Make Git and GitHub work on the user's machine so the agent can create private r
    Read the one-time code (`XXXX-XXXX`) from that file and give it to the user with https://github.com/login/device (open it in Chrome AI when `setup-dev-browser` is done). They paste the code, click "Authorize", and say "done". Check `gh auth status` until it says logged in. If the code expired, start again.
 6. Run `gh auth setup-git` so `git push` uses this login.
 7. Set the Git identity only if `git config --global user.name` is empty: the name from `gh api user --jq '.name // .login'`, and the private GitHub email from `gh api user --jq '"\(.id)+\(.login)@users.noreply.github.com"'` unless the user wants their real email shown in commits. Also run `git config --global init.defaultBranch main`.
-8. Prove it: `gh auth status` is logged in, `gh api user --jq .login` prints their username, `gh repo list --limit 1` answers, and `git config --global user.name` and `user.email` are set.
+8. Prove it: `gh auth status` is logged in, `gh api user --jq .login` prints their username, `gh repo list --limit 1` answers, `git config --global user.name` and `user.email` are set, and a new session finds `gh` too (`$SHELL -lic 'gh --version'`).
 
 End with a short check list, a check or a cross on each line: Git works, `gh` installed, signed in as `<username>`, Git uses the GitHub login, name and email set. Then tell the user in one line that the agent can now create private repos and push for them.
