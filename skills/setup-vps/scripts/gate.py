@@ -195,14 +195,19 @@ def network_check(ip):
 TEXT = {
     "fr": {
         "title": "Connexion",
+        "sub": "Espace privé de {host}.",
         "email": "Email",
         "password": "Mot de passe",
         "submit": "Se connecter",
+        "foot": "Session signée · {n} essais par {m} min",
+        "save_sub": "Ce réseau n'aura plus besoin de mot de passe.",
+        "refused_sub": "Ta session reste valable 7 jours sur cet appareil.",
+        "network": "Réseau",
+        "server": "ce serveur",
         "bad": "Email ou mot de passe incorrect.",
         "locked": "Trop d'essais. Réessaie dans {m} min.",
         "nologin": "Aucun accès configuré sur ce serveur.",
         "save_title": "Sauvegarder cette IP ?",
-        "save_text": "Depuis {ip}{isp}, tu n'auras plus besoin de te connecter.",
         "confirm": "C'est mon réseau perso (maison ou bureau), pas un Wi-Fi public (café, hôtel, coworking, aéroport, gare).",
         "save": "Sauvegarder cette IP",
         "skip": "Continuer sans sauvegarder",
@@ -215,14 +220,19 @@ TEXT = {
     },
     "en": {
         "title": "Sign in",
+        "sub": "Private area of {host}.",
         "email": "Email",
         "password": "Password",
         "submit": "Sign in",
+        "foot": "Signed session · {n} tries per {m} min",
+        "save_sub": "This network will not need the password anymore.",
+        "refused_sub": "Your session stays valid for 7 days on this device.",
+        "network": "Network",
+        "server": "this server",
         "bad": "Wrong email or password.",
         "locked": "Too many tries. Try again in {m} min.",
         "nologin": "No access is set up on this server.",
         "save_title": "Save this IP?",
-        "save_text": "From {ip}{isp}, you will not need to sign in anymore.",
         "confirm": "This is my own network (home or office), not a public Wi-Fi (cafe, hotel, coworking, airport, station).",
         "save": "Save this IP",
         "skip": "Continue without saving",
@@ -235,17 +245,56 @@ TEXT = {
     },
 }
 
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "geist.woff2")
+ICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+        '<stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs><rect width="32" height="32" rx="7.5" fill="url(#g)"/>'
+        '<rect x="8" y="8.5" width="4.5" height="16" rx="1.5" fill="#fff"/><rect x="19.5" y="8.5" width="4.5" height="16" rx="1.5" fill="#fff"/>'
+        '<rect x="11" y="14.75" width="10" height="3.5" rx="1.2" fill="#e0e7ff"/><path d="M24 10.4c2.6-.2 4.2-1.5 4.9-3.6-2.2.5-3.8.4-4.9-.2z" fill="#c7d2fe"/>'
+        '<path d="M8 10.4c-2.6-.2-4.2-1.5-4.9-3.6 2.2.5 3.8.4 4.9-.2z" fill="#c7d2fe"/></svg>')
+FAVICON = "data:image/svg+xml," + urllib.parse.quote(ICON.replace(' aria-hidden="true"', ""))
+CSP = "default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+
+DARK = """--bg:oklch(0.141 0.005 285.823);--fg:oklch(0.967 0.003 286);--card:oklch(0.177 0.006 286);--muted:oklch(0.235 0.006 286);
+--muted-fg:oklch(0.715 0.014 286);--border:oklch(1 0 0 / 8%);--input:oklch(1 0 0 / 14%);--ring:oklch(0.673 0.182 276.935);
+--primary:oklch(0.92 0.004 286.32);--primary-fg:oklch(0.21 0.006 285.885);--brand-ink:oklch(0.785 0.115 274.713);--brand-soft:oklch(0.585 0.233 277.117 / 14%);
+--bad:oklch(0.75 0.16 22);--bad-soft:oklch(0.637 0.237 25.331 / 11%);--bad-line:oklch(0.637 0.237 25.331 / 34%);
+--shadow:0 1px 2px oklch(0 0 0 / 30%),0 12px 32px -12px oklch(0 0 0 / 60%)"""
 STYLE = """
-:root{color-scheme:light dark;--bg:#f6f6f4;--card:#fff;--fg:#1b1b1a;--muted:#6b6b66;--line:#deded8;--accent:#1b1b1a;--accent-fg:#fff;--err:#b42318}
-@media (prefers-color-scheme:dark){:root{--bg:#121211;--card:#1c1c1b;--fg:#ececea;--muted:#9a9a94;--line:#2e2e2c;--accent:#ececea;--accent-fg:#121211;--err:#f97066}}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:16px}
-main{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
-h1{font-size:20px;margin:0 0 18px}label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
-input[type=email],input[type=password]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;font:inherit}
-button{width:100%;margin-top:18px;padding:11px;border:0;border-radius:8px;background:var(--accent);color:var(--accent-fg);font:inherit;font-weight:600;cursor:pointer}
-button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);margin-top:8px}
-.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:14px;color:var(--fg)}.check input{margin-top:4px}
-.err{color:var(--err);font-size:14px;margin:0 0 8px}p{margin:0 0 8px}.muted{color:var(--muted);font-size:14px}
+@font-face{font-family:"Geist Variable";font-style:normal;font-display:swap;font-weight:100 900;src:url(/.gate/geist.woff2) format("woff2-variations")}
+:root{color-scheme:light;--bg:oklch(0.984 0.002 286);--fg:oklch(0.16 0.006 286);--card:oklch(1 0 0);--muted:oklch(0.962 0.003 286);
+--muted-fg:oklch(0.5 0.014 286);--border:oklch(0.915 0.004 286);--input:oklch(0.88 0.006 286);--ring:oklch(0.585 0.233 277.117);
+--primary:oklch(0.21 0.006 285.885);--primary-fg:oklch(0.985 0 0);--brand-ink:oklch(0.457 0.24 277.023);--brand-soft:oklch(0.962 0.018 272.314);
+--bad:oklch(0.505 0.213 27.518);--bad-soft:oklch(0.971 0.013 17.38);--bad-line:oklch(0.885 0.062 18.334);
+--shadow:0 1px 2px oklch(0 0 0 / 4%),0 8px 24px -8px oklch(0 0 0 / 10%)}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;""" + DARK + """}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh;background:var(--bg);color:var(--fg);font:14px/1.5 "Geist Variable",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{display:grid;place-items:center;padding:24px 16px}
+main{width:min(100%,380px);display:grid;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-0.01em}
+.brand svg{width:28px;height:28px;flex:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:var(--shadow);display:grid;gap:18px}
+h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-0.02em}
+.sub{margin:4px 0 0;color:var(--muted-fg);overflow-wrap:anywhere}
+form{display:grid;gap:14px;margin:0}
+label{display:grid;gap:6px;font-weight:500;font-size:13px}
+input[type=email],input[type=password]{width:100%;height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--input);background:transparent;color:inherit;font:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 25%,transparent)}
+.check{display:flex;align-items:flex-start;gap:8px;font-weight:400;color:var(--muted-fg);font-size:13px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:10px}
+.check input{margin:2px 0 0;accent-color:var(--ring);width:15px;height:15px;flex:none}
+.actions{display:grid;gap:8px}
+button,.btn{height:38px;padding:0 14px;border:0;border-radius:8px;background:var(--primary);color:var(--primary-fg);font:inherit;font-weight:500;cursor:pointer;transition:opacity .15s,background .15s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button:hover,.btn:hover{opacity:.9}
+button:focus-visible,.btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.ghost{background:transparent;color:var(--fg);border:1px solid var(--border)}
+.ghost:hover{background:var(--muted);opacity:1}
+.alert{padding:10px 12px;border-radius:8px;border:1px solid var(--bad-line);background:var(--bad-soft);color:var(--bad);font-size:13px}
+.net{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:var(--muted)}
+.net span{color:var(--muted-fg);font-size:12px}
+.net b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;background:var(--brand-soft);color:var(--brand-ink);font:500 12px ui-monospace,"SF Mono",Menlo,monospace;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:99px;background:currentColor}
+.foot{margin:0;color:var(--muted-fg);font-size:12px;text-align:center}
 """
 
 
@@ -291,7 +340,7 @@ class Gate(BaseHTTPRequestHandler):
         if body:
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("X-Frame-Options", "DENY")
-            self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'")
+            self.send_header("Content-Security-Policy", CSP)
             self.send_header("Referrer-Policy", "no-referrer")
         for key, value in (headers or {}).items():
             self.send_header(key, value)
@@ -299,10 +348,24 @@ class Gate(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def page(self, code, title, inner, headers=None):
-        self.send(code, f'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-                        f'<meta name="robots" content="noindex"><title>{html.escape(title)}</title><style>{STYLE}</style></head>'
-                        f'<body><main><h1>{html.escape(title)}</h1>{inner}</main></body></html>', headers)
+    @property
+    def host(self):
+        return (self.headers.get("Host") or "").split(":")[0].lower() or self.t["server"]
+
+    def page(self, code, title, card, headers=None):
+        lang = "fr" if self.t is TEXT["fr"] else "en"
+        foot = self.t["foot"].format(n=MAX_FAILS, m=WINDOW // 60)
+        self.send(code, f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+                        f'<meta name="robots" content="noindex"><title>{html.escape(title)}</title><link rel="icon" href="{FAVICON}">'
+                        f'<style>{STYLE}</style></head><body><main><div class="brand">{ICON}<span>Hermes</span></div>'
+                        f'<section class="card">{card}</section><p class="foot">{html.escape(foot)}</p></main></body></html>', headers)
+
+    def heading(self, title, sub):
+        return f'<div><h1>{html.escape(title)}</h1><p class="sub">{html.escape(sub)}</p></div>'
+
+    @staticmethod
+    def alert(error):
+        return f'<div class="alert" role="alert">{html.escape(error)}</div>' if error else ""
 
     def login_page(self, code=200, error="", nxt="/"):
         t = self.t
@@ -311,24 +374,44 @@ class Gate(BaseHTTPRequestHandler):
             error, code = t["locked"].format(m=max(1, (wait + 59) // 60)), 429
         if not read_login():
             error = t["nologin"]
-        err = f'<p class="err">{html.escape(error)}</p>' if error else ""
-        self.page(code, t["title"], f'{err}<form method="post" action="/.gate/login">'
-                  f'<input type="hidden" name="next" value="{html.escape(nxt)}">'
-                  f'<label for="e">{t["email"]}</label><input id="e" type="email" name="email" autocomplete="username" required autofocus>'
-                  f'<label for="p">{t["password"]}</label><input id="p" type="password" name="password" autocomplete="current-password" required>'
-                  f'<button>{t["submit"]}</button></form>')
+        self.page(code, t["title"], self.heading(t["title"], t["sub"].format(host=self.host)) + self.alert(error)
+                  + f'<form method="post" action="/.gate/login"><input type="hidden" name="next" value="{html.escape(nxt)}">'
+                  f'<label>{t["email"]}<input type="email" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>'
+                  f'<label>{t["password"]}<input type="password" name="password" autocomplete="current-password" required></label>'
+                  f'<button type="submit">{t["submit"]}</button></form>')
+
+    def network_row(self, isp):
+        return (f'<div class="net"><div style="display:grid;min-width:0"><span>{self.t["network"]}</span><b>{html.escape(isp or "?")}</b></div>'
+                f'<span class="pill"><span class="dot"></span>{html.escape(self.ip)}</span></div>')
 
     def save_page(self, token, nxt, isp, error=""):
         t = self.t
-        err = f'<p class="err">{html.escape(error)}</p>' if error else ""
-        isp_text = f" ({isp})" if isp else ""
-        self.page(200, t["save_title"], f'{err}<p>{html.escape(t["save_text"].format(ip=self.ip, isp=isp_text))}</p>'
-                  f'<form method="post" action="/.gate/save"><input type="hidden" name="next" value="{html.escape(nxt)}">'
+        self.page(200, t["save_title"], self.heading(t["save_title"], t["save_sub"]) + self.alert(error) + self.network_row(isp)
+                  + f'<form method="post" action="/.gate/save"><input type="hidden" name="next" value="{html.escape(nxt)}">'
                   f'<input type="hidden" name="csrf" value="{csrf_for(token)}">'
                   f'<label class="check"><input type="checkbox" name="private" value="yes"><span>{html.escape(t["confirm"])}</span></label>'
-                  f'<button name="action" value="save">{t["save"]}</button>'
-                  f'<button class="ghost" name="action" value="skip">{t["skip"]}</button></form>',
+                  f'<div class="actions"><button name="action" value="save">{t["save"]}</button>'
+                  f'<button class="ghost" name="action" value="skip">{t["skip"]}</button></div></form>',
                   {"Set-Cookie": self.cookie(token)})
+
+    def refused_page(self, nxt, isp, why):
+        t = self.t
+        self.page(200, t["save_title"], self.heading(t["save_title"], t["refused_sub"]) + self.network_row(isp)
+                  + self.alert(t["refused"].format(why=t["why_" + why]))
+                  + f'<a class="btn ghost" href="{html.escape(nxt)}">{html.escape(t["skip"])}</a>')
+
+    def font(self):
+        try:
+            with open(FONT, "rb") as f:
+                data = f.read()
+        except OSError:
+            return self.send(404)
+        self.send_response(200)
+        self.send_header("Content-Type", "font/woff2")
+        self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def cookie(self, token, max_age=SESSION_SECONDS):
         return f"{COOKIE}={token}; Path=/; Max-Age={max_age}; HttpOnly; Secure; SameSite=Lax"
@@ -341,6 +424,8 @@ class Gate(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urllib.parse.urlsplit(self.path)
+        if url.path == "/.gate/geist.woff2":
+            return self.font()
         if not self.ip:
             return self.send(403)
         if url.path == "/.gate/verify":
@@ -397,8 +482,7 @@ class Gate(BaseHTTPRequestHandler):
                 return self.send(302, headers={"Location": nxt})
             can_save, isp, why = network_check(self.ip)
             if not can_save:
-                return self.page(200, self.t["save_title"], f'<p class="err">{html.escape(self.t["refused"].format(why=self.t["why_" + why]))}</p>'
-                                 f'<p><a href="{html.escape(nxt)}">{html.escape(self.t["skip"])}</a></p>')
+                return self.refused_page(nxt, isp, why)
             if f.get("private") != "yes":
                 return self.save_page(token, nxt, isp, self.t["need_confirm"])
             if not ip_saved(self.ip):

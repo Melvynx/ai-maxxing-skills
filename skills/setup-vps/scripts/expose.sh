@@ -10,7 +10,7 @@
 #   expose.sh remove <hostname>              take a hostname offline (tunnel route, DNS record, Caddy site)
 #   expose.sh status                         tunnel, gate, whitelist, every hostname, and any route that skips the gate
 # --as-local sends Host and Origin as 127.0.0.1:<port>, for apps that only answer to localhost (the Hermes dashboard).
-# gate.py must sit next to this script or in /usr/local/lib/vps-gate.
+# gate.py (and its font geist.woff2) must sit next to this script or in /usr/local/lib/vps-gate.
 # Exit codes: 0 ok, 2 bad usage, 3 missing setup, 4 DNS name already used by something else, 5 Cloudflare API error.
 set -euo pipefail
 
@@ -115,11 +115,13 @@ EOF
 }
 
 install_gate() {
-  local src
+  local src font
   for src in "$(dirname "$(readlink -f "$0")")/gate.py" "$GATE_LIB/gate.py"; do [ -f "$src" ] && break; done
   [ -f "$src" ] || { echo "gate.py not found next to $0 or in $GATE_LIB" >&2; exit 3; }
   mkdir -p "$GATE_LIB"
   [ "$src" -ef "$GATE_LIB/gate.py" ] || install -m 755 "$src" "$GATE_LIB/gate.py"
+  font="$(dirname "$src")/geist.woff2"
+  [ ! -f "$font" ] || [ "$font" -ef "$GATE_LIB/geist.woff2" ] || install -m 644 "$font" "$GATE_LIB/geist.woff2"
   id vps-gate >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin vps-gate
   mkdir -p "$GATE_DATA"
   # Older installs kept the login and the IPs next to the Caddy snippet: move them over once.
