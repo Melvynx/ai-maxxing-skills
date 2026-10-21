@@ -7,8 +7,12 @@
 #   hermes.sh dashboard [port]             run the dashboard as a service on 127.0.0.1 (default 9119)
 #   hermes.sh autonomy                     Hermes acts without asking first and shows each tool it uses in the chat
 #   hermes.sh skills <domain> <dir>        install cf and the tool skills of <dir> in ~/.agents/skills, read by Hermes and Claude Code
+#   hermes.sh catalog                      the ai-maxxing skills that work on a server, installed or not, with what each does
+#   hermes.sh add <skill>...               install those skills from the ai-maxxing package (kept up to date in ~/.cache)
+#   hermes.sh update                       reinstall every skill this script installed, from the latest package
+#   hermes.sh remove <skill>...            take out skills this script installed (moved to ~/.cache/removed-skills)
 #   hermes.sh check                        one line per part: claude, hermes, model, gateway, dashboard, autonomy, skills
-# Exit codes: 0 ok, 2 bad usage, 3 missing install, 5 Claude Code not logged in, 6 Hermes cannot answer.
+# Exit codes: 0 ok, 2 bad usage, 3 missing install, 4 unknown skill, 5 Claude Code not logged in, 6 Hermes cannot answer.
 set -euo pipefail
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -18,8 +22,49 @@ cmd="${1:-}"
 SKILLS="$HOME/.agents/skills"
 # Skills this script installed carry this file; a skill without it is the owner's own and is never replaced.
 MARK=.setup-vps
+PKG="$HOME/.cache/ai-maxxing-skills"
+DOMAIN_FILE="$HOME/.config/hermes-setup/domain"
+# Skills of the package that only make sense on the owner's computer (browser sign-ins, their own Chrome, setting up this server).
+LOCAL_ONLY='^(connect-vps|install-skills|dev-browser|setup-.*)$'
 
 need_hermes() { command -v hermes >/dev/null 2>&1 || { echo "Hermes is missing: run '$0 install'" >&2; exit 3; }; }
+# Copies one skill folder into ~/.agents/skills (unless the owner has their own under that name) and links it for Claude Code.
+install_skill() {
+  local src="${1%/}" domain="$2" name="${3:-$(basename "${1%/}")}" dest tmp link
+  dest="$SKILLS/$name"
+  mkdir -p "$SKILLS" "$HOME/.claude/skills"
+  if [ -e "$dest" ] && [ ! -f "$dest/$MARK" ]; then
+    echo "kept=$name (the owner's own)"
+  else
+    tmp="$(mktemp -d "$SKILLS/.$name.XXXX")"
+    cp -R "$src/." "$tmp/"
+    [ -n "$domain" ] && find "$tmp" -name '*.md' -exec sed -i "s/__DOMAIN__/$domain/g" {} +
+    touch "$tmp/$MARK"
+    [ -e "$dest" ] && mv "$dest" "$tmp.old"
+    mv "$tmp" "$dest"
+    [ -e "$tmp.old" ] && rm -r "$tmp.old"
+    chmod -R u=rwX,go=rX "$dest"
+    echo "installed=$name"
+  fi
+  # Claude Code on the server reads the same folder through a link.
+  link="$HOME/.claude/skills/$name"
+  if [ -L "$link" ] || [ ! -e "$link" ]; then ln -sfn "$dest" "$link"; fi
+}
+# Clones or updates the ai-maxxing package.
+pull_pkg() {
+  if [ -d "$PKG/.git" ]; then git -C "$PKG" pull -q --ff-only; else mkdir -p "$(dirname "$PKG")" && git clone -q --depth 1 https://github.com/Melvynx/ai-maxxing-skills "$PKG"; fi
+}
+# The package folder of a skill: a skill of the package, one of the server's tool skills, or the Hermes skill
+# that comes with a setup skill (the dashboard one).
+pkg_dir() {
+  local d
+  for d in "$PKG/skills/$1" "$PKG/skills/setup-vps/server-skills/$1" "$PKG"/skills/*/hermes-skill; do
+    [ -f "$d/SKILL.md" ] && [ "$(sed -n 's/^name: //p' "$d/SKILL.md" | head -1)" = "$1" ] && { echo "$d"; return; }
+  done
+  return 1
+}
+describe() { sed -n 's/^description: //p' "$1/SKILL.md" | head -1 | sed 's/\. .*/./' | cut -c1-140; }
+reload_hermes() { hermes gateway restart < /dev/null >/dev/null 2>&1 || true; }
 claude_json() { claude -p "Reply with OK" --permission-mode default --output-format json < /dev/null 2>/dev/null; }
 
 case "$cmd" in
@@ -137,35 +182,69 @@ EOF
       hash -r
     fi
     command -v cf >/dev/null 2>&1 || $SUDO npm install -g --silent cf >/dev/null
-    mkdir -p "$SKILLS" "$HOME/.claude/skills"
+    mkdir -p "$(dirname "$DOMAIN_FILE")" && echo "$domain" > "$DOMAIN_FILE"
     for src in "$dir"/*/; do
-      name="$(basename "$src")"; dest="$SKILLS/$name"
-      [ -f "$src/SKILL.md" ] || continue
-      if [ -e "$dest" ] && [ ! -f "$dest/$MARK" ]; then
-        echo "kept=$name (the owner's own)"
-      else
-        tmp="$(mktemp -d "$SKILLS/.$name.XXXX")"
-        cp -R "$src". "$tmp/"
-        find "$tmp" -name '*.md' -exec sed -i "s/__DOMAIN__/$domain/g" {} +
-        touch "$tmp/$MARK"
-        [ -e "$dest" ] && mv "$dest" "$tmp.old"
-        mv "$tmp" "$dest"
-        [ -e "$tmp.old" ] && rm -r "$tmp.old"
-        chmod -R u=rwX,go=rX "$dest"
-        echo "installed=$name"
-      fi
-      # Claude Code on the server reads the same folder through a link.
-      link="$HOME/.claude/skills/$name"
-      if [ -L "$link" ] || [ ! -e "$link" ]; then ln -sfn "$dest" "$link"; fi
+      [ -f "$src/SKILL.md" ] && install_skill "$src" "$domain"
     done
     # Hermes reads ~/.agents/skills too, next to the folders it already reads.
     dirs="$(hermes config get skills.external_dirs 2>/dev/null | sed -n 's/^ *- //p')"
     if ! printf '%s\n' "$dirs" | grep -qx '~/.agents/skills'; then
       list="$(printf '%s\n' "$dirs" '~/.agents/skills' | sed '/^$/d' | jq -R . | jq -cs .)"
       hermes config set skills.external_dirs "$list" >/dev/null
-      hermes gateway restart < /dev/null >/dev/null 2>&1 || true
     fi
+    reload_hermes
     echo "skills ok: cf $(cf --version 2>/dev/null | head -1), $(ls "$SKILLS" | tr '\n' ' ')"
+    ;;
+
+  catalog)
+    pull_pkg
+    for src in "$PKG"/skills/*/; do
+      name="$(basename "$src")"
+      [ -f "$src/SKILL.md" ] && ! [[ "$name" =~ $LOCAL_ONLY ]] || continue
+      if [ -f "$SKILLS/$name/$MARK" ]; then state=installed; elif [ -e "$SKILLS/$name" ]; then state=own; else state=available; fi
+      printf '%-20s %-10s %s\n' "$name" "$state" "$(describe "$src")"
+    done
+    ;;
+
+  add)
+    shift
+    [ $# -gt 0 ] || { echo "usage: $0 add <skill>... (see '$0 catalog')" >&2; exit 2; }
+    need_hermes; pull_pkg
+    domain="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"
+    for name in "$@"; do
+      if [[ "$name" =~ $LOCAL_ONLY ]]; then echo "skipped=$name (runs on the owner's computer, not here)"; continue; fi
+      src="$(pkg_dir "$name")" || { echo "unknown skill '$name': see '$0 catalog'" >&2; exit 4; }
+      install_skill "$src" "$domain" "$name"
+    done
+    reload_hermes
+    echo "skills ok: $(ls "$SKILLS" | tr '\n' ' ')"
+    ;;
+
+  update)
+    need_hermes; pull_pkg
+    domain="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"
+    for dest in "$SKILLS"/*/; do
+      name="$(basename "$dest")"
+      [ -f "$dest/$MARK" ] || continue
+      if src="$(pkg_dir "$name")"; then install_skill "$src" "$domain" "$name"; else echo "kept=$name (not in the package)"; fi
+    done
+    reload_hermes
+    ;;
+
+  remove)
+    shift
+    [ $# -gt 0 ] || { echo "usage: $0 remove <skill>..." >&2; exit 2; }
+    need_hermes
+    mkdir -p "$HOME/.cache/removed-skills"
+    for name in "$@"; do
+      dest="$SKILLS/$name"
+      if [ ! -e "$dest" ]; then echo "absent=$name"; continue; fi
+      if [ ! -f "$dest/$MARK" ]; then echo "kept=$name (the owner's own: not removing it)"; continue; fi
+      mv "$dest" "$HOME/.cache/removed-skills/$name-$(date +%Y%m%d-%H%M%S)"
+      [ -L "$HOME/.claude/skills/$name" ] && rm "$HOME/.claude/skills/$name"
+      echo "removed=$name (copy in ~/.cache/removed-skills)"
+    done
+    reload_hermes
     ;;
 
   check)
@@ -179,7 +258,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,11p' "$0" >&2
+    sed -n '2,15p' "$0" >&2
     exit 2
     ;;
 esac
