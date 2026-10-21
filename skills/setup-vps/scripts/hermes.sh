@@ -28,6 +28,8 @@ DOMAIN_FILE="$HOME/.config/hermes-setup/domain"
 LOCAL_ONLY='^(connect-vps|install-skills|dev-browser|setup-.*)$'
 
 need_hermes() { command -v hermes >/dev/null 2>&1 || { echo "Hermes is missing: run '$0 install'" >&2; exit 3; }; }
+# Hermes rescans ~/.agents/skills when a conversation starts, so adding or removing a skill needs no restart
+# (a restart would also cut the chat Hermes is answering from).
 # Copies one skill folder into ~/.agents/skills (unless the owner has their own under that name) and links it for Claude Code.
 install_skill() {
   local src="${1%/}" domain="$2" name="${3:-$(basename "${1%/}")}" dest tmp link
@@ -64,7 +66,6 @@ pkg_dir() {
   return 1
 }
 describe() { sed -n 's/^description: //p' "$1/SKILL.md" | head -1 | sed 's/\. .*/./' | cut -c1-140; }
-reload_hermes() { hermes gateway restart < /dev/null >/dev/null 2>&1 || true; }
 claude_json() { claude -p "Reply with OK" --permission-mode default --output-format json < /dev/null 2>/dev/null; }
 
 case "$cmd" in
@@ -191,8 +192,8 @@ EOF
     if ! printf '%s\n' "$dirs" | grep -qx '~/.agents/skills'; then
       list="$(printf '%s\n' "$dirs" '~/.agents/skills' | sed '/^$/d' | jq -R . | jq -cs .)"
       hermes config set skills.external_dirs "$list" >/dev/null
+      hermes gateway restart < /dev/null >/dev/null 2>&1 || true
     fi
-    reload_hermes
     echo "skills ok: cf $(cf --version 2>/dev/null | head -1), $(ls "$SKILLS" | tr '\n' ' ')"
     ;;
 
@@ -210,14 +211,14 @@ EOF
     shift
     [ $# -gt 0 ] || { echo "usage: $0 add <skill>... (see '$0 catalog')" >&2; exit 2; }
     need_hermes; pull_pkg
-    domain="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"
+    domain="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"; unknown=0
     for name in "$@"; do
       if [[ "$name" =~ $LOCAL_ONLY ]]; then echo "skipped=$name (runs on the owner's computer, not here)"; continue; fi
-      src="$(pkg_dir "$name")" || { echo "unknown skill '$name': see '$0 catalog'" >&2; exit 4; }
+      src="$(pkg_dir "$name")" || { echo "unknown=$name (not in '$(basename "$0") catalog')" >&2; unknown=1; continue; }
       install_skill "$src" "$domain" "$name"
     done
-    reload_hermes
     echo "skills ok: $(ls "$SKILLS" | tr '\n' ' ')"
+    [ "$unknown" = 0 ] || exit 4
     ;;
 
   update)
@@ -228,7 +229,6 @@ EOF
       [ -f "$dest/$MARK" ] || continue
       if src="$(pkg_dir "$name")"; then install_skill "$src" "$domain" "$name"; else echo "kept=$name (not in the package)"; fi
     done
-    reload_hermes
     ;;
 
   remove)
@@ -244,7 +244,6 @@ EOF
       [ -L "$HOME/.claude/skills/$name" ] && rm "$HOME/.claude/skills/$name"
       echo "removed=$name (copy in ~/.cache/removed-skills)"
     done
-    reload_hermes
     ;;
 
   check)

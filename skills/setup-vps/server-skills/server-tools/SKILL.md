@@ -13,6 +13,7 @@ This is the owner's server, running 24/7. Every tool below is already signed in:
 | Cloudflare: DNS, Workers, R2, KV, D1, cache | `cf`, see the `cloudflare` skill | `cf auth whoami` |
 | Put an app online with HTTPS and the sign-in page | `expose` | `expose status` |
 | The agent itself: model, chat, dashboard | `hermes-setup` | `hermes-setup check` |
+| More skills from the ai-maxxing package | `hermes-setup add <skill>`, see the `ai-maxxing-skills` skill | `hermes-setup catalog` |
 
 ## Cloudflare on this server
 
