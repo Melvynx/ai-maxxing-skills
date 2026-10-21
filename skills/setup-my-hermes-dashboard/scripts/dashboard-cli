@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Call the dashboard API with the key `dashboard key` saved in ~/.config/dashboard/env.
+
+  dashboard-cli get <path>                 e.g. dashboard-cli get /api/v1/whoami
+  dashboard-cli post <path> <json | ->     the body as an argument, or - to read it from stdin
+  dashboard-cli delete <path>
+
+Prints the JSON answer. Exit codes: 0 ok, 1 the API answered an error (its body goes to stderr), 2 bad usage,
+3 no key yet, 5 the dashboard does not answer.
+"""
+
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+KEY_FILE = os.path.expanduser("~/.config/dashboard/env")
+
+
+def settings():
+    values = {}
+    try:
+        with open(KEY_FILE, encoding="utf-8") as handle:
+            for line in handle:
+                name, sep, value = line.strip().partition("=")
+                if sep:
+                    values[name] = value
+    except FileNotFoundError:
+        pass
+    if not values.get("DASHBOARD_API_TOKEN"):
+        print("no dashboard key: run 'dashboard key' first", file=sys.stderr)
+        sys.exit(3)
+    return values.get("DASHBOARD_API_BASE", "http://127.0.0.1:8794").rstrip("/"), values["DASHBOARD_API_TOKEN"]
+
+
+def main(argv):
+    if len(argv) < 2 or argv[0] not in ("get", "post", "delete") or not argv[1].startswith("/api/"):
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    method, path = argv[0].upper(), argv[1]
+    body = None
+    if method == "POST":
+        raw = sys.stdin.read() if len(argv) < 3 or argv[2] == "-" else argv[2]
+        try:
+            body = json.dumps(json.loads(raw)).encode()
+        except ValueError:
+            print("the body is not valid JSON", file=sys.stderr)
+            return 2
+    base, token = settings()
+    request = urllib.request.Request(base + path, data=body, method=method)
+    request.add_header("Authorization", f"Bearer {token}")
+    request.add_header("Accept", "application/json")
+    if body is not None:
+        request.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            text = response.read().decode()
+    except urllib.error.HTTPError as error:
+        print(error.read().decode() or f"HTTP {error.code}", file=sys.stderr)
+        return 1
+    except (urllib.error.URLError, TimeoutError) as error:
+        print(f"the dashboard does not answer on {base}: {error}", file=sys.stderr)
+        return 5
+    try:
+        print(json.dumps(json.loads(text), indent=2, ensure_ascii=False))
+    except ValueError:
+        print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
