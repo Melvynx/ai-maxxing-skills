@@ -8,6 +8,8 @@ user-invocable: true
 
 Build a private tool on the user's own VPS and hand it to their agent to run. Do every step yourself with the CLIs and only ask for what needs a human (a browser login, their IP). Talk to the user in their language, short messages, no jargon. For an app other people sign up to or pay for, switch to `create-software`.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/create-internal-app/<path> -o <scratch>/<file>` (for example `references/fast-app.md`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 The app has a normal URL (`crm.my-domain.com`) that nobody else can open, behind three walls: a Cloudflare WAF custom rule on the app and Convex hostnames that lets through only the user's IPs and the VPS IP, Dokploy basic auth with a long random password the user keeps in their password manager, and a server-side secret or signed-in user check in every Convex function. When the user's IP changes (travel, 4G), they ask their agent "add my IP" and it updates the rule. For a team, Cloudflare Access with email codes can replace the IP list.
 
 Keep this stack:

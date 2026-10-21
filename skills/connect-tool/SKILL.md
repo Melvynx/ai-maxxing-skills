@@ -6,6 +6,8 @@ argument-hint: "<tool name, e.g. notion or clickfunnels>"
 
 Give the user's agents a new tool they can use from any folder, as a `<tool>-cli` skill. Talk to the user in their language, one short question at a time, no jargon.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/connect-tool/<path> -o <scratch>/<file>` (for example `scripts/cli_template.py`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Confirm the tool (fix typos: "mtoin" is Notion). If `~/.agents/skills/<tool>-cli/` exists, read it and ask before changing it.
 2. Look for a CLI published by the vendor itself (their docs, domain, or GitHub org); check `command -v` in case it is installed. Official CLI found: steps 3a. None: steps 3b. Never install a third-party package without the user's yes.
 3a. Install with the documented method, preferring `brew` on macOS, then the vendor's `npm i -g` / `pipx` / `uv tool install`, then their own install script. Ask before `sudo`. Check `<cli> --version`; if not found, fix the shell PATH and say so in one line. Log in with the CLI's browser login when it has one; if it needs a key, the user adds `export <VAR>=...` to `~/.zshrc` themselves. Read `<cli> --help` and the main subcommands' `--help`.

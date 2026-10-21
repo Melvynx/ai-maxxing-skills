@@ -26,11 +26,19 @@ Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs
 
 Dans cet ordre, une seule fois, chacun dans une nouvelle session. Chaque skill s'adapte à ton système (macOS, Linux ou Windows), saute ce qui est déjà prêt et finit par une check-list :
 
-1. `/setup-node` : installe Node.js, sans mot de passe administrateur.
+1. `/setup-node` : installe Homebrew (sur Mac, ton mot de passe Mac une seule fois) et Node.js.
 2. `/setup-github` : Git, le CLI GitHub, la connexion à ton compte et ton nom dans les commits.
 3. `/setup-brain` : ton dossier de travail avec son `AGENTS.md`.
 4. `/setup-dev-browser` : le Chrome dédié à Claude.
 5. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
+
+Tu n'as pas envie de tout installer ? Lance un seul skill avec son lien, sans rien installer avant. Claude lit le skill et ne télécharge que les fichiers dont il a besoin :
+
+```text
+Setup my GitHub with: https://github.com/Melvynx/ai-maxxing-skills/tree/main/skills/setup-github
+```
+
+Ça marche pareil avec n'importe quel skill : remplace `setup-github` par son nom.
 
 ### Installation manuelle
 

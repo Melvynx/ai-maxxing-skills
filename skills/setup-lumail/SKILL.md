@@ -5,6 +5,8 @@ description: Connect the user's Lumail account on macOS, Linux or Windows throug
 
 Connect the user's Lumail account so the agent can add subscribers, send login codes and build email workflows. Do every step yourself and only ask for what needs a human (creating the account, approving the login). Talk to the user in their language, short messages, no jargon (never say "CLI", "MCP" or "OAuth" to them). Never ask them to paste an API key in the chat.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: fetch a file only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-lumail/<path> -o <scratch>/<file>`, and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Make sure Node works (`node --version`, v20 or higher); if not, run the `setup-node` skill first. Lumail runs through `npx`, nothing else to install.
 2. If `npx -y lumail@latest auth test` already succeeds, skip to step 5.
 3. If the user has no Lumail account, send them to https://lumail.io and wait for "done".

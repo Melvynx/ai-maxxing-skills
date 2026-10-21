@@ -5,6 +5,8 @@ description: Install Homebrew (macOS) and Node.js with npm on macOS, Linux or Wi
 
 Get a working Node.js LTS with `npm` and `npx` for the current user. Do it yourself and only ask the user for what needs a human. Talk to them in their language, short messages, no jargon (never say "PATH", "prefix" or "LTS" to them).
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-node/<path> -o <scratch>/<file>` (for example `scripts/install-node.sh`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Check first: if `node --version` prints v20 or higher and `npm --version` works, say so and stop.
 2. Find the OS with `uname -s` (`Darwin` is macOS, `Linux` is Linux); if it fails or PowerShell answers, it is Windows.
 3. On macOS, make sure Homebrew is there: it is the one way every setup skill installs tools on a Mac, it also installs Apple's developer tools (Git), and it keeps everything up to date. Look for `/opt/homebrew/bin/brew` (Apple Silicon) or `/usr/local/bin/brew` (Intel), even if `brew` is not found. If neither exists, Homebrew needs the user's Mac password once, so you cannot run it yourself: ask them to open the Terminal app (Cmd+Space, type "Terminal"), paste the line below, press Enter, type their Mac password when asked (nothing shows while typing, that is normal), press Enter again when it asks, and say "done" when it finishes (5 to 15 minutes).

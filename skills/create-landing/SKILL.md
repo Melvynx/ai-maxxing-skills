@@ -8,6 +8,8 @@ user-invocable: true
 
 Build one fast page that turns visitors into emails or buyers, and put it live on the user's Cloudflare domain. Do every step yourself with the CLIs and only ask for what needs a human (a browser login, a payment link, a photo). Talk to the user in their language, short messages, no jargon. If the page needs accounts, a dashboard or saved data, switch to `create-software`; for a private tool, `create-internal-app`.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: fetch a file only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/create-landing/<path> -o <scratch>/<file>`, and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 Keep this stack, with no Convex, no Better Auth and no database:
 
 - Page, routing, form server function: TanStack Start (React, TypeScript, Vite), pages prerendered.

@@ -6,6 +6,8 @@ argument-hint: "[path, default ~/brain]"
 
 Set up the user's brain: one folder, run by their agent, where every piece of work lives in a project, so any future session can read one file and know who the user is, what they work on and where everything is. Talk to the user in their language, one short question at a time, with no jargon (never say "frontmatter", "kebab-case" or "symlink" to them).
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-brain/<path> -o <scratch>/<file>` (for example `references/agents-md.md`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Use the argument as the target folder, otherwise `~/brain`, and confirm it in one line. If it already exists and is not empty, overwrite nothing: read what is there, tell the user what you found, and only add what is missing.
 2. Ask these one by one, accept short answers, and move on if they skip one:
    1. Your first name, what you do, and your time zone?

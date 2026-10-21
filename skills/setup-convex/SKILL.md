@@ -5,6 +5,8 @@ description: Sign the user in to Convex from macOS, Linux or Windows through the
 
 Connect the user's Convex account to the Convex CLI on this machine so the agent can create and deploy backends. Do every step yourself and only ask for what needs a human (creating the account, approving the login). Talk to the user in their language, short messages, no jargon (never say "CLI", "deployment key" or "device" to them).
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: fetch a file only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-convex/<path> -o <scratch>/<file>`, and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Make sure Node works (`node --version`, v20 or higher); if not, run the `setup-node` skill first. Convex runs through `npx`, nothing else to install.
 2. If `npx convex@latest login status` already shows a signed-in account and a team, skip to step 4.
 3. Start the login in the background, with the output in a file you can read:

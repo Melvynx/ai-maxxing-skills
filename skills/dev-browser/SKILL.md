@@ -8,6 +8,8 @@ allowed-tools:
 
 Do every browser task in Chrome AI, the user's dedicated Chrome window (profile `~/.chrome-ai-profile`, port 9333) where they are already signed in to their tools. Start it first (it does nothing if it is already open), then connect to it on every run:
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/dev-browser/<path> -o <scratch>/<file>` (for example `references/api-reference.md`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 ```bash
 chrome-ai start
 dev-browser --connect http://127.0.0.1:9333 <<'JS'

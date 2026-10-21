@@ -5,6 +5,8 @@ description: Add Stripe Checkout payments to a web app, test mode first, then pr
 
 Ship payments that grant access only from a verified Stripe event. Never print, log or commit keys, and never use live keys in dev.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: fetch a file only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/stripe-checkout/<path> -o <scratch>/<file>`, and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 Build it in test mode:
 
 1. Ask the user for the test keys (Stripe Dashboard, sandbox, Developers > API keys): `pk_test_...` and `sk_test_...`. Store the secret only server-side (Convex env, Cloudflare secret, `.env.local`), never in a `VITE_`/`NEXT_PUBLIC_` variable, never in git.

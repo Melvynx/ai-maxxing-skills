@@ -8,6 +8,8 @@ user-invocable: true
 
 Give the agent its own Chrome: a separate window with its own profile, where the user signs in once to their tools, and that the agent drives through the `dev-browser` CLI. The user's normal Chrome stays untouched, and the agent never needs a password because the sessions stay saved in that profile. Do every step yourself and only ask for what needs a human (installing Chrome, signing in). Talk to the user in their language, short messages, no jargon (never say "CDP", "profile directory" or "PATH" to them).
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-dev-browser/<path> -o <scratch>/<file>` (for example `scripts/chrome-ai`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 The setup lives in four places: the launcher `~/.local/bin/chrome-ai` (copied from [scripts/chrome-ai](scripts/chrome-ai)), the profile `~/.chrome-ai-profile`, the debugging port `9333` open on `127.0.0.1` only, and the `dev-browser` skill that tells every agent to connect there. If the argument gives another port, set `CHROME_AI_PORT` to it in the user's shell config and use it everywhere below.
 
 1. Check the machine. This works on macOS and Linux; on Windows, stop and say it needs WSL or a Mac.

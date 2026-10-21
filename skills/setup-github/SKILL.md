@@ -5,6 +5,8 @@ description: Install Git and the GitHub CLI (gh) on macOS, Linux or Windows, sig
 
 Make Git and GitHub work on the user's machine so the agent can create private repos and push code. Do every step yourself and only ask for what needs a human (a click in an install window, signing in, a one-time code). Talk to the user in their language, short messages, no jargon (never say "CLI", "PATH" or "token" to them). Never ask for their GitHub password or a token.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-github/<path> -o <scratch>/<file>` (for example `scripts/install-gh.sh`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Find the OS with `uname -s` (`Darwin` is macOS, `Linux` is Linux); if it fails or PowerShell answers, it is Windows.
 2. Make Git work, then check with `git --version`:
    - macOS: if `xcode-select -p` fails, Git is only an empty shell until Apple's developer tools are installed. Homebrew installs them, so if it is missing run the `setup-node` skill first (it installs Homebrew and Node, both needed later anyway). Only if the user cannot install Homebrew (no admin rights), run `xcode-select --install`, tell them a window just opened and to click "Install" then accept the licence, and check `xcode-select -p` every 30 seconds (in the background, up to 30 minutes) until it answers.

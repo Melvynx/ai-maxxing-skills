@@ -5,6 +5,8 @@ description: Install the official Cloudflare CLI (cf) on macOS, Linux or Windows
 
 Connect the user's Cloudflare account to the `cf` CLI so the agent handles domains, DNS and deploys without the user opening the dashboard. Do every step yourself and only ask for what needs a human (creating the account, approving the login, buying a domain). Talk to the user in their language, short messages, no jargon (never say "CLI", "OAuth" or "zone" to them). Never use Wrangler and never ask for an API token.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: fetch a file only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/setup-cloudflare/<path> -o <scratch>/<file>`, and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 1. Make sure Node works (`node --version`, v20 or higher); if not, run the `setup-node` skill first.
 2. If the user has no Cloudflare account, send them to https://dash.cloudflare.com/sign-up and wait for "done". The free plan is enough.
 3. Install the CLI with `npm install -g cf`, then check `cf --version`.

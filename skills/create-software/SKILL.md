@@ -8,6 +8,8 @@ user-invocable: true
 
 Build a working web app on the user's own accounts and put it live on their Cloudflare domain. Do every step yourself with the CLIs and only ask for what needs a human (a browser login, a device code, a payment, a secret key). Talk to the user in their language, short messages, no jargon. For a private tool only the user and their agent use, switch to `create-internal-app`; for a page with no sign-in, switch to `create-landing`.
 
+If you got this skill from a link instead of a local folder, install nothing else from the repo: download a file it links only when a step needs it, with `curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/create-software/<path> -o <scratch>/<file>` (for example `references/fast-app.md`), and read another skill it names only when you reach it, from `https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/<skill-name>/SKILL.md`.
+
 Keep this stack unless the user asks to swap a layer:
 
 - App, routing, server functions: TanStack Start (React, TypeScript, Vite).
