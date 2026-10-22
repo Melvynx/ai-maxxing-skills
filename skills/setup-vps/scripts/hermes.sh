@@ -5,6 +5,8 @@
 #   hermes.sh model <model> [effort]       make Hermes use Claude (provider anthropic) with that model and effort, then test it
 #   hermes.sh gateway                      install and start the always-on chat service (Telegram, Discord)
 #   hermes.sh dashboard [port]             run the dashboard as a service on 127.0.0.1 (default 9119)
+#   hermes.sh style < block                put the owner's "## Output style" block (from stdin) in Hermes's SOUL.md
+#                                          and Claude Code's ~/.claude/CLAUDE.md, replacing the old one
 #   hermes.sh autonomy                     Hermes acts without asking first and shows each tool it uses in the chat
 #   hermes.sh skills <domain> <dir>        install cf and the tool skills of <dir> in ~/.agents/skills, read by Hermes and Claude Code
 #   hermes.sh catalog                      the ai-maxxing skills that work on a server, installed or not, with what each does
@@ -12,7 +14,7 @@
 #                                          base is the default pack, all is every skill of the catalog
 #   hermes.sh update                       reinstall every skill this script installed, from the latest package
 #   hermes.sh remove <skill>...            take out skills this script installed (moved to ~/.cache/removed-skills)
-#   hermes.sh check                        one line per part: claude, hermes, model, gateway, dashboard, autonomy, skills
+#   hermes.sh check                        one line per part: claude, hermes, model, gateway, dashboard, style, autonomy, skills
 # Exit codes: 0 ok, 2 bad usage, 3 missing install, 4 unknown skill, 5 Claude Code not logged in, 6 Hermes cannot answer.
 set -euo pipefail
 
@@ -69,6 +71,16 @@ pkg_dir() {
   return 1
 }
 describe() { sed -n 's/^description: //p' "$1/SKILL.md" | head -1 | sed 's/\. .*/./' | cut -c1-140; }
+# Replaces the "## Output style" section of a file (up to the next "## " heading) with the block in $2, keeping
+# every other line. Writes through a link and keeps the file's owner and mode.
+put_style() {
+  local file="$1" block="$2" kept
+  mkdir -p "$(dirname "$file")" && touch "$file"
+  kept="$(awk '/^## Output style[[:space:]]*$/ {skip=1; next} skip && /^## / {skip=0} !skip {line[++n]=$0}
+    END {while (n > 0 && line[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print line[i]}' "$file")"
+  { [ -n "$kept" ] && printf '%s\n\n' "$kept"; cat "$block"; } > "$file.style-new"
+  cat "$file.style-new" > "$file" && rm -f "$file.style-new"
+}
 claude_json() { claude -p "Reply with OK" --permission-mode default --output-format json < /dev/null 2>/dev/null; }
 
 case "$cmd" in
@@ -154,6 +166,22 @@ EOF
     done
     echo "the dashboard did not answer on port $port: journalctl -u hermes-dashboard -n 50" >&2
     exit 6
+    ;;
+
+  style)
+    need_hermes
+    block="$(mktemp)"; trap 'rm -f "$block"' EXIT
+    # The block without its blank lines around, then one final newline.
+    awk 'NF {seen=1} seen {line[++n]=$0} END {while (n > 0 && line[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print line[i]}' > "$block"
+    [ "$(head -1 "$block")" = "## Output style" ] || { echo "the block must start with the line '## Output style'" >&2; exit 2; }
+    [ "$(grep -c '^## ' "$block")" -eq 1 ] || { echo "the block must hold no other '## ' heading" >&2; exit 2; }
+    [ "$(wc -c < "$block")" -le 4000 ] || { echo "the block is longer than 4000 characters" >&2; exit 2; }
+    soul="$(dirname "$(hermes config path)")/SOUL.md"
+    [ -f "$soul" ] && cp "$soul" "$soul.bak-$(date +%s)"
+    # Hermes reads SOUL.md and Claude Code on the server reads ~/.claude/CLAUDE.md at the start of every conversation.
+    put_style "$soul" "$block"
+    put_style "$HOME/.claude/CLAUDE.md" "$block"
+    echo "style ok: $soul and ~/.claude/CLAUDE.md"
     ;;
 
   autonomy)
@@ -267,12 +295,14 @@ EOF
     echo "model=$(hermes config get model.provider 2>/dev/null | tail -1) $(hermes config get model.default 2>/dev/null | tail -1) $(hermes config get agent.reasoning_effort 2>/dev/null | tail -1)"
     echo "gateway=$(systemctl --user is-active hermes-gateway 2>/dev/null || systemctl is-active hermes-gateway 2>/dev/null || echo inactive)"
     echo "dashboard=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9119/ || echo down)"
+    soul="$(dirname "$(hermes config path 2>/dev/null)")/SOUL.md"
+    echo "style=$(grep -q '^## Output style' "$soul" 2>/dev/null && echo set || echo "not set (run '$0 style')")"
     echo "autonomy=approvals $(hermes config get approvals.mode 2>/dev/null | tail -1), tool lines $(hermes config get display.platforms.telegram.tool_progress 2>/dev/null | tail -1)"
     echo "skills=$(ls "$SKILLS" 2>/dev/null | tr '\n' ' ')"
     ;;
 
   *)
-    sed -n '2,16p' "$0" >&2
+    sed -n '2,18p' "$0" >&2
     exit 2
     ;;
 esac

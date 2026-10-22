@@ -9,12 +9,14 @@ Personal command center, run by agents. Everything is organised by **project**. 
 
 - <What they do>, based in <place> (<time zone>).
 - Products: <list, or "none yet">.
-- Style: <how they want the agent to talk>.
+- Tech level: <not technical | tinkers | developer (stack)>. How to talk to them and how much to do alone is in the `## Output style` of the global rules: follow it here too.
+- Tools every day: <list from the interview>.
+- Never without asking: <their rules, or "nothing special">.
 - Goals and notes live in <tool>. Read them when priorities matter.
 
 ## Layout
 
-<the tree from step 3, one line per folder>
+<the tree of the skill, one line per folder>
 
 Nothing else belongs at the root. No loose files, no new top-level folders.
 
