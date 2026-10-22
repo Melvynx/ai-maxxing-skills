@@ -1,4 +1,4 @@
-How to build the `## Output style` block from the interview. It goes in the user's global rules (every agent, every folder) and, with `setup-vps`, in Hermes on their server, so it must stand on its own: no path, no project, only how to talk to this person and how much to do alone. Write it in English, under 15 lines, and keep the heading exactly `## Output style` (the scripts find and replace it by that line). Never add another `## ` heading inside it.
+How to build the `## Output style` block from the interview. It goes in the user's global rules (every agent, every folder) and, with `setup-vps`, in Hermes on their server, so it must stand on its own: no path, no project, only how to talk to this person and how much to do alone. Write it in English even when the user talks another language (the language they want answers in goes in the "Reply in" line), under 15 lines, and keep the heading exactly `## Output style` (the scripts find and replace it by that line). Never add another `## ` heading inside it.
 
 Pick one line set per answer, adapt the words to what the user said, and drop a line that does not apply.
 
