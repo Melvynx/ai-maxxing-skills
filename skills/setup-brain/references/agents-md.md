@@ -48,5 +48,7 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 
 ## Skills
 
-Every reusable workflow is a skill in `.agents/skills/<name>/SKILL.md`. `.claude/skills/` only holds links to it.
+Every reusable workflow is a skill in `.agents/skills/<name>/SKILL.md`. `.claude/skills/` only holds links to it. Skills used in every folder live in `~/.agents/skills/`. Create or fix a skill with `skill-manager`.
+
+At the end of a work session the user types `/done`: it updates the project's `About.md`, `Roadmap.md` and today's journal, then commits the brain. If they forget and a lot changed, offer it.
 ```
