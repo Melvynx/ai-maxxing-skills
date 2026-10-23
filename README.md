@@ -14,12 +14,12 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 27 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 32 skills sont installés dans `~/.claude/skills/`. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
 Mac ou PC tout neuf, sans Node ni Git ? La commande `npx` ne marchera pas encore. Colle plutôt ce prompt dans une session Claude (onglet **Code**), il n'a besoin de rien d'installé :
 
 ```
-Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs/heads/main.tar.gz avec curl, extrais-la avec tar dans un dossier temporaire, copie chaque dossier de skills/ dans ~/.claude/skills (avec son SKILL.md, ses scripts et ses références), puis liste les skills installés. N'utilise ni git ni npm.
+Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs/heads/main.tar.gz avec curl, extrais-la avec tar dans un dossier temporaire, copie chaque dossier de skills/ et de skills/brain/ qui contient un SKILL.md dans ~/.claude/skills (avec ses scripts et ses références), puis liste les skills installés. N'utilise ni git ni npm.
 ```
 
 ## Par où commencer
@@ -28,7 +28,7 @@ Dans cet ordre, une seule fois, chacun dans une nouvelle session. Chaque skill s
 
 1. `/setup-node` : installe Homebrew (sur Mac, ton mot de passe Mac une seule fois) et Node.js.
 2. `/setup-github` : Git, le CLI GitHub, la connexion à ton compte et ton nom dans les commits.
-3. `/setup-brain` : ton dossier de travail avec son `AGENTS.md`.
+3. `/setup-brain` : ton dossier de travail avec son `AGENTS.md`, et les skills qui le font vivre (`/create-project`, `/done`, `/cleanup`).
 4. `/setup-dev-browser` : le Chrome dédié à Claude.
 5. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
 6. `/connect-vps hostinger` : quand tu as acheté ton VPS, le raccourci `ssh hermes` pour y entrer.
@@ -49,7 +49,7 @@ Setup my GitHub with: https://github.com/Melvynx/ai-maxxing-skills/tree/main/ski
 ```bash
 git clone --depth 1 https://github.com/Melvynx/ai-maxxing-skills.git
 mkdir -p ~/.claude/skills
-cp -R ai-maxxing-skills/skills/* ~/.claude/skills/
+for d in ai-maxxing-skills/skills/*/ ai-maxxing-skills/skills/brain/*/; do [ -f "$d/SKILL.md" ] && cp -R "$d" ~/.claude/skills/; done
 ```
 
 Pour un seul projet, copie les dossiers dans `.claude/skills/` à la racine du projet au lieu de `~/.claude/skills/`.
@@ -66,7 +66,12 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | [`setup-convex`](skills/setup-convex/SKILL.md) | Te connecte à Convex depuis le terminal (création du compte avec GitHub ou Google au passage), pour que Claude crée les bases de données de tes apps. | `/setup-convex` |
 | [`setup-lumail`](skills/setup-lumail/SKILL.md) | Connecte ton compte Lumail à Claude dans le navigateur, sans coller de clé API dans le chat. | `/setup-lumail` |
 | [`setup-stripe`](skills/setup-stripe/SKILL.md) | Installe le CLI Stripe et l'associe à ton compte en mode test avec un code de vérification, pour que Claude crée tes produits et teste les paiements. | `/setup-stripe`, seulement si ton app vend. |
-| [`setup-brain`](skills/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. Interview en 10 questions (qui tu es, ton niveau technique, comment l'agent doit bosser), puis il écrit ton style dans les règles globales de tous tes agents (et de Hermes si tu as un serveur), crée la structure, tes premiers projets et la sauvegarde git. Installe aussi `/done` (à la fin de chaque conversation, Claude range ce qui a changé dans le bon projet : état, prochaines étapes, journal) et `skill-manager` (crée ou corrige tes skills). | `/setup-brain` dans une nouvelle session, à faire en premier. |
+| [`setup-brain`](skills/brain/setup-brain/SKILL.md) | Monte ton "brain" : un seul dossier où Claude range tout par projet (projets, sous-projets, notes, skills), avec un `AGENTS.md` qui lui dit qui tu es et où tout se trouve. Interview en 10 questions (qui tu es, ton niveau technique, comment l'agent doit bosser), puis il écrit ton style dans les règles globales de tous tes agents (et de Hermes si tu as un serveur), crée la structure, tes premiers projets et la sauvegarde git. Installe aussi tous les skills du dossier [`skills/brain/`](skills/brain) (ceux juste en dessous). | `/setup-brain` dans une nouvelle session, à faire en premier. |
+| [`create-project`](skills/brain/create-project/SKILL.md) | Démarre un nouveau projet dans ton brain : 5 questions (c'est quoi, où ça en est, ce qui existe déjà, la date, les prochaines étapes), puis Claude le range dans le bon dossier avec sa fiche `About.md` et sa liste de tâches. | `/create-project` ou "nouveau projet : ..." |
+| [`projects`](skills/brain/projects/SKILL.md) | Reprend un projet là où tu l'avais laissé (Claude lit sa fiche et te dit la prochaine étape), liste tes projets ou en archive un. | "Charge le projet X", "liste mes projets" |
+| [`done`](skills/brain/done/SKILL.md) | À la fin de chaque conversation, Claude range ce qui a changé dans le bon projet (état, prochaines étapes, journal du jour), note tes idées et todos, et sauvegarde le brain. | `/done` à la fin de chaque session |
+| [`cleanup`](skills/brain/cleanup/SKILL.md) | Fait le ménage dans ton brain : repère les projets finis, oubliés, en double ou mal rangés et les vieux fichiers, te propose quoi archiver, fusionner ou déplacer, et ne touche à rien sans ton OK. | `/cleanup` une fois par mois |
+| [`skill-manager`](skills/brain/skill-manager/SKILL.md) | Crée, améliore ou fait le tri dans tes propres skills, pour que Claude refasse tout seul un travail que tu fais souvent. | "Fais-en un skill", "améliore ce skill" |
 | [`connect-tool`](skills/connect-tool/SKILL.md) | Branche n'importe quel outil à Claude : installe son CLI officiel (Notion, Stripe...) ou, s'il n'en a pas (ClickFunnels, Kajabi...), écrit un petit script Python avec ta clé API. Puis crée un skill disponible partout. | `/connect-tool notion` ou `/connect-tool clickfunnels` |
 | [`connect-google`](skills/connect-google/SKILL.md) | Branche ton compte Google (Gmail, Agenda, Drive, Docs, Sheets, Slides, Contacts, Tâches) à tous tes agents avec le CLI `gog`, tout seul : Claude crée le projet Google Cloud et la clé dans Chrome AI, puis t'affiche les pages de connexion Google, tu choisis juste ton compte et tu cliques "Autoriser". | `/connect-google`, après `/setup-dev-browser`. |
 | [`setup-dev-browser`](skills/setup-dev-browser/SKILL.md) | Donne à Claude son propre Chrome : une fenêtre "Chrome AI" séparée de ton Chrome perso, où tu te connectes une fois à tes outils (Google, GitHub, Stripe, Lumail...). Installe le CLI `dev-browser`, le lanceur `chrome-ai`, une app dans Spotlight, et vérifie que tes connexions tiennent après un redémarrage. | `/setup-dev-browser` une fois, après `/setup-brain`. |

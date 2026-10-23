@@ -1,6 +1,3 @@
-Write this as `~/.agents/skills/skill-manager/SKILL.md`, so the user can create and fix skills from every folder, and `/done` can turn a repeated workflow into one.
-
-```markdown
 ---
 name: skill-manager
 description: Create, improve, audit or delete the user's skills (SKILL.md) for Claude Code and Codex. Use when the user wants a new skill, says "fais-en un skill", "make this a skill", "améliore ce skill", a skill misbehaves, or their skills need cleaning up.
@@ -26,4 +23,3 @@ To audit: list the skills in `~/.agents/skills/` and the brain's `.agents/skills
 When they have a server agent (`ssh -o BatchMode=yes hermes true < /dev/null` works) and the skill should run there too, copy it with `rsync -a ~/.agents/skills/<name>/ hermes:.agents/skills/<name>/` and link it there with `ssh hermes 'ln -sfn ~/.agents/skills/<name> ~/.claude/skills/<name>' < /dev/null`.
 
 Finish with the skill's path, the sentence that starts it, and how to share it: a public GitHub repo installs with `npx skills add <owner>/<repo>`.
-```

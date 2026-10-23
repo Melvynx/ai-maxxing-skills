@@ -50,5 +50,8 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 
 Every reusable workflow is a skill in `.agents/skills/<name>/SKILL.md`. `.claude/skills/` only holds links to it. Skills used in every folder live in `~/.agents/skills/`. Create or fix a skill with `skill-manager`.
 
-At the end of a work session the user types `/done`: it updates the project's `About.md`, `Roadmap.md` and today's journal, then commits the brain. If they forget and a lot changed, offer it.
+- `/create-project`: a short interview, then the project folder with its `About.md` and `Roadmap.md`. Use it for every new project.
+- `projects`: load, list or archive a project ("load project X").
+- `/done`: at the end of a work session, updates the project's `About.md`, `Roadmap.md` and today's journal, then commits the brain. If the user forgets and a lot changed, offer it.
+- `/cleanup`: proposes what to archive, merge or move. Offer it when `projects/` holds projects untouched for 60 days.
 ```

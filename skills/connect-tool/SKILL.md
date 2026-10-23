@@ -1,6 +1,6 @@
 ---
 name: connect-tool
-description: Connect any tool (Notion, Stripe, ClickFunnels...) to every agent: install its official CLI, or write a one-file Python CLI over its API, then create a global skill. Use for "connect-tool notion", "connect X", "make a CLI for X", "use my X API key".
+description: Connect any tool (Notion, Stripe, ClickFunnels...) to every agent by installing its official CLI, or writing a one-file Python CLI over its API, then a global skill. Use for "connect-tool notion", "connect X", "make a CLI for X", "use my X API key".
 argument-hint: "<tool name, e.g. notion or clickfunnels>"
 ---
 
