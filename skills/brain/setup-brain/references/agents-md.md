@@ -18,6 +18,7 @@ Personal command center, run by agents. Everything is organised by **project**. 
 
 - `AGENTS.md`: this guide.
 - `projects/`: one folder per project, each with its `About.md`.
+- `notes/`: `journal/` (one file per day, `YYYY-MM-DD.md`), `ideas/` (ideas not yet started), `todos/` (loose todos not tied to a project).
 - `.agents/skills/`: the brain skills, only for this folder; `.claude/skills/` links to them.
 - `archives/`: finished projects, read-only (created with the first archive).
 - `.tmp/`: scratch, logs, screenshots, delete freely (created when needed, ignored by git).
@@ -43,7 +44,8 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 
 ## Hygiene
 
-- An idea or a todo goes in the `Roadmap.md` of the project it belongs to, or of `perso/` when none fits (create it with its `About.md` the first time). No separate notes, ideas or todos folders.
+- A todo for a project goes in its `Roadmap.md`. An idea not yet started goes in `notes/ideas/`, a loose todo in `notes/todos/`.
+- A process to repeat later becomes a skill (with `skill-manager`), never a saved prompt: no `prompts/` folder.
 - One fact, one place. Update `About.md` or an existing file before creating a new one.
 - No per-step reports, status dumps or `final-v2.md` files. When a task is finished, fold the useful result into `About.md` and delete the rest.
 - Scratch, screenshots and logs go in `.tmp/` or the project `output/`, never at the root.
@@ -57,6 +59,6 @@ The brain skills live in this folder: `.agents/skills/<name>/`, linked from `.cl
 
 - `/create-project`: a short interview, then the project folder with its `About.md` and `Roadmap.md`. Use it for every new project.
 - `projects`: load, list or archive a project ("load project X").
-- `/done`: at the end of a work session, updates the project's `About.md` and `Roadmap.md`, then commits the brain. If the user forgets and a lot changed, offer it.
+- `/done`: at the end of a work session, updates the project's `About.md`, `Roadmap.md` and today's journal, then commits the brain. If the user forgets and a lot changed, offer it.
 - `/cleanup`: proposes what to archive, merge or move. Offer it when `projects/` holds projects untouched for 60 days.
 ```
