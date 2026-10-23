@@ -1,6 +1,6 @@
 ---
 name: setup-brain
-description: Set up the user's "brain", a single folder where their agent organises everything by project (projects, sub-projects, notes, skills), after an interview about who they are, their technical level and how they want their agent to work. Writes that working style into the global rules of every agent (and Hermes on their server), and installs the brain skills (/done, /create-project, /cleanup, projects, skill-manager). Use when the user wants to set up or initialize their brain, organise their work with their agent, or starts from zero.
+description: Set up the user's "brain", a single folder where their agent organises everything by project (an AGENTS.md and one folder per project, no empty folders), after an interview about who they are, their technical level and how they want their agent to work. Writes that working style into the global rules of every agent (and Hermes on their server), and installs the brain skills (/done, /create-project, /cleanup, projects, skill-manager). Use when the user wants to set up or initialize their brain, organise their work with their agent, or starts from zero.
 argument-hint: "[path, default ~/brain]"
 ---
 
