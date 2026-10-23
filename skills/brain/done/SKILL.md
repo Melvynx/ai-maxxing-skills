@@ -1,6 +1,8 @@
 ---
 name: done
 description: Close a work session. Saves what changed into the right brain project (About.md, Roadmap.md), captures loose ideas and todos, turns a repeated workflow into a skill, then saves the brain. Use when the user types /done, says "on a fini", "sauvegarde", "c'est bon pour aujourd'hui" or ends a conversation.
+metadata:
+  internal: true
 ---
 
 Close this conversation so the next session starts from the files, not from memory. The brain is the folder named in the `## Brain` section of `~/.claude/CLAUDE.md` (default `~/brain`): read its `AGENTS.md` if you have not this session. Talk to the user in their language, without jargon. Write every file in English.

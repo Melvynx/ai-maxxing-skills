@@ -2,6 +2,8 @@
 name: create-project
 description: Start a new project in the user's brain after a short interview (what it is, the goal, where it stands, what exists, the next steps), placed in the right hub with its About.md and Roadmap.md. Use when the user types /create-project, says "nouveau projet", "crée un projet pour X", "I want to start X" or brings work that fits no project.
 argument-hint: "[what the project is, in a few words]"
+metadata:
+  internal: true
 ---
 
 Turn an idea or a new piece of work into a project folder any future session can pick up from one file. The brain is the folder named in the `## Brain` section of `~/.claude/CLAUDE.md` (default `~/brain`). Talk to the user in their language, one short question at a time, with no jargon (never say "slug", "frontmatter" or "repo" to them). Write every file in English; only names (products, people, tools) stay as they wrote them.

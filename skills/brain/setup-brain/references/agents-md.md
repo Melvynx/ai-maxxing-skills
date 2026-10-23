@@ -18,6 +18,7 @@ Personal command center, run by agents. Everything is organised by **project**. 
 
 - `AGENTS.md`: this guide.
 - `projects/`: one folder per project, each with its `About.md`.
+- `.agents/skills/`: the brain skills, only for this folder; `.claude/skills/` links to them.
 - `archives/`: finished projects, read-only (created with the first archive).
 - `.tmp/`: scratch, logs, screenshots, delete freely (created when needed, ignored by git).
 
@@ -52,7 +53,7 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 
 ## Skills
 
-Skills live in `~/.agents/skills/` (linked in `~/.claude/skills/`) and work in every folder. Create or fix a skill with `skill-manager`.
+The brain skills live in this folder: `.agents/skills/<name>/`, linked from `.claude/skills/<name>`, never real copies there. A skill only for the brain goes here too; one the user wants in every folder goes in `~/.agents/skills/`. Create or fix a skill with `skill-manager`.
 
 - `/create-project`: a short interview, then the project folder with its `About.md` and `Roadmap.md`. Use it for every new project.
 - `projects`: load, list or archive a project ("load project X").

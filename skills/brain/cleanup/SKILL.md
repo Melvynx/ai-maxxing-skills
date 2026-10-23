@@ -1,6 +1,8 @@
 ---
 name: cleanup
 description: Tidy the user's brain. Finds finished, forgotten or empty projects, duplicates, misplaced folders, loose files and old scratch, proposes what to archive, merge or move, and does only what the user approves. Use when the user types /cleanup, says "fais le ménage", "range mon brain", "archive les vieux projets" or the brain feels messy.
+metadata:
+  internal: true
 ---
 
 Keep the brain small, so every session finds the right project fast. The brain is the folder named in the `## Brain` section of `~/.claude/CLAUDE.md` (default `~/brain`): read its `AGENTS.md` first (layout, hubs, hygiene). Talk to the user in their language, without jargon. Never move, merge or trash anything before the user says yes, and never delete permanently: archive what has value, trash only scratch.
