@@ -10,14 +10,14 @@ Keep the brain small, so every session finds the right project fast. The brain i
    - Merge: two projects about the same thing, or a sub-project that duplicates its hub.
    - Move: a project that belongs to a hub but sits at the `projects/` root, or in the wrong hub.
    - Fix: a project folder with no `About.md`, an `About.md` with no status.
-   - Tidy: loose files or folders at the brain root that `AGENTS.md` does not list, `.tmp/` files older than 7 days, `*-final*`, `*-v2*` and report files that duplicate an `About.md`, notes in `notes/ideas/` and `notes/todos/` older than 90 days.
+   - Tidy: loose files or folders at the brain root that `AGENTS.md` does not list, empty folders anywhere, `.tmp/` files older than 7 days, `*-final*`, `*-v2*` and report files that duplicate an `About.md`, roadmap ideas untouched for 90 days.
 2. **Propose.** Show one short numbered list grouped by Archive, Merge, Move, Fix and Tidy, each line with the project and the reason in a few words ("lumail/old-landing: nothing since 14 May"). Recommend a choice and ask in one message: "all", the numbers, or "none". When nothing needs doing, say the brain is clean and stop.
 3. **Do** only what they picked.
    - Archive: fold the final outcome into `About.md` (what was done, where the deliverables are), set `status: done` and `updated:` to today, trash scratch files, keep deliverables, and move the folder to `archives/<folder-name>/` intact.
    - Merge: fold the facts of one `About.md` and `Roadmap.md` into the other (one fact, one place), move its files over, and archive the empty one.
    - Move: move the folder into the right hub.
    - Fix: write the missing `About.md` from what the folder holds, with "To fill" where you would have to guess.
-   - Tidy: file each loose file into the project it belongs to, trash old scratch, turn an old idea the user still wants into a project with the `create-project` skill, and trash the rest.
+   - Tidy: file each loose file into the project it belongs to, trash empty folders and old scratch, turn an old idea the user still wants into a project with the `create-project` skill, and remove the rest from the roadmap.
    - When the user says a flagged project is still alive, set its `updated:` to today and leave it.
 4. **Fix the links.** Search the brain (and the global rules) for each old path you moved and update it.
 5. **Save.** Commit with `git add -A` and `cleanup: <what was archived, merged or moved>`, and push when the brain has a GitHub copy.

@@ -18,7 +18,7 @@ To create one:
 
 To improve one: read it, find the line that caused the wrong behavior (or the missing line), change the fewest lines that fix it, and run it again.
 
-To audit: list the skills in `~/.agents/skills/` and the brain's `.agents/skills/`. For each line, ask whether removing it changes behavior, and delete no-ops, duplicates and stale rules. Point out skills that overlap or that the user never uses, and move one to the trash only after they agree.
+To audit: list the skills in `~/.agents/skills/` (and a project's `.agents/skills/` when one has some). For each line, ask whether removing it changes behavior, and delete no-ops, duplicates and stale rules. Point out skills that overlap or that the user never uses, and move one to the trash only after they agree.
 
 When they have a server agent (`ssh -o BatchMode=yes hermes true < /dev/null` works) and the skill should run there too, copy it with `rsync -a ~/.agents/skills/<name>/ hermes:.agents/skills/<name>/` and link it there with `ssh hermes 'ln -sfn ~/.agents/skills/<name> ~/.claude/skills/<name>' < /dev/null`.
 
