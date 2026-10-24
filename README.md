@@ -14,12 +14,12 @@ Dans ton terminal :
 npx skills add Melvynx/ai-maxxing-skills -g -a claude-code -s '*' -y
 ```
 
-Les 26 skills sont installés dans `~/.claude/skills/`. Les skills du brain (`skills/brain/`) n'en font pas partie : `/setup-brain` les installe dans ton brain uniquement. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
+Les 28 skills sont installés une seule fois dans `~/.agents/skills/` (Codex les lit là), et `~/.claude/skills/` pointe juste dessus. Les skills du brain (`skills/brain/`) n'en font pas partie : `/setup-brain` les installe dans ton brain uniquement. Relance Claude Code (ou ouvre une nouvelle session dans l'app Claude, onglet **Code**) et tape `/` pour les voir.
 
 Mac ou PC tout neuf, sans Node ni Git ? La commande `npx` ne marchera pas encore. Colle plutôt ce prompt dans une session Claude (onglet **Code**), il n'a besoin de rien d'installé :
 
 ```
-Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs/heads/main.tar.gz avec curl, extrais-la avec tar dans un dossier temporaire, copie chaque dossier de skills/ qui contient un SKILL.md dans ~/.claude/skills (pas ceux de skills/brain/) (avec ses scripts et ses références), puis liste les skills installés. N'utilise ni git ni npm.
+Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs/heads/main.tar.gz avec curl, extrais-la avec tar dans un dossier temporaire, copie chaque dossier de skills/ qui contient un SKILL.md dans ~/.agents/skills (pas ceux de skills/brain/) (avec ses scripts et ses références), crée pour chacun un lien ~/.claude/skills/<nom> vers ~/.agents/skills/<nom>, puis liste les skills installés. N'utilise ni git ni npm.
 ```
 
 ## Par où commencer
@@ -27,14 +27,20 @@ Télécharge l'archive https://github.com/Melvynx/ai-maxxing-skills/archive/refs
 Dans cet ordre, une seule fois, chacun dans une nouvelle session. Chaque skill s'adapte à ton système (macOS, Linux ou Windows), saute ce qui est déjà prêt et finit par une check-list :
 
 1. `/setup-node` : installe Homebrew (sur Mac, ton mot de passe Mac une seule fois) et Node.js.
-2. `/setup-github` : Git, le CLI GitHub, la connexion à ton compte et ton nom dans les commits.
-3. Setup brain, avec le lien (il n'est pas dans l'installation globale) : `Crée mon brain avec ce skill : https://github.com/Melvynx/ai-maxxing-skills/tree/main/skills/brain/setup-brain`. Ton dossier de travail avec son `AGENTS.md`, et les skills qui le font vivre (`/create-project`, `/done`, `/cleanup`), installés dans le brain seulement.
-4. `/setup-dev-browser` : le Chrome dédié à Claude.
-5. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
-6. `/connect-vps hostinger` : quand tu as acheté ton VPS, le raccourci `ssh hermes` pour y entrer.
-7. `/setup-vps mon-domaine.com` : ton agent Hermes sur le VPS, joignable sur Telegram ou Discord, avec son dashboard protégé.
-8. `/setup-my-hermes-dashboard mon-domaine.com` : ton dashboard perso, vide au départ, où Hermes ajoute les modules que tu lui demandes. Ou écris simplement à Hermes "crée mon dashboard".
-9. `/install-skills` : `/setup-vps` installe déjà le pack par défaut de Hermes sur le serveur (`create-dashboard`, `connect-tool`, `create-internal-app` et les skills de ses outils, la liste est dans [`skills/setup-vps/hermes-pack`](skills/setup-vps/hermes-pack)). Ce skill ajoute ceux du kit que tu veux aussi donner à Hermes (`create-landing`, `lumail`, `verify`...). Tu peux aussi écrire directement à Hermes sur Telegram "installe le pack par défaut" ou "installe le skill lumail".
+2. `/initialize` : les skills de base pour tous tes dossiers, en une commande : la base AIBlueprint (skills, barre d'état, protections contre les commandes dangereuses), `/show-me`, `/grill-me`, `/wait-what` de Matt Pocock et `/connect-tool`. Sans le kit installé, colle ça dans ton terminal :
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/initialize/scripts/initialize.sh | bash
+   ```
+
+3. `/setup-github` : Git, le CLI GitHub, la connexion à ton compte et ton nom dans les commits.
+4. Setup brain, avec le lien (il n'est pas dans l'installation globale) : `Crée mon brain avec ce skill : https://github.com/Melvynx/ai-maxxing-skills/tree/main/skills/brain/setup-brain`. Ton dossier de travail avec son `AGENTS.md`, et les skills qui le font vivre (`/create-project`, `/done`, `/cleanup`), installés dans le brain seulement.
+5. `/setup-dev-browser` : le Chrome dédié à Claude.
+6. `/setup-cloudflare`, `/setup-convex`, `/setup-lumail`, puis `/setup-stripe` si tu vends.
+7. `/connect-vps hostinger` : quand tu as acheté ton VPS, le raccourci `ssh hermes` pour y entrer.
+8. `/setup-vps mon-domaine.com` : ton agent Hermes sur le VPS, joignable sur Telegram ou Discord, avec son dashboard protégé.
+9. `/setup-my-hermes-dashboard mon-domaine.com` : ton dashboard perso, vide au départ, où Hermes ajoute les modules que tu lui demandes. Ou écris simplement à Hermes "crée mon dashboard".
+10. `/install-skills` : `/setup-vps` installe déjà le pack par défaut de Hermes sur le serveur (`create-dashboard`, `connect-tool`, `create-internal-app` et les skills de ses outils, la liste est dans [`skills/setup-vps/hermes-pack`](skills/setup-vps/hermes-pack)). Ce skill ajoute ceux du kit que tu veux aussi donner à Hermes (`create-landing`, `lumail`, `verify`...). Tu peux aussi écrire directement à Hermes sur Telegram "installe le pack par défaut" ou "installe le skill lumail".
 
 Tu n'as pas envie de tout installer ? Lance un seul skill avec son lien, sans rien installer avant. Claude lit le skill et ne télécharge que les fichiers dont il a besoin :
 
@@ -48,11 +54,14 @@ Setup my GitHub with: https://github.com/Melvynx/ai-maxxing-skills/tree/main/ski
 
 ```bash
 git clone --depth 1 https://github.com/Melvynx/ai-maxxing-skills.git
-mkdir -p ~/.claude/skills
-for d in ai-maxxing-skills/skills/*/; do [ -f "$d/SKILL.md" ] && cp -R "$d" ~/.claude/skills/; done
+mkdir -p ~/.agents/skills ~/.claude/skills
+for d in ai-maxxing-skills/skills/*/; do
+  n=$(basename "$d")
+  [ -f "$d/SKILL.md" ] && cp -R "$d" ~/.agents/skills/ && ln -sfn ~/.agents/skills/"$n" ~/.claude/skills/"$n"
+done
 ```
 
-Pour un seul projet, copie les dossiers dans `.claude/skills/` à la racine du projet au lieu de `~/.claude/skills/`.
+Pour un seul projet, copie les dossiers dans `.agents/skills/` à la racine du projet, puis fais de `.claude/skills` un seul lien vers ce dossier : `mkdir -p .claude && ln -sfn ../.agents/skills .claude/skills`.
 
 Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la copie).
 
@@ -61,6 +70,7 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | Skill | Ce qu'il fait | Comment l'utiliser |
 | --- | --- | --- |
 | [`setup-node`](skills/setup-node/SKILL.md) | Installe Node.js (et donc `npm` et `npx`) sans mot de passe administrateur : Homebrew s'il est là, sinon la version officielle dans ton dossier perso, `winget` sur Windows. Les autres skills le lancent tout seuls si Node manque. | `/setup-node`, à faire en premier sur un ordi neuf. |
+| [`initialize`](skills/initialize/SKILL.md) | Installe en une commande, pour tous tes dossiers et pour Claude Code et Codex, les skills de base : la base [AIBlueprint](https://github.com/Melvynx/aiblueprint) (skills, agents, barre d'état, protections contre les commandes dangereuses, raccourcis `cc` / `cx`), `/show-me`, `/grill-me`, `/wait-what` ([Matt Pocock](https://github.com/mattpocock/skills)) et `/connect-tool`. Relance-le pour tout mettre à jour. | `/initialize`, juste après `/setup-node`. |
 | [`setup-github`](skills/setup-github/SKILL.md) | Rend Git utilisable (les outils Apple sur Mac), installe le CLI GitHub, te connecte avec un code à usage unique dans le navigateur, sans mot de passe ni token, et règle ton nom et ton email dans Git. | `/setup-github` |
 | [`setup-cloudflare`](skills/setup-cloudflare/SKILL.md) | Installe le CLI officiel `cf`, te connecte à Cloudflare dans le navigateur, choisit le bon compte et liste tes domaines. | `/setup-cloudflare` |
 | [`setup-convex`](skills/setup-convex/SKILL.md) | Te connecte à Convex depuis le terminal (création du compte avec GitHub ou Google au passage), pour que Claude crée les bases de données de tes apps. | `/setup-convex` |
@@ -81,6 +91,7 @@ Pour mettre à jour : relance la commande d'installation (ou `git pull` puis la 
 | [`setup-my-hermes-dashboard`](skills/setup-my-hermes-dashboard/SKILL.md) | Met ton dashboard perso sur `dashboard.mon-domaine.com`, avec le même look et les mêmes outils que le dashboard Hermes (TanStack Start, Tailwind, SQLite), derrière la même page de connexion. Il démarre vide : tu demandes à Hermes "ajoute un module qui montre mes conversations" (ou tes crons, un rapport du matin, tes ventes du jour) et il le code, le teste, le met en ligne et le sauvegarde sur ton GitHub. | `/setup-my-hermes-dashboard mon-domaine.com`, après `/setup-vps`. |
 | [`install-skills`](skills/install-skills/SKILL.md) | Hermes a déjà son pack par défaut (`create-dashboard`, `connect-tool`, `create-internal-app` et les skills de ses outils). Ce skill installe sur ton VPS ceux du kit que tu veux en plus (`create-landing`, `create-software`, `lumail`, `verify`...), dans le dossier que Hermes lit. Après, Hermes sait aussi le faire tout seul : "quels skills tu peux installer ?", "installe connect-tool", "mets à jour tes skills". Tes propres skills ne sont jamais touchés. | `/install-skills`, ou `/install-skills connect-tool verify`, après `/setup-vps`. |
 | [`grill-me`](skills/grill-me/SKILL.md) | Claude te pose 10 questions à la fois sur l'app que tu veux (pour qui, l'action principale, les données, qui voit quoi, le prix, les emails, le domaine, le design, la v1), chacune avec une réponse recommandée, puis te donne un brief à valider avant de coder. `create-software`, `create-internal-app` et `create-landing` le lancent tout seuls. | Automatique avec `/create-software`, `/create-internal-app` et `/create-landing`, ou `/grill-me` à la fin de n'importe quel prompt. |
+| [`show-me`](skills/show-me/SKILL.md) | Claude t'explique n'importe quoi (un code, une archi, un process) avec un petit schéma ou un visuel au lieu d'un mur de texte. | `/show-me comment marche mon paiement` |
 | [`create-landing`](skills/create-landing/SKILL.md) | Crée une landing page, une page de vente ou une waitlist sur Cloudflare, sans base de données ni connexion : TanStack Start, shadcn/ui + Base UI, formulaire email branché sur Lumail (avec double opt-in, c'est un formulaire à froid), bouton d'achat Stripe ou Codeline en option, copy écrite avec toi avant le code. | `/create-landing une waitlist pour mon app sur mon-domaine.com` |
 | [`create-software`](skills/create-software/SKILL.md) | Crée une app web publique hébergée sur Cloudflare, pour des gens qui s'inscrivent ou paient : TanStack Start, shadcn/ui + Base UI, Convex pour tout, les librairies TanStack (données, listes, formulaires, markdown, raccourcis clavier), Better Auth, Lumail (inscrits directement, sans double opt-in) et Stripe si l'app vend. | `/create-software une plateforme de formation sur formation.mon-domaine.com` |
 | [`create-internal-app`](skills/create-internal-app/SKILL.md) | Crée un outil interne (CRM, dashboard, back-office) sur ton VPS via Dokploy, géré ensuite par ton agent. URL publique mais verrouillée comme le QG de l'agent : mot de passe, puis seulement tes IP autorisées dans Cloudflare. | `/create-internal-app un CRM perso sur crm.mon-domaine.com` |

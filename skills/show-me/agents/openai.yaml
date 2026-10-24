@@ -1,0 +1,10 @@
+interface:
+  display_name: "Show Me"
+  short_description: "Explain the current topic with concise visuals"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#737373"
+  default_prompt: "Use $show-me to explain this topic visually."
+
+policy:
+  allow_implicit_invocation: true

@@ -9,7 +9,7 @@ A skill is a folder with a `SKILL.md` that teaches the agent one workflow it the
 
 Where a skill lives, always one source and links elsewhere, never two copies:
 - Used in every folder: `~/.agents/skills/<name>/` (Codex reads it there), linked for Claude Code with `mkdir -p ~/.claude/skills && ln -s ~/.agents/skills/<name> ~/.claude/skills/<name>` unless `~/.claude/skills` already links to `~/.agents/skills`.
-- Only for the brain or one project (the default for a brain workflow): `<folder>/.agents/skills/<name>/`, linked with `mkdir -p <folder>/.claude/skills && ln -sfn ../../.agents/skills/<name> <folder>/.claude/skills/<name>`.
+- Only for the brain or one project (the default for a brain workflow): `<folder>/.agents/skills/<name>/`. Claude Code reads it through `<folder>/.claude/skills`, one link to that folder: when it is missing, create it with `mkdir -p <folder>/.claude && ln -sfn ../.agents/skills <folder>/.claude/skills`.
 
 To create one:
 1. Ask in one message what it should do and 2 or 3 sentences the user would type to start it. When the conversation just did the workflow, propose the skill from what you did and ask them to confirm.
