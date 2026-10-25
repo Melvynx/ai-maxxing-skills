@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Styles</title>
+<style>
+  :root { --bg:#fafafa; --fg:#0a0a0a; --muted:#666; --border:#e5e5e5; --card:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0a0a0a; --fg:#fafafa; --muted:#a1a1a1; --border:#262626; --card:#111; } }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; padding:48px 16px; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-.02em; }
+  .lead { color:var(--muted); margin:8px 0 32px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; }
+  a.card { display:block; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; color:inherit; text-decoration:none; transition:border-color .15s; }
+  a.card:hover { border-color:var(--fg); }
+  .shot { position:relative; height:240px; overflow:hidden; border-bottom:1px solid var(--border); pointer-events:none; }
+  .shot iframe { position:absolute; top:0; left:0; width:1280px; height:900px; border:0; transform:scale(.3); transform-origin:0 0; }
+  .meta { padding:14px 16px; }
+  .name { font-weight:600; font-family:ui-monospace,monospace; font-size:14px; }
+  .desc { color:var(--muted); font-size:14px; margin-top:2px; }
+  .more { color:var(--muted); font-size:14px; margin-top:32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pick your style</h1>
+  <p class="lead">The same page in each style. Click one to see it full size, then tell your agent the name you like.</p>
+  <div class="grid" id="grid"></div>
+  <p class="more">Also available without a preview: <b>grid</b> (technical spec-sheet landing), <b>black-grid</b> (austere black developer tool), <b>ios-app</b> (iPhone app screens).</p>
+</div>
+<script>
+  const styles = [
+    ["vercel", "Clean black and white, sharp and technical"],
+    ["stripe", "Light and airy, soft shadows, trustworthy"],
+    ["linear", "Dark, dense and precise app"],
+    ["raycast", "Glossy dark with soft glows, premium"],
+    ["anthropic", "Warm cream paper, calm and human"],
+    ["gumroad", "Loud yellow and pink, bold borders, playful"],
+    ["new-york-times", "Newspaper: serif text, thin rules, no color"],
+    ["dusk", "Dark data dashboard over a twilight sky"],
+    ["luma", "Black canvas, rounded cards, friendly events app"],
+    ["testspirite", "Light paper dashboard, neat and calm"],
+  ];
+  const grid = document.getElementById("grid");
+  for (const [name, desc] of styles) {
+    const a = document.createElement("a");
+    a.className = "card"; a.href = name + ".html"; a.target = "_blank";
+    a.innerHTML = `<div class="shot"><iframe src="${name}.html" loading="lazy" scrolling="no" tabindex="-1" title="${name}"></iframe></div><div class="meta"><div class="name">${name}</div><div class="desc">${desc}</div></div>`;
+    grid.appendChild(a);
+  }
+</script>
+</body>
+</html>
