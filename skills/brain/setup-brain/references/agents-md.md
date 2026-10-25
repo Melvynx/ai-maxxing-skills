@@ -47,6 +47,7 @@ Status lifecycle: `active` while working, `paused` when parked, `done` when ship
 - A todo for a project goes in its `Roadmap.md`. An idea not yet started goes in `notes/ideas/`, a loose todo in `notes/todos/`.
 - A process to repeat later becomes a skill (with `skill-manager`), never a saved prompt: no `prompts/` folder.
 - One fact, one place. Update `About.md` or an existing file before creating a new one.
+- Every decision is written with its reason in the project's `About.md` (`## Decisions`), and so is every option that was rejected, so no agent redoes it. Read those lines before proposing a change.
 - No per-step reports, status dumps or `final-v2.md` files. When a task is finished, fold the useful result into `About.md` and delete the rest.
 - Scratch, screenshots and logs go in `.tmp/` or the project `output/`, never at the root.
 - File names: `Title Case.md` or lowercase-with-dashes, `.md` for text.
@@ -59,6 +60,6 @@ The brain skills live in this folder: `.agents/skills/<name>/`, the single sourc
 
 - `/create-project`: a short interview, then the project folder with its `About.md` and `Roadmap.md`. Use it for every new project.
 - `projects`: load, list or archive a project ("load project X").
-- `/done`: at the end of a work session, updates the project's `About.md`, `Roadmap.md` and today's journal, then commits the brain. If the user forgets and a lot changed, offer it.
+- `/done`: at the end of a work session, updates the project's `About.md` (with the reason behind each decision), `Roadmap.md` and today's journal, then commits the brain. When the user forgets, it runs on its own in the background about 20 minutes after the conversation goes quiet.
 - `/cleanup`: proposes what to archive, merge or move. Offer it when `projects/` holds projects untouched for 60 days.
 ```

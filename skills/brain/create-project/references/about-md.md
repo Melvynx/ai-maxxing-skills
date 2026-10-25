@@ -15,4 +15,10 @@ updated: <today, YYYY-MM-DD>
 
 ## Current state
 - What is done, what is next (short)
+
+## Decisions
+- <YYYY-MM-DD> <what was decided>, because <why>
+- <YYYY-MM-DD> Not <option>, because <why>
 ```
+
+Leave `## Decisions` out until there is a first decision with its reason; `/done` adds it.
