@@ -140,7 +140,8 @@ function readConversation(lines, from, id) {
 
     if (o.type === "user") {
       const raw = typeof content === "string" ? content : Array.isArray(content) ? content.filter((c) => c.type === "text").map((c) => c.text).join("\n") : "";
-      if (raw.includes("<command-name>/done</command-name>")) {
+      // a real /done line starts with the command tags; a summary may only quote them
+      if (/^\s*<command-(name|message)>/.test(raw) && raw.includes("<command-name>/done</command-name>")) {
         messages = [];
         prompts = 0;
         continue;
