@@ -312,6 +312,15 @@ EOF
     {
       echo "http://$host:$GATE_PORT {"
       echo "	import gate"
+      if [ "$as_local" = "--as-local" ]; then
+        # The app only sees Origin 127.0.0.1 below, so it cannot spot another site's request (a saved IP passes
+        # the gate without a cookie): refuse any request whose Origin is not this page, WebSockets included.
+        echo "	@cross_site {"
+        echo "		header Origin *"
+        echo "		not header Origin https://$host"
+        echo "	}"
+        echo "	respond @cross_site \"Cross-site request refused\" 403"
+      fi
       echo "	reverse_proxy 127.0.0.1:$port {"
       if [ "$as_local" = "--as-local" ]; then
         echo "		header_up Host 127.0.0.1:$port"

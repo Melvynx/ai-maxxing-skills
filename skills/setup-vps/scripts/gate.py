@@ -300,7 +300,11 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--ring);outline-of
 
 def safe_next(value):
     value = value or "/"
-    if not value.startswith("/") or value.startswith("//") or value.startswith("/\\") or value.startswith("/.gate/"):
+    # Browsers drop tabs and newlines and read "\" as "/", so "/\t/evil.com" would land on //evil.com.
+    if any(ord(c) < 0x21 or c in "\\\x7f" for c in value):
+        return "/"
+    parts = urllib.parse.urlsplit(value)
+    if parts.scheme or parts.netloc or not value.startswith("/") or value.startswith("//") or value.startswith("/.gate/"):
         return "/"
     return value
 
@@ -343,7 +347,7 @@ class Gate(BaseHTTPRequestHandler):
             self.send_header("Content-Security-Policy", CSP)
             self.send_header("Referrer-Policy", "no-referrer")
         for key, value in (headers or {}).items():
-            self.send_header(key, value)
+            self.send_header(key, str(value).replace("\r", "").replace("\n", ""))
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
