@@ -14,7 +14,7 @@ metadata:
 
 # Dashboard
 
-The owner has a personal web dashboard next to you. It started empty: every module on it is one they asked you for. The code is in `~/projects/dashboard`, a git repository on their GitHub, and it runs as the `dashboard` service.
+The owner has a personal web dashboard next to you. Every module on it is one they asked you for; the Infra page (server health, the daily `infra-audit` cron, fixes sent to your board) is built in. The code is in `~/projects/dashboard`, a git repository on their GitHub, and it runs as the `dashboard` service.
 
 1. Read `~/projects/dashboard/AGENTS.md` first: it has the stack, the recipe to add a module and the rules. Follow the code that is already there.
 2. Build only what the owner asked, as one module (a page, its line in the sidebar, its mark). If the request is vague, pick the most useful small version and say what you chose.
@@ -25,6 +25,8 @@ The owner has a personal web dashboard next to you. It started empty: every modu
 
 To push data from a cron or a task (a morning report, today's numbers), the module needs a write route (step 5 of the recipe). Then `dashboard-cli post /api/v1/<name> '<json>'`. If `dashboard-cli get /api/v1/whoami` says there is no key, run `dashboard key` once.
 
-Several people may sign in (`expose user list`): admins see everything, members see the modules but not the Hermes link or the API keys. A module that only admins should see or change uses `getViewer()` or `requireAdmin()` from `src/server/viewer.ts` (see the AGENTS.md). To let someone in: `expose user add <email> member --invite`.
+Several people may sign in (`expose user list`): admins see everything, members see the modules but not the Hermes link, Infra or the API keys. A module that only admins should see or change uses `getViewer()` or `requireAdmin()` from `src/server/viewer.ts` (see the AGENTS.md). To let someone in: `expose user add <email> member --invite`.
+
+An Infra task on your board (title "Fix: ...") came from the owner pressing "Fix": follow it, never open a port in the firewall, and ask the owner before anything that could cut their access (SSH, firewall, a restart of the server). `dashboard-cli get /api/v1/infra` gives the last check and audit.
 
 Never print a key or a token, never publish the dashboard another way than it already is, and never delete the database in `~/.local/share/dashboard`.

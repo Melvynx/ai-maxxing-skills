@@ -15,7 +15,7 @@ export const savedCollapsed = () => readCookie(COLLAPSED_COOKIE) === "collapsed"
 
 type Item = {
   /** Every page path; a new module adds its own. */
-  to: "/" | "/api-keys";
+  to: "/" | "/api-keys" | "/infra";
   label: string;
   hint: string;
   section?: Exclude<Section, "hermes">;
@@ -29,12 +29,15 @@ type Item = {
  */
 export const ITEMS: Item[] = [{ to: "/", label: "Home", hint: "Your agent at a glance" }];
 
+/** Built in, admins only: the health of the server and of Hermes, the daily audit and the fixes (src/server/infra). */
+export const INFRA: Item = { to: "/infra", label: "Infra", hint: "Server health, daily audit and fixes", section: "infra" };
+
 const KEYS: Item = { to: "/api-keys", label: "API keys", hint: "Keys for dashboard-cli and agents", icon: KeyRound };
 
 const isActive = (pathname: string, to: Item["to"]) => (to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`));
 
 export function currentItem(pathname: string): Item | undefined {
-  return [...ITEMS, KEYS].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
+  return [...ITEMS, INFRA, KEYS].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
 }
 
 const ROW =
@@ -66,12 +69,13 @@ function NavLink({ item, collapsed, onNavigate }: { item: Item; collapsed: boole
   );
 }
 
-function Nav({ collapsed, hermesUrl, onNavigate }: { collapsed: boolean; hermesUrl: string | null; onNavigate?: () => void }) {
+function Nav({ collapsed, hermesUrl, admin, onNavigate }: { collapsed: boolean; hermesUrl: string | null; admin: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Sections" className="grid gap-1" data-testid="hub-nav">
       {ITEMS.map((item) => (
         <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
+      {admin ? <NavLink item={INFRA} collapsed={collapsed} onNavigate={onNavigate} /> : null}
       {hermesUrl ? (
         <a
           href={hermesUrl}
@@ -164,7 +168,7 @@ export function HubFrame({
         <div className={cn("flex h-9 items-center gap-1 px-1", collapsed && "justify-center px-0")}>
           <HomeLink collapsed={collapsed} />
         </div>
-        <Nav collapsed={collapsed} hermesUrl={hermesUrl} />
+        <Nav collapsed={collapsed} hermesUrl={hermesUrl} admin={viewer.role === "admin"} />
         <div className="mt-auto grid gap-1 border-t pt-2.5">
           <Footer collapsed={collapsed} viewer={viewer} />
           <button
@@ -193,7 +197,7 @@ export function HubFrame({
               <div className="flex h-9 items-center px-1">
                 <HomeLink onNavigate={() => setMenuOpen(false)} />
               </div>
-              <Nav collapsed={false} hermesUrl={hermesUrl} onNavigate={() => setMenuOpen(false)} />
+              <Nav collapsed={false} hermesUrl={hermesUrl} admin={viewer.role === "admin"} onNavigate={() => setMenuOpen(false)} />
               <div className="mt-auto border-t pt-2.5">
                 <Footer collapsed={false} viewer={viewer} onNavigate={() => setMenuOpen(false)} />
               </div>

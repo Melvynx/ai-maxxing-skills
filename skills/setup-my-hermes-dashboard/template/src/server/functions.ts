@@ -4,27 +4,33 @@ import { z } from "zod";
 import { getApp } from "@/server/app";
 import { SCOPES, type PublicKey } from "@/server/db/api-keys";
 import type { HermesStatus } from "@/server/hermes";
+import type { Tone } from "@/server/infra/model";
 import { getViewer, requireAdmin, type Viewer } from "@/server/viewer";
 
 /**
  * What the pages read and change. Pages sit behind the gate of the server (sign-in or saved IP), so these need no
- * key. The gate also says who is there (see viewer.ts): members see the modules, only admins get the Hermes link and
- * the API keys. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
+ * key. The gate also says who is there (see viewer.ts): members see the modules, only admins get the Hermes link,
+ * Infra and the API keys. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
  */
 export const orNull = <T>(promise: Promise<T>) => promise.catch(() => null);
 
 export type HomeSummary = {
   owner: string;
+  admin: boolean;
   hermesUrl: string | null;
   status: HermesStatus | null;
   model: string | null;
+  /** The last Infra check, for admins only (null for members, or before the first check). */
+  infra: { at: number; tone: Tone; bad: number; warn: number } | null;
 };
 
 export const getHome = createServerFn({ method: "GET" }).handler(async (): Promise<HomeSummary> => {
-  const { hermes, settings } = getApp();
+  const { hermes, settings, infra } = getApp();
   const admin = getViewer().role === "admin";
   const [status, model] = await Promise.all([orNull(hermes.status()), orNull(hermes.model())]);
-  return { owner: settings.owner, hermesUrl: admin ? settings.hermesUrl : null, status, model };
+  const run = admin ? infra.health.latest() : null;
+  const glance = run && { at: run.at, tone: run.tone, bad: run.checks.filter((c) => c.tone === "bad").length, warn: run.checks.filter((c) => c.tone === "warn").length };
+  return { owner: settings.owner, admin, hermesUrl: admin ? settings.hermesUrl : null, status, model, infra: glance };
 });
 
 export const getLinks = createServerFn({ method: "GET" }).handler(async (): Promise<{ hermesUrl: string | null; viewer: Viewer }> => {

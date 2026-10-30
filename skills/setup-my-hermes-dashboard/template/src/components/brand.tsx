@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /** One key per module. A new module adds its key here, a drawing in DRAWINGS and a name in SECTION_NAMES. */
-export type Section = "hermes";
+export type Section = "hermes" | "infra";
 
 /** Indigo tile shared by every mark; `public/favicon.svg` is the Hermes drawing on the same tile. */
 function Tile({ className, section, children }: { className?: string; section: Section; children: React.ReactNode }) {
@@ -33,6 +33,17 @@ const DRAWINGS: Record<Section, React.ReactNode> = {
       <path d="M8 10.4c-2.6-.2-4.2-1.5-4.9-3.6 2.2.5 3.8.4 4.9-.2z" fill="#c7d2fe" />
     </>
   ),
+  // A server with a pulse line.
+  infra: (
+    <>
+      <rect x="7" y="7.5" width="18" height="7" rx="2" fill="#fff" />
+      <rect x="7" y="17.5" width="18" height="7" rx="2" fill="#e0e7ff" />
+      <circle cx="10.5" cy="11" r="1.2" fill="#4f46e5" />
+      <circle cx="10.5" cy="21" r="1.2" fill="#4f46e5" />
+      <path d="M14 21h2.2l1.3-2.4 2 4.8 1.3-2.4H22" fill="none" stroke="#4f46e5" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="14" y="10.2" width="8" height="1.6" rx=".8" fill="#c7d2fe" />
+    </>
+  ),
 };
 
 export function SectionMark({ section, className }: { section: Section; className?: string }) {
@@ -45,6 +56,7 @@ export function SectionMark({ section, className }: { section: Section; classNam
 
 export const SECTION_NAMES: Record<Section, string> = {
   hermes: "Hermes",
+  infra: "Infra",
 };
 
 /** Page heading: the section mark + its name (the name is visually hidden on phones, where the header is tight). */

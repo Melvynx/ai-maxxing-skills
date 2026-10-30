@@ -14,6 +14,16 @@ CREATE TABLE IF NOT EXISTS api_keys (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, prefix TEXT NOT NULL UNIQUE, digest TEXT NOT NULL, scopes TEXT NOT NULL,
   created_at INTEGER NOT NULL, expires_at INTEGER, last_used_at INTEGER, revoked_at INTEGER
 );
+CREATE TABLE IF NOT EXISTS infra_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, tone TEXT NOT NULL, checks TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS infra_runs_at ON infra_runs (at);
+CREATE TABLE IF NOT EXISTS infra_fixes (
+  id TEXT PRIMARY KEY, source TEXT NOT NULL, key TEXT NOT NULL, title TEXT NOT NULL, prompt TEXT NOT NULL,
+  task_id TEXT, status TEXT NOT NULL, note TEXT, actor TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS infra_fixes_key ON infra_fixes (key);
+CREATE TABLE IF NOT EXISTS infra_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `;
 
 /** Opens (and creates) `<dataDir>/dashboard.sqlite3`: owner-only folder and file, WAL, synchronous FULL. */

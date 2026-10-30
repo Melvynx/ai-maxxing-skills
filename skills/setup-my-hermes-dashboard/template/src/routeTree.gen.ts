@@ -12,7 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as InfraIndexRouteImport } from './routes/infra.index'
+import { Route as InfraAuditRouteImport } from './routes/infra.audit'
+import { Route as InfraHealthRouteImport } from './routes/infra.health'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
+import { Route as ApiV1InfraRouteImport } from './routes/api/v1/infra'
 import { Route as ApiV1WhoamiRouteImport } from './routes/api/v1/whoami'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +34,29 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InfraIndexRoute = InfraIndexRouteImport.update({
+  id: '/infra/',
+  path: '/infra/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InfraAuditRoute = InfraAuditRouteImport.update({
+  id: '/infra/audit',
+  path: '/infra/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InfraHealthRoute = InfraHealthRouteImport.update({
+  id: '/infra/health',
+  path: '/infra/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
   id: '/api/v1/health',
   path: '/api/v1/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1InfraRoute = ApiV1InfraRouteImport.update({
+  id: '/api/v1/infra',
+  path: '/api/v1/infra',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1WhoamiRoute = ApiV1WhoamiRouteImport.update({
@@ -45,14 +69,22 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/api/$': typeof ApiSplatRoute
+  '/infra/audit': typeof InfraAuditRoute
+  '/infra/health': typeof InfraHealthRoute
+  '/infra/': typeof InfraIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/api/$': typeof ApiSplatRoute
+  '/infra/audit': typeof InfraAuditRoute
+  '/infra/health': typeof InfraHealthRoute
+  '/infra': typeof InfraIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
 }
 export interface FileRoutesById {
@@ -60,20 +92,46 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/api/$': typeof ApiSplatRoute
+  '/infra/audit': typeof InfraAuditRoute
+  '/infra/health': typeof InfraHealthRoute
+  '/infra/': typeof InfraIndexRoute
   '/api/v1/health': typeof ApiV1HealthRoute
+  '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api-keys' | '/api/$' | '/api/v1/health' | '/api/v1/whoami'
+  fullPaths:
+    | '/'
+    | '/api-keys'
+    | '/api/$'
+    | '/infra/audit'
+    | '/infra/health'
+    | '/infra/'
+    | '/api/v1/health'
+    | '/api/v1/infra'
+    | '/api/v1/whoami'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api-keys' | '/api/$' | '/api/v1/health' | '/api/v1/whoami'
+  to:
+    | '/'
+    | '/api-keys'
+    | '/api/$'
+    | '/infra/audit'
+    | '/infra/health'
+    | '/infra'
+    | '/api/v1/health'
+    | '/api/v1/infra'
+    | '/api/v1/whoami'
   id:
     | '__root__'
     | '/'
     | '/api-keys'
     | '/api/$'
+    | '/infra/audit'
+    | '/infra/health'
+    | '/infra/'
     | '/api/v1/health'
+    | '/api/v1/infra'
     | '/api/v1/whoami'
   fileRoutesById: FileRoutesById
 }
@@ -81,7 +139,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  InfraAuditRoute: typeof InfraAuditRoute
+  InfraHealthRoute: typeof InfraHealthRoute
+  InfraIndexRoute: typeof InfraIndexRoute
   ApiV1HealthRoute: typeof ApiV1HealthRoute
+  ApiV1InfraRoute: typeof ApiV1InfraRoute
   ApiV1WhoamiRoute: typeof ApiV1WhoamiRoute
 }
 
@@ -108,11 +170,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/infra/': {
+      id: '/infra/'
+      path: '/infra'
+      fullPath: '/infra/'
+      preLoaderRoute: typeof InfraIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/infra/audit': {
+      id: '/infra/audit'
+      path: '/infra/audit'
+      fullPath: '/infra/audit'
+      preLoaderRoute: typeof InfraAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/infra/health': {
+      id: '/infra/health'
+      path: '/infra/health'
+      fullPath: '/infra/health'
+      preLoaderRoute: typeof InfraHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/health': {
       id: '/api/v1/health'
       path: '/api/v1/health'
       fullPath: '/api/v1/health'
       preLoaderRoute: typeof ApiV1HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/infra': {
+      id: '/api/v1/infra'
+      path: '/api/v1/infra'
+      fullPath: '/api/v1/infra'
+      preLoaderRoute: typeof ApiV1InfraRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/whoami': {
@@ -129,7 +219,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
   ApiSplatRoute: ApiSplatRoute,
+  InfraAuditRoute: InfraAuditRoute,
+  InfraHealthRoute: InfraHealthRoute,
+  InfraIndexRoute: InfraIndexRoute,
   ApiV1HealthRoute: ApiV1HealthRoute,
+  ApiV1InfraRoute: ApiV1InfraRoute,
   ApiV1WhoamiRoute: ApiV1WhoamiRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,7 +3,7 @@ import { Activity, ArrowRight, ArrowUpRight, HardDrive, MessageCircle, Sparkles 
 import * as React from "react";
 
 import { SECTION_NAMES, SectionMark } from "@/components/brand";
-import { ITEMS } from "@/components/hub/sidebar";
+import { INFRA, ITEMS } from "@/components/hub/sidebar";
 import { Dot, type Tone } from "@/components/hub/page";
 import { count } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -113,6 +113,38 @@ function ModuleCard({ item }: { item: (typeof ITEMS)[number] }) {
   );
 }
 
+const INFRA_STATE: Record<Tone, string> = { good: "All good", warn: "Needs a look", bad: "Needs you", idle: "Not checked yet" };
+
+/** Admins only: the last Infra check, the card links to its page. */
+function InfraCard({ infra }: { infra: NonNullable<HomeSummary["infra"]> | "never" }) {
+  const tone = infra === "never" ? "idle" : infra.tone;
+  const problems = infra === "never" ? [] : [infra.bad && `${infra.bad} problem${infra.bad > 1 ? "s" : ""}`, infra.warn && `${infra.warn} warning${infra.warn > 1 ? "s" : ""}`].filter(Boolean);
+  return (
+    <article
+      className="group relative flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 shadow-panel transition-shadow hover:shadow-float md:col-span-3 xl:col-span-4"
+      data-testid="home-infra"
+    >
+      <header className="flex items-center gap-3">
+        <SectionMark section="infra" className="size-9" />
+        <div className="grid min-w-0 flex-1">
+          <h2 className="text-md font-semibold">
+            <Link to={INFRA.to} className="outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/40">
+              {SECTION_NAMES.infra}
+            </Link>
+          </h2>
+          <p className="truncate text-xs text-muted-foreground">{INFRA.hint}</p>
+        </div>
+        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden />
+      </header>
+      <p className="flex items-center gap-2 text-sm">
+        <Dot tone={tone} className="size-2.5" />
+        <span className={cn("font-medium", tone === "bad" && "text-bad", tone === "warn" && "text-warn")}>{INFRA_STATE[tone]}</span>
+        {problems.length ? <span className="text-muted-foreground">· {problems.join(", ")}</span> : null}
+      </p>
+    </article>
+  );
+}
+
 function HermesCard({ url }: { url: string }) {
   return (
     <article className="group relative flex min-w-0 flex-col gap-5 rounded-xl border bg-card p-5 shadow-panel transition-shadow hover:shadow-float md:col-span-6 xl:col-span-4">
@@ -153,6 +185,7 @@ export function HubHome({ summary, items = ITEMS }: { summary: HomeSummary; item
       <div className="grid grid-cols-1 gap-4 md:grid-cols-6 xl:grid-cols-12">
         <OpsStrip summary={summary} />
         {modules.length ? modules.map((item) => <ModuleCard key={item.to} item={item} />) : <NoModule />}
+        {summary.admin ? <InfraCard infra={summary.infra ?? "never"} /> : null}
         {summary.hermesUrl ? <HermesCard url={summary.hermesUrl} /> : null}
       </div>
     </main>

@@ -1,6 +1,6 @@
 # Dashboard
 
-The owner's personal dashboard, next to their Hermes agent. It ships empty on purpose: the owner asks for the modules they want ("show my latest conversations", "a morning report", "my sales of the day") and the agent builds them here. Build only what was asked, one module at a time.
+The owner's personal dashboard, next to their Hermes agent. It ships with no module on purpose: the owner asks for the modules they want ("show my latest conversations", "a morning report", "my sales of the day") and the agent builds them here. Build only what was asked, one module at a time. One part is built in for admins: **Infra** (see below).
 
 - Stack: TanStack Start (React 19, file routes, server functions), Vite, Tailwind 4, Radix, lucide icons, sonner toasts, zod, SQLite through better-sqlite3 and drizzle. Tests with vitest. Node 24, pnpm.
 - Runs on the server as the `dashboard` service on `127.0.0.1:8794`, published at its `url` (see `dashboard status`) behind the server's sign-in gate. Never bind another address, never open a port.
@@ -12,9 +12,20 @@ The owner's personal dashboard, next to their Hermes agent. It ships empty on pu
 The gate signs people in by email code and tells the dashboard who is there. Users and roles live on the server (`expose user list`, `expose user add <email> member --invite`).
 
 - `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `email` is null on a saved IP or for a call from the server itself (both count as admin).
-- Admins see everything. Members see every module, but not the Hermes link or the API keys page.
+- Admins see everything. Members see every module, but not the Hermes link, Infra or the API keys page.
 - A module or action that only admins should have: call `requireAdmin()` at the top of its server function (it throws for a member), and hide its sidebar line or button when `Route.useLoaderData()` or the root loader's `viewer.role` is not `"admin"`. Hiding alone is not enough: always check on the server too.
 - A module whose data is per person (my tasks, my notes): store `getViewer().email` with each row and filter on it.
+
+## Infra (built in)
+
+`/infra`, admins only, under the sidebar line "Infra" and a card on the home. Code in `src/server/infra/` and `src/routes/infra.*.tsx`.
+
+- **Health**: the dashboard checks the server every 15 minutes (Hermes chat, crons, Hermes update, key services, disk, memory, load, pending restart, system updates, out-of-memory kills, SSH, firewall, open ports) and keeps 7 days of history. A stopped `caddy`, `vps-gate`, `vps-tunnel` or `hermes-dashboard` is restarted on its own, once an hour at most. Nothing else is ever changed by a check.
+- **Daily audit**: a Hermes cron named `infra-audit` (07:00, created once; if the owner deletes it, it stays deleted). It only looks and writes a report; the page reads it from `~/.hermes/cron/output/<job id>/`.
+- **Fix**: each problem and each audit action has a "Fix" button. It sends an editable task to the Hermes board (`hermes kanban create`), one open task per problem, and the page follows its status.
+- Add a check: a function in `src/server/infra/checks.ts` that returns a `Check` (tone `good`, `warn`, `bad`, or `idle` when it could not check), listed in `runChecks`, with a test in `infra.test.ts`. A check reads through `System` (never `child_process` directly) and never changes the server; anything to change becomes a `fix` draft (`checkFix`).
+- Settings in `/etc/dashboard.env`: `INFRA_CHECKS=off` stops the timed checks, `INFRA_AUDIT=off` stops creating the audit cron, `HERMES_BIN` and `HERMES_HOME` when Hermes is not in `~/.local/bin/hermes` and `~/.hermes`.
+- `dashboard-cli get /api/v1/infra`: the last check, the last audit and the open fixes, as JSON.
 
 ## Add a module
 
@@ -34,7 +45,7 @@ Tell the owner the module is online at `<url>/<path>` and what it shows, in one 
 
 ## Change or remove a module
 
-Change it in place. To remove one, delete its route and its lines in `ITEMS`, `Section`, `DRAWINGS` and `SECTION_NAMES`; keep its table (the data stays). Then `dashboard deploy`, commit and push.
+Change it in place. To remove one, delete its route and its lines in `ITEMS`, `Section`, `DRAWINGS` and `SECTION_NAMES`; keep its table (the data stays). Infra is not a module: keep it. Then `dashboard deploy`, commit and push.
 
 ## Commands
 

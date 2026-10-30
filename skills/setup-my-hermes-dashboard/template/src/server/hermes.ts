@@ -1,5 +1,6 @@
 /**
- * Read-only client of the Hermes dashboard API (`hermes dashboard`, 127.0.0.1:9119).
+ * Client of the Hermes dashboard API (`hermes dashboard`, 127.0.0.1:9119), read-only except `send` (Infra uses it to
+ * create and start its daily audit cron).
  * `/api/status` is open; every other endpoint wants the session token Hermes prints in its own page, which changes on
  * each restart: it is read from that page, kept in memory, and read again once when Hermes answers 401.
  * Modules read any other endpoint with `api(path)`; AGENTS.md lists the useful ones.
@@ -45,11 +46,17 @@ export class Hermes {
     this.token = fixedToken;
   }
 
-  private async request(path: string, token: string | null): Promise<Response> {
+  private async request(path: string, token: string | null, method = "GET", body?: unknown): Promise<Response> {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (token) headers["X-Hermes-Session-Token"] = token;
+    if (body !== undefined) headers["Content-Type"] = "application/json";
     try {
-      return await this.fetcher(`${this.base}${path}`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      return await this.fetcher(`${this.base}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
     } catch {
       throw new HermesError("Hermes is not answering");
     }
@@ -69,9 +76,18 @@ export class Hermes {
     return this.get<T>(path);
   }
 
+  /** POST (or PUT, DELETE) a JSON body to a Hermes endpoint, e.g. `send("POST", "/api/cron/jobs", job)`. */
+  async send<T = unknown>(method: "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
+    return this.call<T>(path, true, method, body);
+  }
+
   private async get<T>(path: string, auth = true): Promise<T> {
-    let response = await this.request(path, auth ? (this.token ?? (await this.readToken())) : null);
-    if (auth && response.status === 401 && !this.fixedToken) response = await this.request(path, await this.readToken());
+    return this.call<T>(path, auth, "GET");
+  }
+
+  private async call<T>(path: string, auth: boolean, method: string, body?: unknown): Promise<T> {
+    let response = await this.request(path, auth ? (this.token ?? (await this.readToken())) : null, method, body);
+    if (auth && response.status === 401 && !this.fixedToken) response = await this.request(path, await this.readToken(), method, body);
     if (!response.ok) throw new HermesError(`Hermes answered ${response.status} on ${path}`);
     return (await response.json()) as T;
   }
