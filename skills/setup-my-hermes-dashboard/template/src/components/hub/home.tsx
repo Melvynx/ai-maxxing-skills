@@ -3,7 +3,7 @@ import { Activity, ArrowRight, ArrowUpRight, HardDrive, MessageCircle, Sparkles 
 import * as React from "react";
 
 import { SECTION_NAMES, SectionMark } from "@/components/brand";
-import { INFRA, ITEMS } from "@/components/hub/sidebar";
+import { ITEMS, MONITORING } from "@/components/hub/sidebar";
 import { Dot, type Tone } from "@/components/hub/page";
 import { count } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ function OpsStrip({ summary }: { summary: HomeSummary }) {
 
 /** Example asks, shown while the home has no module: each one is a sentence the user sends to Hermes as is. */
 const IDEAS = [
-  "Add a module to my dashboard that lists my latest conversations.",
+  "Add a module to my dashboard that shows how much I spent on AI this week.",
   "Add a module to my dashboard with my crons and when they run next.",
   "Every morning at 8, post a short report of my day on my dashboard.",
 ];
@@ -114,6 +114,8 @@ function ModuleCard({ item }: { item: (typeof ITEMS)[number] }) {
 }
 
 const INFRA_STATE: Record<Tone, string> = { good: "All good", warn: "Needs a look", bad: "Needs you", idle: "Not checked yet" };
+
+const INFRA = MONITORING.find((item) => item.to === "/infra")!;
 
 /** Admins only: the last Infra check, the card links to its page. */
 function InfraCard({ infra }: { infra: NonNullable<HomeSummary["infra"]> | "never" }) {

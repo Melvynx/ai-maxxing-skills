@@ -2,15 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { getApp } from "@/server/app";
+import { toConversations, type Conversation } from "@/server/conversations";
 import { SCOPES, type PublicKey } from "@/server/db/api-keys";
 import type { HermesStatus } from "@/server/hermes";
 import type { Tone } from "@/server/infra/model";
+import { chooseModel, readModels, type ChooseAnswer, type ModelsData } from "@/server/models";
 import { getViewer, requireAdmin, type Viewer } from "@/server/viewer";
 
 /**
  * What the pages read and change. Pages sit behind the gate of the server (sign-in or saved IP), so these need no
- * key. The gate also says who is there (see viewer.ts): members see the modules, only admins get the Hermes link,
- * Infra and the API keys. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
+ * key. The gate also says who is there (see viewer.ts): members see the modules, only admins get System monitoring
+ * (Conversations, Infra, Models, the Hermes link) and the API keys. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
  */
 export const orNull = <T>(promise: Promise<T>) => promise.catch(() => null);
 
@@ -62,4 +64,36 @@ export const revokeKey = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     requireAdmin();
     return { key: getApp().keys.revoke(data.id) };
+  });
+
+/** Null for a member. `conversations` is null when Hermes does not answer. */
+export type ConversationsPage = { now: number; conversations: Conversation[] | null };
+
+/** The latest Hermes sessions, every platform together. */
+export const getConversations = createServerFn({ method: "GET" }).handler(async (): Promise<ConversationsPage | null> => {
+  if (getViewer().role !== "admin") return null;
+  const data = await orNull(getApp().hermes.api("/api/sessions?limit=30&order=recent"));
+  return { now: Date.now(), conversations: data === null ? null : toConversations(data) };
+});
+
+/** Null for a member. `models` is null when Hermes does not answer. */
+export type ModelsPage = { models: ModelsData | null };
+
+export const getModels = createServerFn({ method: "GET" }).handler(async (): Promise<ModelsPage | null> => {
+  if (getViewer().role !== "admin") return null;
+  return { models: await orNull(readModels(getApp().hermes)) };
+});
+
+/** Hermes's main model: used from the next conversation on. */
+export const setModel = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      provider: z.string().regex(/^[\w.-]{1,80}$/),
+      model: z.string().regex(/^[\w.:/@+-]{1,200}$/),
+      confirmed: z.boolean().default(false),
+    }),
+  )
+  .handler(async ({ data }): Promise<ChooseAnswer> => {
+    requireAdmin();
+    return chooseModel(getApp().hermes, data);
   });

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowUpRight, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, ChevronDown, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, UserRound, type LucideIcon } from "lucide-react";
 import * as React from "react";
 
 import { SectionMark, type Section } from "@/components/brand";
@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 import type { Viewer } from "@/server/viewer";
 
 const COLLAPSED_COOKIE = "hermes-sidebar";
+const MONITORING_COOKIE = "hermes-monitoring";
 
 export const savedCollapsed = () => readCookie(COLLAPSED_COOKIE) === "collapsed";
+/** The System monitoring group starts open; closing it is remembered like the rail. */
+export const savedMonitoringOpen = () => readCookie(MONITORING_COOKIE) !== "closed";
 
 type Item = {
   /** Every page path; a new module adds its own. */
-  to: "/" | "/api-keys" | "/infra";
+  to: "/" | "/api-keys" | "/conversations" | "/infra" | "/models";
   label: string;
   hint: string;
   section?: Exclude<Section, "hermes">;
@@ -29,15 +32,22 @@ type Item = {
  */
 export const ITEMS: Item[] = [{ to: "/", label: "Home", hint: "Your agent at a glance" }];
 
-/** Built in, admins only: the health of the server and of Hermes, the daily audit and the fixes (src/server/infra). */
-export const INFRA: Item = { to: "/infra", label: "Infra", hint: "Server health, daily audit and fixes", section: "infra" };
+/**
+ * Built in, admins only, in the "System monitoring" group at the bottom of the rail: the agent's conversations, the
+ * health of the server (src/server/infra) and the AI model it answers with (src/server/models.ts).
+ */
+export const MONITORING: Item[] = [
+  { to: "/conversations", label: "Conversations", hint: "Your latest conversations with Hermes", section: "conversations" },
+  { to: "/infra", label: "Infra", hint: "Server health, daily audit and fixes", section: "infra" },
+  { to: "/models", label: "Models", hint: "The AI model Hermes uses", section: "models" },
+];
 
 const KEYS: Item = { to: "/api-keys", label: "API keys", hint: "Keys for dashboard-cli and agents", icon: KeyRound };
 
 const isActive = (pathname: string, to: Item["to"]) => (to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`));
 
 export function currentItem(pathname: string): Item | undefined {
-  return [...ITEMS, INFRA, KEYS].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
+  return [...ITEMS, ...MONITORING, KEYS].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
 }
 
 const ROW =
@@ -69,28 +79,72 @@ function NavLink({ item, collapsed, onNavigate }: { item: Item; collapsed: boole
   );
 }
 
-function Nav({ collapsed, hermesUrl, admin, onNavigate }: { collapsed: boolean; hermesUrl: string | null; admin: boolean; onNavigate?: () => void }) {
+function Nav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Sections" className="grid gap-1" data-testid="hub-nav">
       {ITEMS.map((item) => (
         <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
-      {admin ? <NavLink item={INFRA} collapsed={collapsed} onNavigate={onNavigate} /> : null}
-      {hermesUrl ? (
-        <a
-          href={hermesUrl}
-          target="_blank"
-          rel="noreferrer"
-          className={cn(ROW, IDLE, "mt-2", collapsed && "justify-center px-0")}
-          title="Open the Hermes dashboard: chat, settings, logs"
-          data-testid="hub-hermes"
-        >
-          <SectionMark section="hermes" className="size-5" />
-          <span className={cn("truncate", collapsed && "sr-only")}>Hermes agent</span>
-          <ArrowUpRight className={cn("ml-auto size-4 opacity-60", collapsed && "sr-only")} aria-hidden />
-        </a>
-      ) : null}
     </nav>
+  );
+}
+
+/** Admins only, at the bottom of the rail: a group that folds, with the link to Hermes's own dashboard last. */
+function Monitoring({
+  collapsed,
+  open,
+  onToggle,
+  hermesUrl,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  open: boolean;
+  onToggle: () => void;
+  hermesUrl: string | null;
+  onNavigate?: () => void;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Folded, the group still shows the page you are on.
+  const shown = open || collapsed ? MONITORING : MONITORING.filter((item) => isActive(pathname, item.to));
+  return (
+    <nav aria-label="System monitoring" className="grid gap-1" data-testid="hub-monitoring">
+      {collapsed ? (
+        <span className="mx-auto mb-1 h-px w-6 bg-border" aria-hidden />
+      ) : (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40"
+          data-testid="hub-monitoring-toggle"
+        >
+          System monitoring
+          <ChevronDown className={cn("ml-auto size-3.5 transition-transform", !open && "-rotate-90")} aria-hidden />
+        </button>
+      )}
+      {shown.map((item) => (
+        <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+      ))}
+      {hermesUrl && (open || collapsed) ? <HermesLink url={hermesUrl} collapsed={collapsed} /> : null}
+    </nav>
+  );
+}
+
+/** Hermes's own dashboard (chat, settings, logs), in a new tab. Its URL is only sent to admins. */
+function HermesLink({ url, collapsed }: { url: string; collapsed: boolean }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className={cn(ROW, IDLE, collapsed && "justify-center px-0")}
+      title="Open the Hermes dashboard: chat, settings, logs"
+      data-testid="hub-hermes"
+    >
+      <SectionMark section="hermes" className="size-5" />
+      <span className={cn("truncate", collapsed && "sr-only")}>Hermes agent</span>
+      <ArrowUpRight className={cn("ml-auto size-4 opacity-60", collapsed && "sr-only")} aria-hidden />
+    </a>
   );
 }
 
@@ -139,22 +193,31 @@ function HomeLink({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?:
  */
 export function HubFrame({
   initialCollapsed,
+  initialMonitoringOpen,
   hermesUrl,
   viewer,
   children,
 }: {
   initialCollapsed: boolean;
+  initialMonitoringOpen: boolean;
   hermesUrl: string | null;
   viewer: Viewer;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = React.useState(initialCollapsed);
+  const [monitoringOpen, setMonitoringOpen] = React.useState(initialMonitoringOpen);
+  const admin = viewer.role === "admin";
   const [menuOpen, setMenuOpen] = React.useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current = currentItem(pathname);
   const toggle = () =>
     setCollapsed((value) => {
       writeCookie(COLLAPSED_COOKIE, value ? "expanded" : "collapsed");
+      return !value;
+    });
+  const toggleMonitoring = () =>
+    setMonitoringOpen((value) => {
+      writeCookie(MONITORING_COOKIE, value ? "closed" : "open");
       return !value;
     });
   const CollapseIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
@@ -168,8 +231,13 @@ export function HubFrame({
         <div className={cn("flex h-9 items-center gap-1 px-1", collapsed && "justify-center px-0")}>
           <HomeLink collapsed={collapsed} />
         </div>
-        <Nav collapsed={collapsed} hermesUrl={hermesUrl} admin={viewer.role === "admin"} />
-        <div className="mt-auto grid gap-1 border-t pt-2.5">
+        <Nav collapsed={collapsed} />
+        {admin ? (
+          <div className="mt-auto">
+            <Monitoring collapsed={collapsed} open={monitoringOpen} onToggle={toggleMonitoring} hermesUrl={hermesUrl} />
+          </div>
+        ) : null}
+        <div className={cn("grid gap-1 border-t pt-2.5", !admin && "mt-auto")}>
           <Footer collapsed={collapsed} viewer={viewer} />
           <button
             type="button"
@@ -197,8 +265,13 @@ export function HubFrame({
               <div className="flex h-9 items-center px-1">
                 <HomeLink onNavigate={() => setMenuOpen(false)} />
               </div>
-              <Nav collapsed={false} hermesUrl={hermesUrl} admin={viewer.role === "admin"} onNavigate={() => setMenuOpen(false)} />
-              <div className="mt-auto border-t pt-2.5">
+              <Nav collapsed={false} onNavigate={() => setMenuOpen(false)} />
+              {admin ? (
+                <div className="mt-auto">
+                  <Monitoring collapsed={false} open={monitoringOpen} onToggle={toggleMonitoring} hermesUrl={hermesUrl} onNavigate={() => setMenuOpen(false)} />
+                </div>
+              ) : null}
+              <div className={cn("border-t pt-2.5", !admin && "mt-auto")}>
                 <Footer collapsed={false} viewer={viewer} onNavigate={() => setMenuOpen(false)} />
               </div>
             </SheetContent>

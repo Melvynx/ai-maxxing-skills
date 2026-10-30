@@ -1,4 +1,4 @@
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, ShieldCheck } from "lucide-react";
 import * as React from "react";
 
 import { SectionTitle, type Section } from "@/components/brand";
@@ -64,5 +64,16 @@ export function Table({ head, children }: { head: string[]; children: React.Reac
         <tbody className="divide-y">{children}</tbody>
       </table>
     </div>
+  );
+}
+
+/** What a member sees on an admins-only page (the server sends them nothing). */
+export function AdminsOnly({ title, children, testId }: { title: string; children: React.ReactNode; testId?: string }) {
+  return (
+    <main className="mx-auto grid min-h-[60dvh] max-w-sm place-content-center justify-items-center gap-2 p-6 text-center" data-testid={testId ?? "admins-only"}>
+      <ShieldCheck className="mb-1 size-6 text-brand" aria-hidden />
+      <h1 className="text-lg font-semibold">{title}</h1>
+      <p className="text-sm text-muted-foreground">{children}</p>
+    </main>
   );
 }

@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /** One key per module. A new module adds its key here, a drawing in DRAWINGS and a name in SECTION_NAMES. */
-export type Section = "hermes" | "infra";
+export type Section = "hermes" | "conversations" | "infra" | "models";
 
 /** Indigo tile shared by every mark; `public/favicon.svg` is the Hermes drawing on the same tile. */
 function Tile({ className, section, children }: { className?: string; section: Section; children: React.ReactNode }) {
@@ -33,6 +33,15 @@ const DRAWINGS: Record<Section, React.ReactNode> = {
       <path d="M8 10.4c-2.6-.2-4.2-1.5-4.9-3.6 2.2.5 3.8.4 4.9-.2z" fill="#c7d2fe" />
     </>
   ),
+  // Two speech bubbles.
+  conversations: (
+    <>
+      <path d="M7 8.5h13a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7.5L8.5 23v-3.5H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="#fff" />
+      <path d="M24 13h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-1v3l-3.5-3H16a2 2 0 0 1-2-1.5h6a4 4 0 0 0 4-4z" fill="#c7d2fe" />
+      <rect x="9" y="12.5" width="9" height="1.8" rx=".9" fill="#c7d2fe" />
+      <rect x="9" y="15.5" width="6" height="1.8" rx=".9" fill="#c7d2fe" />
+    </>
+  ),
   // A server with a pulse line.
   infra: (
     <>
@@ -42,6 +51,14 @@ const DRAWINGS: Record<Section, React.ReactNode> = {
       <circle cx="10.5" cy="21" r="1.2" fill="#4f46e5" />
       <path d="M14 21h2.2l1.3-2.4 2 4.8 1.3-2.4H22" fill="none" stroke="#4f46e5" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="14" y="10.2" width="8" height="1.6" rx=".8" fill="#c7d2fe" />
+    </>
+  ),
+  // A chip with a spark: the AI model.
+  models: (
+    <>
+      <path d="M12 6v3M16 6v3M20 6v3M12 23v3M16 23v3M20 23v3M6 12h3M6 16h3M6 20h3M23 12h3M23 16h3M23 20h3" stroke="#c7d2fe" strokeWidth="1.6" strokeLinecap="round" />
+      <rect x="9" y="9" width="14" height="14" rx="3" fill="#fff" />
+      <path d="M16 11.5l1.2 3.3 3.3 1.2-3.3 1.2-1.2 3.3-1.2-3.3-3.3-1.2 3.3-1.2z" fill="#4f46e5" />
     </>
   ),
 };
@@ -56,7 +73,9 @@ export function SectionMark({ section, className }: { section: Section; classNam
 
 export const SECTION_NAMES: Record<Section, string> = {
   hermes: "Hermes",
+  conversations: "Conversations",
   infra: "Infra",
+  models: "Models",
 };
 
 /** Page heading: the section mark + its name (the name is visually hidden on phones, where the header is tight). */

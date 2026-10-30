@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
+import { Route as ConversationsRouteImport } from './routes/conversations'
+import { Route as ModelsRouteImport } from './routes/models'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as InfraIndexRouteImport } from './routes/infra.index'
 import { Route as InfraAuditRouteImport } from './routes/infra.audit'
@@ -27,6 +29,16 @@ const IndexRoute = IndexRouteImport.update({
 const ApiKeysRoute = ApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConversationsRoute = ConversationsRouteImport.update({
+  id: '/conversations',
+  path: '/conversations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModelsRoute = ModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -68,6 +80,8 @@ const ApiV1WhoamiRoute = ApiV1WhoamiRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/conversations': typeof ConversationsRoute
+  '/models': typeof ModelsRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -79,6 +93,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/conversations': typeof ConversationsRoute
+  '/models': typeof ModelsRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -91,6 +107,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/conversations': typeof ConversationsRoute
+  '/models': typeof ModelsRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -104,6 +122,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api-keys'
+    | '/conversations'
+    | '/models'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -115,6 +135,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api-keys'
+    | '/conversations'
+    | '/models'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -126,6 +148,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api-keys'
+    | '/conversations'
+    | '/models'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -138,6 +162,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
+  ConversationsRoute: typeof ConversationsRoute
+  ModelsRoute: typeof ModelsRoute
   ApiSplatRoute: typeof ApiSplatRoute
   InfraAuditRoute: typeof InfraAuditRoute
   InfraHealthRoute: typeof InfraHealthRoute
@@ -161,6 +187,20 @@ declare module '@tanstack/react-router' {
       path: '/api-keys'
       fullPath: '/api-keys'
       preLoaderRoute: typeof ApiKeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversations': {
+      id: '/conversations'
+      path: '/conversations'
+      fullPath: '/conversations'
+      preLoaderRoute: typeof ConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/models': {
+      id: '/models'
+      path: '/models'
+      fullPath: '/models'
+      preLoaderRoute: typeof ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -218,6 +258,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
+  ConversationsRoute: ConversationsRoute,
+  ModelsRoute: ModelsRoute,
   ApiSplatRoute: ApiSplatRoute,
   InfraAuditRoute: InfraAuditRoute,
   InfraHealthRoute: InfraHealthRoute,
