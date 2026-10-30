@@ -462,7 +462,7 @@ EOF
     else
       echo "sign_in=password login=$([ -s "$GATE_DATA/login" ] && cut -d' ' -f1 "$GATE_DATA/login" || echo none)"
     fi
-    echo "users=$(sed 's/#.*//; /^[[:space:]]*$/d' "$GATE_DATA/users" 2>/dev/null | awk '{ printf "%s%s(%s)", NR > 1 ? " " : "", $1, $2 }')"
+    echo "users=$(sed 's/#.*//; /^[[:space:]]*$/d' "$GATE_DATA/users" 2>/dev/null | awk '{ printf "%s%s(%s)", (NR > 1 ? " " : ""), $1, $2 }')"
     echo "saved_ips=$(sed 's/[[:space:]]*#.*//' "$GATE_DATA/ips" 2>/dev/null | tr '\n' ' ')"
     echo "locked_ips=$(jq -r --argjson now "$(date +%s)" '[.ips // {} | to_entries[] | select(.value.until > $now) | .key] | join(" ")' "$GATE_DATA/state.json" 2>/dev/null)"
     cfapi GET "/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/$id/configurations" \
