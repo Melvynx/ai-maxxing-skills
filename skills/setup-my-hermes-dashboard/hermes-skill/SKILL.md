@@ -1,7 +1,7 @@
 ---
 name: dashboard
 description: Build, change or remove a module of the owner's personal web dashboard, and push data to it. Use when the owner asks to see something on their dashboard, add a page or a card to it, or have a cron post a report there.
-version: 1.0.0
+version: 1.1.0
 author: ai-maxxing
 license: MIT
 platforms: [linux]
@@ -24,5 +24,7 @@ The owner has a personal web dashboard next to you. It started empty: every modu
 6. Answer the owner in one or two lines: what the module shows and its address (the `url` line of `dashboard status`, plus the module path).
 
 To push data from a cron or a task (a morning report, today's numbers), the module needs a write route (step 5 of the recipe). Then `dashboard-cli post /api/v1/<name> '<json>'`. If `dashboard-cli get /api/v1/whoami` says there is no key, run `dashboard key` once.
+
+Several people may sign in (`expose user list`): admins see everything, members see the modules but not the Hermes link or the API keys. A module that only admins should see or change uses `getViewer()` or `requireAdmin()` from `src/server/viewer.ts` (see the AGENTS.md). To let someone in: `expose user add <email> member --invite`.
 
 Never print a key or a token, never publish the dashboard another way than it already is, and never delete the database in `~/.local/share/dashboard`.

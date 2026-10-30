@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 # Put pages of the VPS online behind one gate: Cloudflare Tunnel -> Caddy -> sign-in gate (gate.py) -> the app.
-# Everyone reaches the sign-in page (email + password, locked after repeated failures); saved IPs skip it.
+# Everyone reaches the sign-in page (locked after repeated failures); saved IPs skip it. Two ways to sign in:
+# email + 6-digit code sent by Lumail (the default once `mail` is set, many users with roles), or one email + password.
 # Run on the VPS as root (or with sudo). Needs ~/.config/cloudflare/env from import-keys.sh. Safe to rerun.
 #   expose.sh install [tunnel-name]          install cloudflared, Caddy and the gate, create or reuse the tunnel, start all
-#   expose.sh login <email> [--stdin]        set the gate login: generate and print a password, or read the user's from stdin
+#   expose.sh user add <email> [admin|member] [--invite]  let this email sign in with a code (default member);
+#                                            --invite emails them the links of the sites they can open
+#   expose.sh user remove <email> / user list   take someone's access away (signs them out at once) / list everyone
+#   expose.sh mail "<Name> <address>"        turn on sign-in codes: Lumail key on stdin, sends a test email to the first
+#                                            admin and only saves the key if it arrived. `mail off` goes back to password
+#   expose.sh login <email> [--stdin]        password sign-in instead: generate and print a password, or read it from stdin
 #   expose.sh allow <ip> / deny <ip>         save or forget an IP that skips the sign-in (IPv6 counts as its /64)
 #   expose.sh unlock                         clear the failed sign-in counters and locks
-#   expose.sh add <hostname> <port> [--as-local]  publish http://127.0.0.1:<port> at https://<hostname>, behind the gate
+#   expose.sh add <hostname> <port> [--as-local] [--admins]  publish http://127.0.0.1:<port> at https://<hostname>
 #   expose.sh remove <hostname>              take a hostname offline (tunnel route, DNS record, Caddy site)
-#   expose.sh status                         tunnel, gate, whitelist, every hostname, and any route that skips the gate
+#   expose.sh status                         tunnel, gate, users, every hostname, and any route that skips the gate
 # --as-local sends Host and Origin as 127.0.0.1:<port>, for apps that only answer to localhost (the Hermes dashboard).
+# --admins keeps the site for admins: members who sign in get "restricted access". The app behind receives the
+# signed-in email and role in the X-Gate-User and X-Gate-Role headers (a saved IP counts as admin, with no email).
 # gate.py (and its font geist.woff2) must sit next to this script or in /usr/local/lib/vps-gate.
-# Exit codes: 0 ok, 2 bad usage, 3 missing setup, 4 DNS name already used by something else, 5 Cloudflare API error.
+# Exit codes: 0 ok, 2 bad usage, 3 missing setup, 4 DNS name already used by something else, 5 Cloudflare or Lumail error.
 set -euo pipefail
 
 STATE=/etc/vps-expose
@@ -88,11 +96,9 @@ EOF
   write_gate
 }
 
-# The gate: /.gate/* is the sign-in page, every other request asks gate.py first (saved IP or session cookie).
-write_gate() {
-  mkdir -p "$CADDY_DIR/gate"
-  cat > "$CADDY_DIR/gate/gate.caddy" <<EOF
-(gate) {
+gate_snippet() { # name verify-uri
+  cat <<EOF
+($1) {
 	@gate_page path /.gate/*
 	handle @gate_page {
 		reverse_proxy 127.0.0.1:$GATE_AUTH_PORT {
@@ -101,11 +107,20 @@ write_gate() {
 	}
 	@gate_app not path /.gate/*
 	forward_auth @gate_app 127.0.0.1:$GATE_AUTH_PORT {
-		uri /.gate/verify
+		uri $2
 		header_up X-Gate-IP {client_ip}
+		# Who is signed in, for the app. Caddy first deletes any X-Gate-* header the visitor sent.
+		copy_headers X-Gate-User X-Gate-Role
 	}
 }
 EOF
+}
+
+# The gate: /.gate/* is the sign-in page, every other request asks gate.py first (saved IP or session cookie).
+# gate lets every signed-in user through, gate_admin only admins.
+write_gate() {
+  mkdir -p "$CADDY_DIR/gate"
+  { gate_snippet gate /.gate/verify; echo; gate_snippet gate_admin "/.gate/verify?need=admin"; } > "$CADDY_DIR/gate/gate.caddy"
   # Caddy runs as its own user: let it read the gate, nobody else.
   if getent group caddy >/dev/null 2>&1; then
     chown -R root:caddy "$CADDY_DIR/gate"
@@ -170,6 +185,24 @@ gate_file() { # name: write stdin into a gate data file, readable by the gate on
   chown vps-gate:vps-gate "$GATE_DATA/$1.tmp"
   chmod 600 "$GATE_DATA/$1.tmp"
   mv "$GATE_DATA/$1.tmp" "$GATE_DATA/$1"
+}
+
+gate_py() { # run a gate.py command (sends one email) with the gate's data
+  GATE_DATA="$GATE_DATA" GATE_LANG="${GATE_LANG:-fr}" python3 "$GATE_LIB/gate.py" "$@"
+}
+
+valid_email() {
+  [[ "$1" =~ ^[^@[:space:]\<\>\"\']+@[^@[:space:]\<\>\"\']+\.[^@[:space:]\<\>\"\']+$ ]] || { echo "not an email address: $1" >&2; exit 2; }
+}
+
+first_admin() { awk '$2 == "admin" { print $1; exit }' "$GATE_DATA/users" 2>/dev/null; }
+
+sites_for() { # role -> https URL of every site that role can open
+  local f
+  for f in "$CADDY_DIR"/sites/*.caddy; do
+    [ -e "$f" ] || continue
+    if [ "$1" = admin ] || ! grep -q "import gate_admin" "$f"; then echo "https://$(basename "$f" .caddy)"; fi
+  done
 }
 
 reload_caddy() {
@@ -261,6 +294,68 @@ EOF
     echo "install ok: tunnel $name ($id), Caddy on 127.0.0.1:$GATE_PORT, sign-in gate on 127.0.0.1:$GATE_AUTH_PORT"
     ;;
 
+  user)
+    [ -d "$GATE_DATA" ] || { echo "run '$0 install' first" >&2; exit 3; }
+    touch "$GATE_DATA/users"
+    email="$(printf '%s' "${3:-}" | tr '[:upper:]' '[:lower:]')"
+    case "${2:-}" in
+      add)
+        role=member; invite=0
+        for arg in "${@:4}"; do
+          case "$arg" in
+            admin|member) role="$arg" ;;
+            --invite) invite=1 ;;
+            *) echo "usage: $0 user add <email> [admin|member] [--invite]" >&2; exit 2 ;;
+          esac
+        done
+        valid_email "$email"
+        { awk -v e="$email" '$1 != e' "$GATE_DATA/users"; echo "$email $role"; } | gate_file users
+        echo "user ok: $email ($role)"
+        if [ "$invite" -eq 1 ]; then
+          [ -s "$GATE_DATA/lumail" ] || { echo "no invite sent: sign-in codes are off (run '$0 mail' first)" >&2; exit 3; }
+          urls="$(sites_for "$role")"
+          [ -n "$urls" ] || { echo "no invite sent: no site is online yet" >&2; exit 3; }
+          # shellcheck disable=SC2086
+          gate_py invite "$email" $urls || exit 5
+        fi
+        ;;
+      remove)
+        valid_email "$email"
+        grep -q "^$email " "$GATE_DATA/users" || { echo "$email has no access" >&2; exit 2; }
+        if [ -s "$GATE_DATA/lumail" ] && [ "$(awk -v e="$email" '$2 == "admin" && $1 != e' "$GATE_DATA/users" | wc -l)" -eq 0 ] \
+          && grep -q "^$email admin" "$GATE_DATA/users"; then
+          echo "$email is the last admin: add another admin first, or nobody can manage the sign-in" >&2; exit 2
+        fi
+        awk -v e="$email" '$1 != e' "$GATE_DATA/users" | gate_file users
+        echo "user ok: $email removed and signed out"
+        ;;
+      list)
+        sed 's/#.*//; /^[[:space:]]*$/d' "$GATE_DATA/users"
+        ;;
+      *) echo "usage: $0 user add <email> [admin|member] [--invite] | user remove <email> | user list" >&2; exit 2 ;;
+    esac
+    ;;
+
+  mail)
+    sender="${2:-}"
+    [ -d "$GATE_DATA" ] || { echo "run '$0 install' first" >&2; exit 3; }
+    if [ "$sender" = off ]; then
+      [ -s "$GATE_DATA/login" ] || { echo "set a password first ('$0 login <email>'), or nobody could sign in" >&2; exit 3; }
+      mkdir -p "$STATE/removed"; [ -f "$GATE_DATA/lumail" ] && mv "$GATE_DATA/lumail" "$STATE/removed/lumail.$(date +%s)"
+      echo "mail ok: sign-in codes off, back to the password"
+      exit 0
+    fi
+    [[ "$sender" == *"<"*"@"*">" ]] || { echo "usage: $0 mail \"Name <address@your-domain>\" (Lumail key on stdin)" >&2; exit 2; }
+    admin="$(first_admin)"
+    [ -n "$admin" ] || { echo "add an admin first: $0 user add <email> admin" >&2; exit 3; }
+    if [ -t 0 ]; then IFS= read -rsp "Lumail key: " key; echo >&2; else IFS= read -r key; fi
+    [[ "$key" =~ ^[A-Za-z0-9_-]{16,}$ ]] || { echo "this does not look like a Lumail key" >&2; exit 2; }
+    # Send a real email before saving anything: a key or sender Lumail refuses never locks anyone out.
+    printf '%s\n' "$key" | gate_py test-mail "$sender" "$admin" || { echo "nothing changed: fix the key or the sender, then rerun" >&2; exit 5; }
+    printf 'key=%s\nfrom=%s\n' "$key" "$sender" | gate_file lumail
+    echo "mail ok: sign-in codes on, test email sent to $admin (everyone signs in again once)"
+    ;;
+
   login)
     user="${2:-}"
     [ -n "$user" ] || { echo "usage: $0 login <email>" >&2; exit 2; }
@@ -296,8 +391,15 @@ EOF
     ;;
 
   add)
-    host="${2:-}"; port="${3:-}"; as_local="${4:-}"
-    [ -n "$host" ] && [[ "$port" =~ ^[0-9]+$ ]] || { echo "usage: $0 add <hostname> <port> [--as-local]" >&2; exit 2; }
+    host="${2:-}"; port="${3:-}"; as_local=""; snippet=gate
+    for arg in "${@:4}"; do
+      case "$arg" in
+        --as-local) as_local="$arg" ;;
+        --admins) snippet=gate_admin ;;
+        *) host="" ;;
+      esac
+    done
+    [ -n "$host" ] && [[ "$port" =~ ^[0-9]+$ ]] || { echo "usage: $0 add <hostname> <port> [--as-local] [--admins]" >&2; exit 2; }
     load_cf
     id="$(tunnel_id)"
     zone="$(zone_id_for "$host")"
@@ -311,7 +413,7 @@ EOF
     fi
     {
       echo "http://$host:$GATE_PORT {"
-      echo "	import gate"
+      echo "	import $snippet"
       if [ "$as_local" = "--as-local" ]; then
         # The app only sees Origin 127.0.0.1 below, so it cannot spot another site's request (a saved IP passes
         # the gate without a cookie): refuse any request whose Origin is not this page, WebSockets included.
@@ -331,7 +433,7 @@ EOF
     } > "$CADDY_DIR/sites/$host.caddy"
     reload_caddy
     set_ingress "$host" add
-    echo "add ok: https://$host -> gate -> 127.0.0.1:$port"
+    echo "add ok: https://$host -> gate$([ "$snippet" = gate_admin ] && echo " (admins only)") -> 127.0.0.1:$port"
     ;;
 
   remove)
@@ -355,11 +457,20 @@ EOF
     echo "tunnel=$id ($(systemctl is-active vps-tunnel))"
     echo "caddy=$(systemctl is-active caddy)"
     echo "gate=$(systemctl is-active vps-gate)"
-    echo "login=$([ -s "$GATE_DATA/login" ] && cut -d' ' -f1 "$GATE_DATA/login" || echo none)"
+    if [ -s "$GATE_DATA/lumail" ]; then
+      echo "sign_in=code from=$(sed -n 's/^from=//p' "$GATE_DATA/lumail")"
+    else
+      echo "sign_in=password login=$([ -s "$GATE_DATA/login" ] && cut -d' ' -f1 "$GATE_DATA/login" || echo none)"
+    fi
+    echo "users=$(sed 's/#.*//; /^[[:space:]]*$/d' "$GATE_DATA/users" 2>/dev/null | awk '{ printf "%s%s(%s)", NR > 1 ? " " : "", $1, $2 }')"
     echo "saved_ips=$(sed 's/[[:space:]]*#.*//' "$GATE_DATA/ips" 2>/dev/null | tr '\n' ' ')"
     echo "locked_ips=$(jq -r --argjson now "$(date +%s)" '[.ips // {} | to_entries[] | select(.value.until > $now) | .key] | join(" ")' "$GATE_DATA/state.json" 2>/dev/null)"
     cfapi GET "/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/$id/configurations" \
-      | jq -r --arg svc "http://localhost:$GATE_PORT" '.result.config.ingress[]? | select(.hostname) | if .service == $svc then "site=\(.hostname)" else "UNPROTECTED=\(.hostname) -> \(.service)" end'
+      | jq -r --arg svc "http://localhost:$GATE_PORT" '.result.config.ingress[]? | select(.hostname) | if .service == $svc then "site=\(.hostname)" else "UNPROTECTED=\(.hostname) -> \(.service)" end' \
+      | while IFS= read -r line; do
+          if [[ "$line" == site=* ]] && grep -q "import gate_admin" "$CADDY_DIR/sites/${line#site=}.caddy" 2>/dev/null; then line="$line admins-only"; fi
+          echo "$line"
+        done
     for f in "$CADDY_DIR"/sites/*.caddy; do
       [ -e "$f" ] || continue
       grep -q "import gate" "$f" || echo "UNPROTECTED_CADDY=$(basename "$f" .caddy)"
@@ -367,7 +478,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,14p' "$0" >&2
+    sed -n '2,23p' "$0" >&2
     exit 2
     ;;
 esac

@@ -16,7 +16,7 @@ const DESCRIPTION = "Your Hermes agent at a glance, with the modules you ask it 
 
 export const Route = createRootRoute({
   beforeLoad: () => ({ theme: savedTheme(), collapsed: savedCollapsed() }),
-  // Read once per visit: the public Hermes address only changes with a redeploy.
+  // Read once per visit: the public Hermes address only changes with a redeploy, and who is signed in with a sign-in.
   loader: () => getLinks(),
   staleTime: Infinity,
   head: () => ({
@@ -82,7 +82,10 @@ function useReloadOnStaleChunks() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme, collapsed } = Route.useRouteContext();
-  const hermesUrl = Route.useLoaderData()?.hermesUrl ?? null;
+  const links = Route.useLoaderData();
+  const hermesUrl = links?.hermesUrl ?? null;
+  // Before the loader answers (an error page), act as a member: nothing admin-only shows.
+  const viewer = links?.viewer ?? { email: null, role: "member" as const };
   useReloadOnStaleChunks();
   return (
     <html lang="en" className={theme === "dark" ? "dark" : undefined} suppressHydrationWarning>
@@ -91,7 +94,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <ThemeProvider saved={theme}>
-          <HubFrame initialCollapsed={collapsed} hermesUrl={hermesUrl}>{children}</HubFrame>
+          <HubFrame initialCollapsed={collapsed} hermesUrl={hermesUrl} viewer={viewer}>
+            {children}
+          </HubFrame>
           <Toaster position="bottom-right" />
         </ThemeProvider>
         <Scripts />

@@ -12,6 +12,7 @@ This is the owner's server, running 24/7. Every tool below is already signed in:
 | GitHub: repos, clone, push, PRs, issues | `gh`, see the `github-cli` skill | `gh auth status` |
 | Cloudflare: DNS, Workers, R2, KV, D1, cache | `cf`, see the `cloudflare` skill | `cf auth whoami` |
 | Put an app online with HTTPS and the sign-in page | `expose` | `expose status` |
+| Who can sign in (email + code, admin or member) | `expose user` | `expose user list` |
 | The agent itself: model, chat, dashboard | `hermes-setup` | `hermes-setup check` |
 | More skills from the ai-maxxing package | `hermes-setup add <skill>`, see the `ai-maxxing-skills` skill | `hermes-setup catalog` |
 
@@ -22,10 +23,19 @@ This is the owner's server, running 24/7. Every tool below is already signed in:
 ## Put something online
 
 1. Run the app as a service listening on `127.0.0.1:<port>` only.
-2. `expose add <name>.__DOMAIN__ <port>`: it creates the address, HTTPS and the sign-in page in front.
+2. `expose add <name>.__DOMAIN__ <port>`: it creates the address, HTTPS and the sign-in page in front. Add `--admins` when the page can change the server or shows private data only the owner should see (like the Hermes dashboard): members then get "restricted access".
 3. `expose status` lists what is online; `expose remove <name>.__DOMAIN__` takes it down.
 
-Never open a port in the firewall, never bind `0.0.0.0`, never publish a page another way. Every page sits behind the sign-in page: never use `expose allow` or `--public` unless the owner asks for that exact page or address. `expose unlock` clears a lock after too many wrong passwords.
+Never open a port in the firewall, never bind `0.0.0.0`, never publish a page another way. Every page sits behind the sign-in page: never use `expose allow` or `--public` unless the owner asks for that exact page or address. `expose unlock` clears a lock after too many wrong codes.
+
+## Who can sign in
+
+People sign in with their email and a 6-digit code sent by Lumail (`expose status` shows `sign_in=code`). An `admin` opens every page; a `member` opens every page not added with `--admins`.
+
+- "Add <email> to the dashboard" or "give <email> access": `expose user add <email> member --invite` (it emails them the links they can open). Make someone `admin` only when the owner says so, in those words.
+- "Remove <email>": `expose user remove <email>`; it signs them out at once. The last admin cannot be removed.
+- `expose user list` shows everyone with their role.
+- An app behind the gate receives `X-Gate-User` (the email, empty for a saved IP) and `X-Gate-Role` (`admin` or `member`): use them to show who is there and to keep admin actions for admins, never a second password.
 
 ## Rules
 

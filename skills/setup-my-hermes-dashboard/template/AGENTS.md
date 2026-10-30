@@ -7,6 +7,15 @@ The owner's personal dashboard, next to their Hermes agent. It ships empty on pu
 - Data: `$DATA_DIR/dashboard.sqlite3` (`~/.local/share/dashboard` on the server). Settings: `/etc/dashboard.env`.
 - Never print a key, a token or the Hermes session token. Never delete the database or `key-pepper`.
 
+## Who is signed in
+
+The gate signs people in by email code and tells the dashboard who is there. Users and roles live on the server (`expose user list`, `expose user add <email> member --invite`).
+
+- `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `email` is null on a saved IP or for a call from the server itself (both count as admin).
+- Admins see everything. Members see every module, but not the Hermes link or the API keys page.
+- A module or action that only admins should have: call `requireAdmin()` at the top of its server function (it throws for a member), and hide its sidebar line or button when `Route.useLoaderData()` or the root loader's `viewer.role` is not `"admin"`. Hiding alone is not enough: always check on the server too.
+- A module whose data is per person (my tasks, my notes): store `getViewer().email` with each row and filter on it.
+
 ## Add a module
 
 A module is a page, its line in the sidebar and its mark. The home shows a card for every module on its own.

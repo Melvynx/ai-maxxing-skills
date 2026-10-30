@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowUpRight, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, UserRound, type LucideIcon } from "lucide-react";
 import * as React from "react";
 
 import { SectionMark, type Section } from "@/components/brand";
@@ -7,6 +7,7 @@ import { useTheme } from "@/components/theme-provider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { readCookie, writeCookie } from "@/lib/cookie";
 import { cn } from "@/lib/utils";
+import type { Viewer } from "@/server/viewer";
 
 const COLLAPSED_COOKIE = "hermes-sidebar";
 
@@ -89,12 +90,13 @@ function Nav({ collapsed, hermesUrl, onNavigate }: { collapsed: boolean; hermesU
   );
 }
 
-function Footer({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function Footer({ collapsed, viewer, onNavigate }: { collapsed: boolean; viewer: Viewer; onNavigate?: () => void }) {
   const { theme, toggle } = useTheme();
   const themeLabel = theme === "dark" ? "Light theme" : "Dark theme";
   return (
     <div className="grid gap-1">
-      <NavLink item={KEYS} collapsed={collapsed} onNavigate={onNavigate} />
+      {/* API keys open the dashboard to scripts: admins only. */}
+      {viewer.role === "admin" ? <NavLink item={KEYS} collapsed={collapsed} onNavigate={onNavigate} /> : null}
       <button type="button" onClick={toggle} className={cn(ROW, IDLE, collapsed && "justify-center px-0")} title={themeLabel} data-testid="theme">
         {theme === "dark" ? <Sun className="size-5 p-0.5" aria-hidden /> : <Moon className="size-5 p-0.5" aria-hidden />}
         <span className={cn(collapsed && "sr-only")}>{themeLabel}</span>
@@ -104,6 +106,16 @@ function Footer({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: ()
         <LogOut className="size-5 p-0.5" aria-hidden />
         <span className={cn(collapsed && "sr-only")}>Sign out</span>
       </a>
+      {viewer.email ? (
+        <p
+          className={cn("flex h-9 items-center gap-2.5 px-2 text-xs text-muted-foreground", collapsed && "justify-center px-0")}
+          title={`Signed in as ${viewer.email} (${viewer.role})`}
+          data-testid="hub-viewer"
+        >
+          <UserRound className="size-5 shrink-0 p-0.5" aria-hidden />
+          <span className={cn("truncate", collapsed && "sr-only")}>{viewer.email}</span>
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -121,7 +133,17 @@ function HomeLink({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?:
  * The hub frame: a left rail on large screens (expanded or icon-only, remembered in a cookie so the server renders it
  * right) and a top bar with a menu sheet below `lg`. Each page keeps its own header.
  */
-export function HubFrame({ initialCollapsed, hermesUrl, children }: { initialCollapsed: boolean; hermesUrl: string | null; children: React.ReactNode }) {
+export function HubFrame({
+  initialCollapsed,
+  hermesUrl,
+  viewer,
+  children,
+}: {
+  initialCollapsed: boolean;
+  hermesUrl: string | null;
+  viewer: Viewer;
+  children: React.ReactNode;
+}) {
   const [collapsed, setCollapsed] = React.useState(initialCollapsed);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -144,7 +166,7 @@ export function HubFrame({ initialCollapsed, hermesUrl, children }: { initialCol
         </div>
         <Nav collapsed={collapsed} hermesUrl={hermesUrl} />
         <div className="mt-auto grid gap-1 border-t pt-2.5">
-          <Footer collapsed={collapsed} />
+          <Footer collapsed={collapsed} viewer={viewer} />
           <button
             type="button"
             onClick={toggle}
@@ -173,7 +195,7 @@ export function HubFrame({ initialCollapsed, hermesUrl, children }: { initialCol
               </div>
               <Nav collapsed={false} hermesUrl={hermesUrl} onNavigate={() => setMenuOpen(false)} />
               <div className="mt-auto border-t pt-2.5">
-                <Footer collapsed={false} onNavigate={() => setMenuOpen(false)} />
+                <Footer collapsed={false} viewer={viewer} onNavigate={() => setMenuOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>

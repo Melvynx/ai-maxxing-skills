@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { dateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { PublicKey } from "@/server/db/api-keys";
 import { createKey, listKeys, revokeKey } from "@/server/functions";
 
 export const Route = createFileRoute("/api-keys")({
@@ -35,6 +36,21 @@ const when = (ts: number | null, fallback: string) => (ts ? dateTime(ts * 1000) 
 
 function ApiKeysPage() {
   const keys = Route.useLoaderData();
+  if (!keys) return <AdminsOnly />;
+  return <KeysManager keys={keys} />;
+}
+
+function AdminsOnly() {
+  return (
+    <main className="mx-auto grid min-h-[60dvh] max-w-sm place-content-center justify-items-center gap-2 p-6 text-center" data-testid="api-keys-admins-only">
+      <KeyRound className="mb-1 size-6 text-brand" aria-hidden />
+      <h1 className="text-lg font-semibold">API keys are for admins</h1>
+      <p className="text-sm text-muted-foreground">Ask the owner of this dashboard if you need one.</p>
+    </main>
+  );
+}
+
+function KeysManager({ keys }: { keys: PublicKey[] }) {
   const router = useRouter();
   const [name, setName] = React.useState("");
   const [expiry, setExpiry] = React.useState<number>(1);
