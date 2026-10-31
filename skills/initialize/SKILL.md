@@ -13,8 +13,8 @@ If you got this skill from a link instead of a local folder, install nothing els
    curl -fsSL https://raw.githubusercontent.com/Melvynx/ai-maxxing-skills/main/skills/initialize/scripts/initialize.sh | bash
    ```
    It installs, for Claude Code and Codex:
-   - the AIBlueprint base (`npx aiblueprint-cli@latest agents setup --skip`): its skills (apex, skill-manager...), agents, the statusline, the security hooks that block dangerous commands, and the `cc` / `cx` shortcuts in the terminal;
-   - `/show-me` (explains anything with a small diagram or visual), `/grill-me` (sharpens an idea with questions before building), `/connect-tool` (connects any tool like Notion or Stripe) and `/use-style` (gives pages, apps and documents a named visual style like Vercel, Stripe or Linear) from this kit;
+   - the AIBlueprint base (`npx aiblueprint-cli@latest agents setup --skip`): its skills (apex, plan...), agents, the statusline, the security hooks that block dangerous commands, and the `cc` / `cx` shortcuts in the terminal;
+   - `skill-manager` (installs, updates or removes a skill from a name or a link, and creates or fixes their own skills; it replaces the AIBlueprint one), `/show-me` (explains anything with a small diagram or visual), `/grill-me` (sharpens an idea with questions before building), `/connect-tool` (connects any tool like Notion or Stripe) and `/use-style` (gives pages, apps and documents a named visual style like Vercel, Stripe or Linear) from this kit;
    - `/wait-what` from Matt Pocock (`mattpocock/skills`): explains what the agent is doing right now, in plain words.
    On Windows without bash, run the three `npx` lines of [scripts/initialize.sh](scripts/initialize.sh) one by one in PowerShell.
 3. Every skill lands once in `~/.agents/skills/` (the single source, Codex reads it there), and `~/.claude/skills/` only links to it. The script ends with an `ok` or `MISS` line per skill: fix a `FAIL` or `MISS` by rerunning its line and reading the error, never by copying files by hand into `~/.claude/skills`.

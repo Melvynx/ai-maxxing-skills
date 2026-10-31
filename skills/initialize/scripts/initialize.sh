@@ -23,13 +23,13 @@ step() {
 
 # 1. AIBlueprint base: skills, agents, statusline, security hooks, cc/cx shortcuts
 step "aiblueprint" npx -y aiblueprint-cli@latest agents setup --skip
-# 2-3, 5-6. show-me, grill-me, connect-tool and use-style from the AI Maxxing kit
-step "show-me grill-me connect-tool use-style" npx -y skills add Melvynx/ai-maxxing-skills -g -a claude-code -a codex -s show-me -s grill-me -s connect-tool -s use-style -y
+# 2-3, 5-6. skill-manager (after AIBlueprint, so the kit one replaces its own), show-me, grill-me, connect-tool and use-style from the AI Maxxing kit
+step "skill-manager show-me grill-me connect-tool use-style" npx -y skills add Melvynx/ai-maxxing-skills -g -a claude-code -a codex -s skill-manager -s show-me -s grill-me -s connect-tool -s use-style -y
 # 4. wait-what by Matt Pocock
 step "wait-what" npx -y skills add mattpocock/skills -g -a claude-code -a codex -s wait-what -y
 
 echo
-for s in show-me grill-me wait-what connect-tool use-style; do
+for s in skill-manager show-me grill-me wait-what connect-tool use-style; do
   if [ -f "$HOME/.agents/skills/$s/SKILL.md" ] && [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then
     echo "ok   /$s"
   else
