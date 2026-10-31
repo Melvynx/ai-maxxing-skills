@@ -2,8 +2,6 @@
 
 Structured, builder-centric landing aesthetic. A technical spec sheet, not a marketing funnel.
 
-**Reference implementations:** `/aibuilder`, `/aiblueprint`, `/agents`
-
 ---
 
 ## Core vibe
@@ -33,8 +31,6 @@ Use existing design tokens. Do **not** invent a new palette.
 | Card | `--card` | Bordered panels |
 
 Status (sold out, success) may use the existing destructive/emerald tokens at low opacity.
-
-**Codelynx:** wrap pages in `theme-aiblueprint` (or the product theme class). See `.agents/styles/grid-theme.md` for token detail.
 
 ---
 
@@ -106,7 +102,7 @@ Responsive shell and section rhythm. Names vary by repo; the semantics stay the 
 ```
 
 ```tsx
-<div className="theme-aiblueprint bg-background text-foreground relative min-h-full overflow-x-hidden">
+<div className="bg-background text-foreground relative min-h-full overflow-x-hidden">
   <div className={GT_SHELL}>
     <div className="border-x border-b border-border bg-background">
       <PageHeader />

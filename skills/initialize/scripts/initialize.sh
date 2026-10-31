@@ -6,7 +6,7 @@
 set -u
 
 SKILLS="skill-manager show-me grill-me wait-what connect-tool use-style"
-# Developer skills an older version of this script installed with AIBlueprint: listed at the end, never removed here.
+# Developer skills an older version of this script installed: listed at the end, never removed here.
 OLD="apex arena app-icon appstore-connect agents-manager hooks-manager rules-manager environments-manager audit-memories audit-skills audit-test"
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -62,22 +62,22 @@ codex_settings() {
 step "codex settings" codex_settings
 
 # 4. Shortcuts: cc (Claude Code without questions), ccc (same, continues the last conversation), cx and cxc (Codex).
-#    Replaces the block an older run (or AIBlueprint) wrote, between the same markers.
+#    Replaces the block an older run wrote (old marker name included), so it is never added twice.
 shortcuts() {
   local rc block
-  block='# BEGIN AIBlueprint shell shortcuts
+  block='# BEGIN AI Maxxing shortcuts
 # Claude Code
 alias cc="claude --dangerously-skip-permissions"
 alias ccc="claude --dangerously-skip-permissions -c"
 # Codex
 alias cx="codex"
 alias cxc="codex resume --last"
-# END AIBlueprint shell shortcuts'
+# END AI Maxxing shortcuts'
   for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
     [ "$rc" = "$HOME/.zshrc" ] || [ -f "$rc" ] || continue
     touch "$rc"
     # drops the old block and the blank lines at the end, so a rerun leaves the file as it was
-    awk '/^# BEGIN AIBlueprint shell shortcuts/ {skip=1; next} skip && /^# END AIBlueprint shell shortcuts/ {skip=0; next} skip {next}
+    awk '/^# BEGIN (AI Maxxing|AIBlueprint shell) shortcuts/ {skip=1; next} skip && /^# END (AI Maxxing|AIBlueprint shell) shortcuts/ {skip=0; next} skip {next}
       /^$/ {blank++; next} {while (blank) {print ""; blank--} print}' "$rc" > "$rc.tmp" \
       && { cat "$rc.tmp"; echo; echo "$block"; } > "$rc" && rm -f "$rc.tmp"
   done
