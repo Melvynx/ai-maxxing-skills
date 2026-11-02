@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codex Images"
+  short_description: "Batch-generate reference-backed images with Codex"
+  default_prompt: "Use $codex-images to generate multiple final images with Codex from local prompts and reference files, then save clean outputs and a manifest in the repo."
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#4601FA"

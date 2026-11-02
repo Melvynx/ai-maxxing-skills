@@ -1,0 +1,505 @@
+#!/usr/bin/env node
+/**
+ * Batch image generation through Codex CLI.
+ *
+ * Usage:
+ *   .codex/scripts/image_gen --prompts '["White cap on grey background", "Red T-shirt product shot"]'
+ *   .codex/scripts/image_gen --prompt "Original smart T-shirt catalog image" --count 3
+ *   .codex/scripts/image_gen --prompts prompts.json --out .codex/scripts/output/tshirts
+ */
+import { spawn } from "node:child_process";
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = findRepoRoot(path.dirname(fileURLToPath(import.meta.url)));
+const codexHome = process.env.CODEX_HOME || path.join(process.env.HOME || "", ".codex");
+const generatedRoot = path.join(codexHome, "generated_images");
+const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+
+const args = parseArgs(process.argv.slice(2));
+
+if (args.help) {
+  printUsage();
+  process.exit(0);
+}
+
+const jobs = await buildJobs(args);
+if (jobs.length === 0) {
+  fail("Provide --prompts <json-array-or-file> or --prompt <text>.");
+}
+
+const batchSlug = slugify(args.name || jobs[0]?.name || jobs[0]?.prompt || "image-batch").slice(0, 42) || "image-batch";
+const outDir = path.resolve(
+  repoRoot,
+  args.out || path.join(".codex", "scripts", "output", `${batchSlug}-${timestamp()}`),
+);
+const concurrency = parsePositiveInt(args.concurrency, Math.min(3, jobs.length), "--concurrency");
+const codexBin = args.codexBin || "codex";
+const startedAt = Date.now();
+const before = await listGeneratedImages();
+
+console.log(`Output: ${path.relative(repoRoot, outDir)}`);
+console.log(`Jobs: ${jobs.length}, concurrency: ${concurrency}`);
+console.log(`Codex images root: ${generatedRoot}`);
+
+if (args.dryRun) {
+  for (const job of jobs) {
+    console.log(`\n--- job ${job.index} ---\n${job.prompt}`);
+  }
+  process.exit(0);
+}
+
+await mkdir(path.join(outDir, "logs"), { recursive: true });
+
+const results = await runPool(jobs, concurrency, (job) =>
+  runCodexJob({
+    job,
+    codexBin,
+    model: args.model,
+    profile: args.profile,
+    logDir: path.join(outDir, "logs"),
+  }),
+);
+
+const failed = results.filter((result) => result.exitCode !== 0);
+const after = await listGeneratedImages();
+const freshImages = Array.from(after.values())
+  .filter((entry) => !before.has(entry.filePath) && entry.mtimeMs >= startedAt - 5_000)
+  .sort((a, b) => a.mtimeMs - b.mtimeMs || a.filePath.localeCompare(b.filePath));
+const copyTasks = await buildCopyTasks({ jobs, results, freshImages });
+
+if (copyTasks.length === 0) {
+  await writeManifest(outDir, {
+    createdAt: new Date().toISOString(),
+    outDir,
+    generatedRoot,
+    jobs,
+    results,
+    copied: [],
+  });
+  fail(
+    [
+      "Codex finished without producing new files in $CODEX_HOME/generated_images.",
+      "The nested Codex CLI may not have the image_gen tool enabled, or the agent may have failed before generation.",
+      `Check logs in ${path.relative(repoRoot, path.join(outDir, "logs"))}.`,
+    ].join("\n"),
+    failed.length > 0 ? failed[0].exitCode : 2,
+  );
+}
+
+const copied = [];
+for (const task of copyTasks) {
+  const extension = path.extname(task.source.filePath).toLowerCase();
+  const cleanName = task.result.assetName || task.job.name || task.job.prompt;
+  const baseName = `${String(task.job.index).padStart(3, "0")}-${slugify(cleanName) || "image"}${extension}`;
+  const destination = await uniquePath(path.join(outDir, baseName));
+  await copyFile(task.source.filePath, destination);
+  copied.push({
+    path: path.relative(repoRoot, destination),
+    source: task.source.filePath,
+    promptIndex: task.job.index,
+    prompt: task.job.prompt,
+    name: task.result.assetName || null,
+    size: task.source.size,
+  });
+  console.log(`Copied ${path.relative(repoRoot, destination)}`);
+}
+
+await writeManifest(outDir, {
+  createdAt: new Date().toISOString(),
+  outDir,
+  generatedRoot,
+  jobs,
+  results,
+  copied,
+});
+
+if (failed.length > 0) {
+  fail(`${failed.length} Codex job(s) failed, but ${copied.length} image file(s) were copied.`, 1);
+}
+
+if (copied.length < jobs.length) {
+  fail(`Expected at least ${jobs.length} image file(s), copied ${copied.length}.`, 2);
+}
+
+console.log(`Done. Copied ${copied.length} image file(s) to ${path.relative(repoRoot, outDir)}.`);
+
+function parseArgs(argv) {
+  const parsed = {
+    count: "1",
+    concurrency: undefined,
+    out: undefined,
+    name: undefined,
+    prompt: undefined,
+    prompts: undefined,
+    model: undefined,
+    profile: undefined,
+    codexBin: undefined,
+    dryRun: false,
+    help: false,
+  };
+
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    if (arg === "-h" || arg === "--help") {
+      parsed.help = true;
+    } else if (arg === "--dry-run") {
+      parsed.dryRun = true;
+    } else if (arg.startsWith("--") && arg.includes("=")) {
+      const [key, ...rest] = arg.slice(2).split("=");
+      setArg(parsed, key, rest.join("="));
+    } else if (arg.startsWith("--")) {
+      const key = arg.slice(2);
+      if (["prompt", "prompts", "count", "concurrency", "out", "name", "model", "profile", "codex-bin"].includes(key)) {
+        const value = argv[++index];
+        if (!value) fail(`Missing value for --${key}`);
+        setArg(parsed, key, value);
+      } else {
+        fail(`Unknown option: ${arg}`);
+      }
+    } else {
+      fail(`Unexpected argument: ${arg}`);
+    }
+  }
+
+  return parsed;
+}
+
+function setArg(parsed, key, value) {
+  switch (key) {
+    case "codex-bin":
+      parsed.codexBin = value;
+      break;
+    case "prompt":
+    case "prompts":
+    case "count":
+    case "concurrency":
+    case "out":
+    case "name":
+    case "model":
+    case "profile":
+      parsed[key] = value;
+      break;
+    default:
+      fail(`Unknown option: --${key}`);
+  }
+}
+
+async function buildJobs(options) {
+  const prompts = [];
+  if (options.prompts) {
+    prompts.push(...(await readPromptsInput(options.prompts)));
+  }
+  if (options.prompt) {
+    const count = parsePositiveInt(options.count, 1, "--count");
+    for (let index = 0; index < count; index++) {
+      prompts.push({
+        prompt:
+          count === 1
+            ? options.prompt
+            : `${options.prompt}\n\nVariant: ${index + 1} of ${count}. Make this a distinct image while preserving the core request.`,
+        name: count === 1 ? undefined : `variant-${index + 1}`,
+      });
+    }
+  }
+
+  return prompts.map((entry, index) => ({
+    index: index + 1,
+    prompt: typeof entry === "string" ? entry : entry.prompt,
+    name: typeof entry === "string" ? undefined : entry.name,
+  }));
+}
+
+async function readPromptsInput(input) {
+  const trimmedInput = input.trim();
+  if (trimmedInput.startsWith("[")) {
+    return parsePromptsJson(trimmedInput);
+  }
+
+  const filePath = path.resolve(repoRoot, input);
+  if (!existsSync(filePath)) {
+    fail(`--prompts must be an inline JSON array or an existing file path: ${input}`);
+  }
+
+  const raw = await readFile(filePath, "utf8");
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  if (trimmed.startsWith("[")) {
+    return parsePromptsJson(trimmed);
+  }
+
+  return trimmed
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+}
+
+function parsePromptsJson(source) {
+  let value;
+  try {
+    value = JSON.parse(source);
+  } catch (error) {
+    fail(`Could not parse --prompts JSON: ${error.message}`);
+  }
+  if (!Array.isArray(value)) fail("--prompts JSON must be an array.");
+  return value.map((entry, index) => {
+    if (typeof entry === "string") return entry;
+    if (entry && typeof entry === "object" && typeof entry.prompt === "string") {
+      return {
+        prompt: entry.prompt,
+        name: typeof entry.name === "string" ? entry.name : undefined,
+      };
+    }
+    fail(`Invalid prompt entry at index ${index}. Use strings or { "prompt": "...", "name": "..." }.`);
+  });
+}
+
+async function runCodexJob({ job, codexBin, model, profile, logDir }) {
+  const logPath = path.join(logDir, `job-${String(job.index).padStart(3, "0")}.log`);
+  const prompt = [
+    "You are running inside a batch image-generation automation.",
+    "Use Codex's built-in image_gen tool to generate exactly one raster image for the prompt below.",
+    "Do not edit repository files. Do not ask follow-up questions. Do not generate SVG, HTML, or placeholders.",
+    "Choose a concise, human-readable, kebab-case asset name for the image.",
+    "After generation, reply with exactly these lines when possible:",
+    "ASSET_NAME: <clean-kebab-case-name>",
+    "IMAGE_PATH: <absolute generated image path>",
+    "",
+    "Image prompt:",
+    job.prompt,
+  ].join("\n");
+
+  const commandArgs = [
+    "--ask-for-approval",
+    "never",
+    "--sandbox",
+    "danger-full-access",
+    "exec",
+    "--skip-git-repo-check",
+    "--cd",
+    repoRoot,
+  ];
+  if (profile) commandArgs.push("--profile", profile);
+  if (model) commandArgs.push("--model", model);
+  commandArgs.push("-");
+
+  console.log(`Starting job ${job.index}`);
+
+  return await new Promise((resolve) => {
+    const child = spawn(codexBin, commandArgs, {
+      cwd: repoRoot,
+      env: process.env,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let log = `$ ${codexBin} ${commandArgs.join(" ")}\n\n${prompt}\n\n`;
+
+    child.stdout.on("data", (chunk) => {
+      process.stdout.write(`[${job.index}] ${chunk}`);
+      log += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      process.stderr.write(`[${job.index}] ${chunk}`);
+      log += chunk.toString();
+    });
+    child.on("error", async (error) => {
+      log += `\nERROR: ${error.stack || error.message}\n`;
+      await writeFile(logPath, log);
+      resolve({
+        index: job.index,
+        exitCode: 127,
+        logPath: path.relative(repoRoot, logPath),
+        error: error.message,
+        sessionId: extractSessionId(log),
+        assetName: extractAssetName(log),
+        generatedImages: extractGeneratedImagePaths(log),
+      });
+    });
+    child.on("close", async (exitCode) => {
+      await writeFile(logPath, log);
+      console.log(`Job ${job.index} exited ${exitCode ?? 0}`);
+      resolve({
+        index: job.index,
+        exitCode: exitCode ?? 0,
+        logPath: path.relative(repoRoot, logPath),
+        sessionId: extractSessionId(log),
+        assetName: extractAssetName(log),
+        generatedImages: extractGeneratedImagePaths(log),
+      });
+    });
+    child.stdin.end(prompt);
+  });
+}
+
+async function buildCopyTasks({ jobs, results, freshImages }) {
+  const freshByPath = new Map(freshImages.map((entry) => [entry.filePath, entry]));
+  const used = new Set();
+  const tasks = [];
+
+  for (const result of [...results].sort((a, b) => a.index - b.index)) {
+    const job = jobs[result.index - 1];
+    const reported = [...new Set(result.generatedImages || [])]
+      .map((filePath) => freshByPath.get(filePath))
+      .filter(Boolean);
+    const sessionGenerated = result.sessionId
+      ? freshImages.filter((entry) =>
+          entry.filePath.startsWith(path.join(generatedRoot, result.sessionId)),
+        )
+      : [];
+    const source = reported.at(-1) ?? sessionGenerated.at(-1);
+    if (source) {
+      used.add(source.filePath);
+      tasks.push({ job, result, source });
+    }
+  }
+
+  for (const job of jobs) {
+    if (tasks.some((task) => task.job.index === job.index)) continue;
+    const result = results[job.index - 1] || {};
+    const source = freshImages.find((entry) => !used.has(entry.filePath));
+    if (!source) continue;
+    used.add(source.filePath);
+    tasks.push({ job, result, source });
+  }
+
+  return tasks.sort((a, b) => a.job.index - b.job.index);
+}
+
+async function runPool(items, concurrency, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      while (next < items.length) {
+        const current = next++;
+        results[current] = await worker(items[current]);
+      }
+    }),
+  );
+
+  return results;
+}
+
+async function listGeneratedImages() {
+  const entries = new Map();
+  if (!existsSync(generatedRoot)) return entries;
+
+  async function walk(dir) {
+    const children = await readdir(dir, { withFileTypes: true });
+    for (const child of children) {
+      const filePath = path.join(dir, child.name);
+      if (child.isDirectory()) {
+        await walk(filePath);
+      } else if (child.isFile() && imageExtensions.has(path.extname(child.name).toLowerCase())) {
+        const info = await stat(filePath);
+        entries.set(filePath, { filePath, mtimeMs: info.mtimeMs, size: info.size });
+      }
+    }
+  }
+
+  await walk(generatedRoot);
+  return entries;
+}
+
+function extractGeneratedImagePaths(text) {
+  const escapedRoot = generatedRoot.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const sessionId = extractSessionId(text);
+  const escapedSessionId = sessionId?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pathRoot = escapedSessionId ? `${escapedRoot}\\/${escapedSessionId}` : escapedRoot;
+  const pattern = new RegExp(`${pathRoot}\\/[^\\s'"\`]+?\\.(?:png|jpe?g|webp)`, "gi");
+  return [...text.matchAll(pattern)].map((match) => match[0]);
+}
+
+function extractSessionId(text) {
+  return text.match(/session id:\s*([0-9a-f-]+)/i)?.[1];
+}
+
+function extractAssetName(text) {
+  const explicit = text.match(/ASSET_NAME:\s*([a-z0-9][a-z0-9-]{1,80})/i)?.[1];
+  if (explicit) return explicit.toLowerCase();
+  const loose = text.match(/(?:asset name|name):\s*`?([a-z0-9][a-z0-9-]{1,80})`?/i)?.[1];
+  if (loose) return loose.toLowerCase();
+  return undefined;
+}
+
+async function uniquePath(filePath) {
+  if (!existsSync(filePath)) return filePath;
+  const extension = path.extname(filePath);
+  const stem = filePath.slice(0, -extension.length);
+  for (let index = 2; ; index++) {
+    const candidate = `${stem}-${index}${extension}`;
+    if (!existsSync(candidate)) return candidate;
+  }
+}
+
+async function writeManifest(outDirPath, data) {
+  await mkdir(outDirPath, { recursive: true });
+  await writeFile(path.join(outDirPath, "manifest.json"), `${JSON.stringify(data, null, 2)}\n`);
+}
+
+function parsePositiveInt(value, fallback, label) {
+  if (value === undefined || value === null || value === "") return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed < 1) fail(`${label} must be a positive integer.`);
+  return parsed;
+}
+
+function findRepoRoot(start) {
+  let current = path.resolve(start);
+  while (current !== path.dirname(current)) {
+    if (existsSync(path.join(current, ".git")) || existsSync(path.join(current, "package.json"))) {
+      return current;
+    }
+    current = path.dirname(current);
+  }
+  return process.cwd();
+}
+
+function timestamp() {
+  return new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "").replace("T", "-");
+}
+
+function slugify(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+function fail(message, code = 1) {
+  console.error(message);
+  process.exit(code);
+}
+
+function printUsage() {
+  console.log(`Usage:
+  .codex/scripts/image_gen --prompts '["A cap on a light grey background", "A closed white T-shirt product shot"]'
+  .codex/scripts/image_gen --prompts prompts.json --out .codex/scripts/output/my-batch
+  .codex/scripts/image_gen --prompt "A smart closed T-shirt product thumbnail" --count 3
+
+Options:
+  --prompts <json|file>   Inline JSON array or a file containing JSON array/newline prompts.
+                          JSON entries can be strings or { "name": "clean-name", "prompt": "..." }.
+  --prompt <text>         Single prompt. Use with --count for variants.
+  --count <n>             Number of variants for --prompt. Default: 1.
+  --concurrency <n>       Codex jobs to run in parallel. Default: min(3, job count).
+  --out <dir>             Output directory. Default: .codex/scripts/output/<batch>-<timestamp>.
+  --name <slug>           Batch name used for default output directory.
+  --model <model>         Optional model passed to codex exec.
+  --profile <profile>     Optional profile passed to codex exec.
+  --codex-bin <path>      Codex binary. Default: codex.
+  --dry-run               Print jobs without generating.
+`);
+}
