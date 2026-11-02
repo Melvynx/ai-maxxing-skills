@@ -1,417 +1,610 @@
 <!DOCTYPE html>
+<!-- use-style example. Every file in examples/ shares this exact markup and script: only the <style> block (and its font link) changes. To add a style, copy any example and rewrite the <style> block. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Real Analysis · Is the $200 comparison honest?</title>
+<title>Northwind · Overview (new-york-times)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:#fff; --wash:#f7f7f7; --fg:#121212; --slate:#363636; --muted:#666; --faint:#999;
-    --rule:#121212; --rule-light:#e2e2e2;
-    --link:#326891; --blue:#567b95; --red:#d0021b;
-    --serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
-    --sans:'Libre Franklin', Helvetica, Arial, sans-serif;
-  }
+  /* ---- Shared structure (identical in every example) ---- */
   * { box-sizing:border-box; margin:0; padding:0; }
-  html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
-  body { font-family:var(--serif); background:var(--bg); color:var(--fg); line-height:1.5; -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:1100px; margin:0 auto; padding:0 24px; }
-  .mono, .num { font-variant-numeric:tabular-nums; }
-  .sans { font-family:var(--sans); }
-  .kicker { font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-  .meta { font-family:var(--sans); font-size:11.5px; font-weight:500; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  html { -webkit-text-size-adjust:100%; }
+  body { font-family:var(--font); background:var(--bg); color:var(--fg); line-height:1.5; font-size:14px; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration:none; }
+  button, input { font:inherit; color:inherit; }
+  button { cursor:pointer; background:none; border:0; }
+  svg { display:block; }
+  .num, .kpi-value, .ch-val, .ch-pct, .goal-split b, .tip { font-variant-numeric:tabular-nums; }
+  .mono { font-family:var(--font-mono); }
+  .muted { color:var(--muted); }
 
-  /* Masthead */
-  .topbar { display:flex; justify-content:space-between; align-items:center; padding:12px 0; font-family:var(--sans); font-size:12px; }
-  .topbar .date { color:var(--fg); }
-  .topbar .mkt { color:var(--muted); } .topbar .mkt b { color:var(--red); font-weight:600; }
-  .masthead { font-family:'UnifrakturCook', serif; font-weight:700; text-align:center; font-size:clamp(34px,7vw,62px); line-height:1.1; padding:8px 0 14px; letter-spacing:.01em; }
-  .topnav { display:flex; justify-content:center; flex-wrap:wrap; gap:6px 26px; border-top:2px solid var(--rule); border-bottom:2px solid var(--rule); padding:12px 0; }
-  .topnav a { font-family:var(--serif); font-size:16px; color:var(--fg); text-decoration:none; }
-  .topnav a:hover { color:var(--link); text-decoration:underline; }
-  .topnav a.active { font-weight:700; }
-  .livestrip { display:flex; flex-wrap:wrap; align-items:center; gap:8px 22px; padding:12px 0; border-bottom:1px solid var(--rule); font-family:var(--sans); font-size:13px; }
-  .livestrip .live { color:var(--red); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-  .livestrip .sep { color:var(--rule-light); }
-  .livestrip a { color:var(--fg); text-decoration:none; } .livestrip a:hover { text-decoration:underline; }
-  .livestrip .ago { color:var(--muted); }
+  .app { display:flex; min-height:100vh; }
+  .side { position:sticky; top:0; height:100vh; width:240px; flex-shrink:0; display:flex; flex-direction:column; background:var(--side-bg, var(--bg)); border-right:1px solid var(--border); }
+  .brand { display:flex; align-items:center; gap:10px; height:60px; padding:0 18px; }
+  .logo { display:grid; place-items:center; width:28px; height:28px; border-radius:var(--radius-sm); background:var(--accent); color:var(--accent-fg); font-weight:700; font-size:14px; }
+  .brand-name { font-weight:600; font-size:15px; }
+  .brand-plan { margin-left:auto; font-size:11px; font-weight:500; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
+  .nav { flex:1; padding:8px 10px; display:flex; flex-direction:column; gap:2px; overflow:auto; }
+  .nav-label { padding:16px 10px 6px; font-size:12px; font-weight:500; color:var(--subtle); }
+  .nav-label:first-child { padding-top:6px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:var(--radius-sm); color:var(--muted); font-weight:500; transition:background .15s, color .15s; }
+  .nav-item svg, .search svg, .icon-btn svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+  .nav-item:hover { background:var(--hover); color:var(--fg); }
+  .nav-item.is-active { background:var(--hover); color:var(--fg); }
+  .nav-badge { margin-left:auto; font-size:11px; padding:0 7px; border-radius:999px; background:var(--accent-soft); color:var(--accent-text, var(--fg)); font-weight:600; }
+  .user { display:flex; align-items:center; gap:10px; padding:14px 16px; border-top:1px solid var(--border); }
+  .avatar { display:grid; place-items:center; width:30px; height:30px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); font-size:11px; font-weight:600; color:var(--fg); flex-shrink:0; }
+  .avatar.sm { width:24px; height:24px; font-size:10px; }
+  .user-meta { display:flex; flex-direction:column; min-width:0; line-height:1.3; }
+  .user-meta b { font-weight:500; font-size:13px; }
+  .user-meta small { font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
 
-  /* Headline block */
-  .lead { padding:34px 0 30px; border-bottom:2px solid var(--rule); }
-  .lead .tagline { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
-  .lead .tagline .dot { width:7px; height:7px; border-radius:50%; background:var(--red); }
-  h1 { font-family:var(--serif); font-size:clamp(34px,6vw,58px); font-weight:700; letter-spacing:-0.01em; line-height:1.04; max-width:18ch; }
-  h1 .muted2 { font-style:italic; color:var(--slate); }
-  .byline { font-family:var(--sans); font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-top:18px; }
-  .lede { font-size:20px; line-height:1.45; margin-top:18px; max-width:62ch; color:var(--slate); }
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .top { display:flex; align-items:center; gap:16px; height:60px; padding:0 28px; border-bottom:1px solid var(--border); background:var(--top-bg, transparent); }
+  .crumbs { display:flex; align-items:center; gap:8px; color:var(--muted); white-space:nowrap; }
+  .crumbs b { color:var(--fg); font-weight:500; }
+  .crumb-sep { color:var(--subtle); }
+  .search { margin-left:auto; display:flex; align-items:center; gap:8px; width:300px; height:36px; padding:0 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--field-bg, var(--surface)); color:var(--muted); }
+  .search input { flex:1; min-width:0; border:0; outline:0; background:none; color:var(--fg); }
+  .search input::placeholder { color:var(--subtle); }
+  .search kbd { font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--border); color:var(--muted); }
+  .icon-btn { position:relative; display:grid; place-items:center; width:36px; height:36px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--muted); }
+  .icon-btn .dot { position:absolute; top:8px; right:9px; width:7px; height:7px; border-radius:999px; background:var(--bad); border:2px solid var(--surface); }
 
-  /* Stats row */
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:2px solid var(--rule); }
-  .stat { padding:24px 22px 26px; border-right:1px solid var(--rule); }
-  .stat:last-child { border-right:none; }
-  .stat .k { font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
-  .stat .v { font-family:var(--serif); font-size:40px; font-weight:700; letter-spacing:-0.02em; margin-top:12px; line-height:1; }
-  .stat .d { font-size:14px; color:var(--slate); margin-top:11px; }
+  .page { width:100%; max-width:1280px; margin:0 auto; padding:28px; display:flex; flex-direction:column; gap:20px; }
+  .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; padding-bottom:4px; }
+  .eyebrow { font-size:13px; color:var(--muted); margin-bottom:4px; }
+  h1 { font-family:var(--font-display, var(--font)); font-size:28px; font-weight:600; letter-spacing:-.02em; line-height:1.2; }
+  .lead { margin-top:6px; color:var(--muted); max-width:56ch; }
+  .actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
-  /* Sections */
-  section { padding:48px 0; border-bottom:1px solid var(--rule); }
-  .sec-head { margin-bottom:30px; max-width:74ch; }
-  .sec-head .step { font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--red); }
-  .sec-head h2 { font-family:var(--serif); font-size:clamp(24px,3.4vw,34px); font-weight:700; letter-spacing:-0.015em; margin-top:10px; line-height:1.1; }
-  .sec-head p { font-size:17px; line-height:1.55; color:var(--slate); margin-top:14px; }
+  .seg, .tabs { display:inline-flex; padding:3px; gap:2px; border-radius:var(--radius-sm); background:var(--surface-2); border:1px solid var(--border); }
+  .seg button, .tabs button { padding:4px 12px; border-radius:calc(var(--radius-sm) - 2px); font-size:13px; font-weight:500; color:var(--muted); transition:background .15s, color .15s; }
+  .seg button.is-active, .tabs button.is-active { background:var(--surface); color:var(--fg); box-shadow:var(--seg-shadow, 0 1px 2px rgba(0,0,0,.08)); }
+  .btn { display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 14px; border-radius:var(--radius-btn, var(--radius-sm)); border:1px solid var(--border-strong); background:var(--surface); color:var(--fg); font-weight:500; transition:background .15s, border-color .15s; }
+  .btn:hover { background:var(--hover); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:var(--accent-fg); }
+  .btn-primary:hover { background:var(--accent-hover, var(--accent)); filter:var(--accent-hover-filter, none); }
 
-  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid var(--rule); }
-  .grid-2 .panel:first-child { border-right:1px solid var(--rule); }
-  .panel { padding:24px 24px 8px; }
-  .grid-2 .panel:first-child { padding-left:0; } .grid-2 .panel:last-child { padding-right:0; }
-  .panel .ptitle { font-family:var(--serif); font-size:18px; font-weight:700; }
-  .panel .psub { font-family:var(--sans); font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
-  .chart-box { position:relative; height:300px; margin-top:18px; }
-  .chart-box.tall { height:240px; }
+  .kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px; }
+  .card, .kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .kpi { position:relative; padding:18px 18px 0; overflow:hidden; }
+  .kpi-label { color:var(--muted); font-weight:500; font-size:13px; }
+  .kpi-value { margin-top:6px; font-family:var(--font-display, var(--font)); font-size:28px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+  .kpi-foot { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; }
+  .kpi-note { color:var(--subtle); }
+  .delta { font-weight:600; padding:1px 7px; border-radius:999px; }
+  .delta.up { color:var(--good); background:var(--good-soft); }
+  .delta.down { color:var(--bad); background:var(--bad-soft); }
+  .spark { width:calc(100% + 36px); height:40px; margin:10px -18px 0; }
+  .spark-line { fill:none; stroke:var(--c1); stroke-width:1.75; }
+  .spark-area { fill:var(--c1); opacity:var(--spark-area-opacity, .1); }
 
-  .single .panel { padding:0; }
+  .row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:16px; }
+  .card { padding:20px; display:flex; flex-direction:column; min-width:0; }
+  .card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  h2 { font-family:var(--font-display, var(--font)); font-size:16px; font-weight:600; letter-spacing:-.01em; }
+  .card-sub { margin-top:2px; font-size:13px; color:var(--muted); }
+  .link { font-size:13px; font-weight:500; color:var(--link, var(--fg)); white-space:nowrap; }
+  .link:hover { text-decoration:underline; }
+  .chip { font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--accent-soft); color:var(--accent-text, var(--fg)); }
 
-  .legend { display:flex; gap:22px; flex-wrap:wrap; margin-top:18px; }
-  .legend span { font-family:var(--sans); display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--slate); }
-  .legend i { width:11px; height:11px; display:inline-block; }
+  .legend { display:flex; gap:16px; font-size:12px; color:var(--muted); margin:-6px 0 8px; }
+  .legend span, .tip span { display:inline-flex; align-items:center; gap:6px; }
+  .sw { display:inline-block; width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .sw-1 { background:var(--c1); } .sw-2 { background:var(--c2); } .sw-3 { background:var(--c3); } .sw-4 { background:var(--c4); } .sw-5 { background:var(--c5); }
+  .chart { position:relative; flex:1; min-height:240px; }
+  .chart-svg { overflow:visible; }
+  .grid-line { stroke:var(--grid); stroke-width:1; }
+  .axis { fill:var(--subtle); font-size:11px; font-family:var(--font-axis, var(--font)); }
+  .line-cur { fill:none; stroke:var(--c1); stroke-width:2; stroke-linejoin:round; }
+  .line-prev { fill:none; stroke:var(--c2); stroke-width:1.5; stroke-dasharray:4 4; }
+  .bar-cur { fill:var(--c1); rx:2; }
+  .bar-prev { fill:var(--c2); rx:2; }
+  .guide { stroke:var(--border-strong); stroke-width:1; }
+  .dot-cur { fill:var(--surface); stroke:var(--c1); stroke-width:2; }
+  .tip { position:absolute; top:6px; left:0; min-width:130px; display:flex; flex-direction:column; gap:2px; padding:8px 10px; font-size:12px; border-radius:var(--radius-sm); background:var(--tip-bg, var(--surface)); color:var(--tip-fg, var(--fg)); border:1px solid var(--border); box-shadow:0 6px 20px rgba(0,0,0,.14); pointer-events:none; opacity:0; transition:opacity .12s; }
+  .tip.on { opacity:1; }
+  .tip b { font-weight:600; margin-bottom:2px; }
 
-  .note { margin-top:20px; padding-top:18px; border-top:1px solid var(--rule-light); font-size:15.5px; line-height:1.55; color:var(--slate); max-width:80ch; }
-  .note b { color:var(--fg); font-weight:700; }
+  .donut-wrap { position:relative; width:168px; height:168px; margin:4px auto 18px; }
+  .donut { width:100%; height:100%; }
+  .donut-track { fill:none; stroke:var(--surface-2); stroke-width:14; }
+  .donut-seg { fill:none; stroke-width:14; }
+  .seg-1 { stroke:var(--c1); } .seg-2 { stroke:var(--c3); } .seg-3 { stroke:var(--c4); } .seg-4 { stroke:var(--c5); } .seg-5 { stroke:var(--c2); }
+  .channels .sw-2 { background:var(--c3); } .channels .sw-3 { background:var(--c4); } .channels .sw-4 { background:var(--c5); } .channels .sw-5 { background:var(--c2); }
+  .donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.2; }
+  .donut-center b { font-family:var(--font-display, var(--font)); font-size:22px; font-weight:600; letter-spacing:-.02em; }
+  .donut-center small { font-size:12px; color:var(--muted); }
+  .channels { list-style:none; display:flex; flex-direction:column; }
+  .channels li { display:grid; grid-template-columns:auto 1fr auto 40px; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); font-size:13px; }
+  .ch-val { font-weight:500; }
+  .ch-pct { text-align:right; color:var(--muted); }
 
-  /* Pull quote / big callout */
-  .big-callout { border-top:3px solid var(--rule); border-bottom:3px solid var(--rule); padding:32px 0; margin-top:8px; }
-  .big-callout .lbl { font-family:var(--sans); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
-  .big-callout .row { display:flex; flex-wrap:wrap; align-items:baseline; gap:14px 46px; margin-top:18px; }
-  .big-callout .row .v { font-family:var(--serif); font-size:54px; font-weight:700; letter-spacing:-0.02em; }
-  .big-callout .row .eq { font-family:var(--serif); font-size:34px; color:var(--faint); }
-  .big-callout .cap { font-size:16px; line-height:1.5; margin-top:18px; color:var(--slate); max-width:62ch; }
+  .table-card { padding-bottom:6px; }
+  .table-wrap { overflow-x:auto; margin:0 -20px; }
+  .table { width:100%; border-collapse:collapse; font-size:13px; }
+  .table th { text-align:left; font-weight:500; font-size:12px; color:var(--muted); padding:8px 20px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--th-bg, transparent); white-space:nowrap; }
+  .table td { padding:11px 20px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .table tr:last-child td { border-bottom:0; }
+  .table tbody tr { transition:background .12s; }
+  .table tbody tr:hover { background:var(--hover); }
+  .table .num { text-align:right; font-weight:500; }
+  .cust { display:inline-flex; align-items:center; gap:8px; font-weight:500; }
+  .status { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; padding:2px 9px 2px 7px; border-radius:999px; border:1px solid var(--border); }
+  .status i { width:6px; height:6px; border-radius:999px; background:currentColor; }
+  .s-paid { color:var(--good); background:var(--good-soft); border-color:transparent; }
+  .s-pending { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
+  .s-failed { color:var(--bad); background:var(--bad-soft); border-color:transparent; }
+  .s-refunded { color:var(--muted); }
 
-  .three { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--rule); }
-  .mini { padding:22px 22px 8px; border-right:1px solid var(--rule); }
-  .mini:last-child { border-right:none; padding-right:0; } .three .mini:first-child { padding-left:0; }
-  .mini .mt { font-family:var(--serif); font-size:17px; font-weight:700; } .mini .ms { font-family:var(--sans); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
-  .mini .cwrap { position:relative; height:150px; margin-top:14px; }
+  .progress { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+  .progress-fill { height:100%; border-radius:inherit; background:var(--c1); }
+  .goal-split { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+  .goal-split div { display:flex; flex-direction:column; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface-2); }
+  .goal-split small { font-size:12px; color:var(--muted); }
+  .goal-split b { font-size:18px; font-weight:600; letter-spacing:-.01em; }
+  .divider { height:1px; background:var(--border); margin:18px 0 14px; }
+  .sub-head { font-size:13px; font-weight:600; margin-bottom:6px; }
+  .tasks { list-style:none; display:flex; flex-direction:column; }
+  .tasks label { display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; font-size:13px; }
+  .tasks input, .switch { appearance:none; -webkit-appearance:none; flex-shrink:0; cursor:pointer; margin:0; }
+  .tasks input { width:16px; height:16px; border-radius:var(--check-radius, 4px); border:1.5px solid var(--border-strong); background:var(--surface); display:grid; place-items:center; transition:background .15s, border-color .15s; }
+  .tasks input:checked { background:var(--accent); border-color:var(--accent); }
+  .tasks input:checked::after { content:""; width:8px; height:4px; border-left:2px solid var(--accent-fg); border-bottom:2px solid var(--accent-fg); transform:translateY(-1px) rotate(-45deg); }
+  .tasks input:checked + span { color:var(--subtle); text-decoration:line-through; }
+  .toggle-row { margin-top:auto; padding-top:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); cursor:pointer; border-top:1px solid var(--border); }
+  .switch { position:relative; width:34px; height:20px; border-radius:999px; background:var(--border-strong); transition:background .15s; }
+  .switch::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:999px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2); transition:transform .15s; }
+  .switch:checked { background:var(--accent); }
+  .switch:checked::after { transform:translateX(14px); background:var(--switch-knob, #fff); }
 
-  .verdict-table { width:100%; border-collapse:collapse; border-top:2px solid var(--rule); }
-  .verdict-table td { padding:20px 4px; font-size:17px; line-height:1.5; border-bottom:1px solid var(--rule-light); vertical-align:top; }
-  .verdict-table td:first-child { font-family:var(--serif); font-weight:700; color:var(--fg); width:42%; padding-right:28px; }
-  .verdict-table td:last-child { color:var(--slate); }
-  .tag { font-family:var(--sans); font-size:10px; font-weight:700; padding:2px 7px; vertical-align:middle; margin-right:8px; letter-spacing:.04em; text-transform:uppercase; }
-  .tag.no { background:var(--red); color:#fff; } .tag.tie { background:var(--fg); color:#fff; }
-
-  footer { padding:44px 0 90px; }
-  footer .eyebrow { font-family:var(--sans); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:20px; display:block; border-top:2px solid var(--rule); padding-top:20px; }
-  footer ul { list-style:none; display:grid; gap:14px; max-width:84ch; }
-  footer li { font-size:15px; line-height:1.55; color:var(--slate); padding-left:20px; position:relative; }
-  footer li::before { content:""; position:absolute; left:0; top:9px; width:6px; height:6px; background:var(--fg); }
-  footer li b { color:var(--fg); }
-  footer a { color:var(--link); text-decoration:none; } footer a:hover { text-decoration:underline; }
-  footer .sig { font-family:var(--sans); margin-top:28px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--faint); }
-
-  @media (max-width:860px){
-    .stats{grid-template-columns:1fr 1fr;} .stat:nth-child(2n){border-right:none;}
-    .grid-2{grid-template-columns:1fr;} .grid-2 .panel:first-child{border-right:none;border-bottom:1px solid var(--rule);padding:24px 0 24px;}
-    .grid-2 .panel:last-child{padding:24px 0 8px;}
-    .three{grid-template-columns:1fr;} .mini{border-right:none;border-bottom:1px solid var(--rule);padding:22px 0 22px;}
+  @media (max-width: 1100px) {
+    .kpis { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .row { grid-template-columns:1fr; }
+    .search { width:220px; }
   }
-  @media (max-width:480px){ .stats{grid-template-columns:1fr;} .stat{border-right:none;border-bottom:1px solid var(--rule);} }
-
-  /* === responsive hardening (auto) === */
-  html, body { max-width:100%; overflow-x:hidden; }
-  img, canvas, svg, table { max-width:100%; }
-  .note, .mono, .lede, .big-callout .cap, .sec-head p, .stat .d, footer li { overflow-wrap:anywhere; word-break:break-word; }
-  @media (max-width:760px){
-    .grid-2, .three { grid-template-columns:1fr !important; }
-    .stats { grid-template-columns:1fr 1fr; }
-    .topnav, .nav, .topband .inner, .navpills, .hero { flex-wrap:wrap; }
-    .chart-box { height:260px; }
-    .chart-box.tall { height:240px; }
-    section { padding-top:40px; padding-bottom:40px; }
+  @media (max-width: 860px) {
+    .side { display:none; }
+    .top { padding:0 16px; }
+    .crumbs span, .crumb-sep { display:none; }
+    .search { width:auto; flex:1; }
+    .search kbd { display:none; }
+    .page { padding:20px 16px; }
   }
-  @media (max-width:560px){
-    .wrap { padding-left:16px; padding-right:16px; }
-    .stats { grid-template-columns:1fr; }
-    .big-callout { padding:24px 20px; }
-    .big-callout .row { gap:10px 22px; }
-    .big-callout .row .v { font-size:40px; }
-    .big-callout .row .eq { font-size:24px; }
-    .verdict-table, .verdict-table tbody, .verdict-table tr, .verdict-table td { display:block; width:100% !important; }
-    .verdict-table td { padding:14px 18px !important; }
-    .verdict-table td:first-child { padding-bottom:4px; }
-    .verdict-table td:last-child { padding-top:0; border-top:none !important; }
-    .chart-box { height:230px; }
-    .stat .v { font-size:32px; }
-    h1 { max-width:100% !important; }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns:1fr 1fr; gap:10px; }
+    .kpi { padding:14px 14px 0; }
+    .kpi-value { font-size:22px; }
+    .spark { width:calc(100% + 28px); margin:8px -14px 0; }
+    h1 { font-size:24px; }
+    .chart-card .card-head { flex-direction:column; }
   }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 
-
-  /* === chart responsive fix (auto) === */
-  .grid-2, .three { min-width:0; }
-  .grid-2 > *, .three > *, .panel, .mini, .stat { min-width:0; }
-  .chart-box, .cwrap { position:relative; width:100%; }
-  .chart-box canvas, .cwrap canvas { max-width:100% !important; }
-
+  /* ---- new-york-times: broadsheet, serif headlines, hairline rules, no boxes, near-zero color ---- */
+  :root {
+    --font:"Libre Franklin", Helvetica, Arial, sans-serif; --font-display:"Source Serif 4", Georgia, "Times New Roman", serif; --font-mono:"Libre Franklin", Helvetica, Arial, sans-serif;
+    --bg:#fff; --side-bg:#fff; --surface:#fff; --surface-2:#f7f7f7; --hover:#f7f7f7; --field-bg:#fff;
+    --fg:#121212; --muted:#666; --subtle:#999;
+    --border:#e2e2e2; --border-strong:#121212;
+    --accent:#567b95; --accent-fg:#fff; --accent-hover:#476a83; --accent-soft:#f7f7f7; --accent-text:#121212;
+    --good:#121212; --good-soft:transparent; --warn:#666; --warn-soft:transparent; --bad:#d0021b; --bad-soft:transparent;
+    --c1:#121212; --c2:#bbb; --c3:#666; --c4:#999; --c5:#cfcfcf;
+    --grid:#e2e2e2; --area-opacity:.06; --spark-area-opacity:.05;
+    --radius:0; --radius-sm:0; --shadow:none; --seg-shadow:none;
+    --tip-bg:#121212; --tip-fg:#fff; --link:#326891; --check-radius:0;
+  }
+  .side { border-right:1px solid #121212; }
+  .brand { height:64px; border-bottom:2px solid #121212; justify-content:center; }
+  .logo { display:none; }
+  .brand-name { font-family:"UnifrakturCook", serif; font-weight:700; font-size:26px; letter-spacing:0; }
+  .brand-plan { margin-left:0; border:0; padding:0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#666; align-self:flex-end; margin-bottom:18px; }
+  .nav { padding:8px 16px; gap:0; }
+  .nav-label { padding:18px 0 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#121212; border-bottom:1px solid #121212; margin-bottom:4px; }
+  .nav-label:first-child { padding-top:10px; }
+  .nav-item { padding:8px 0; color:#363636; font-family:var(--font-display); font-size:16px; font-weight:400; border-bottom:1px solid #e2e2e2; border-radius:0; }
+  .nav-item svg { display:none; }
+  .nav-item:hover { background:none; color:#121212; text-decoration:underline; }
+  .nav-item.is-active { background:none; color:#121212; font-weight:700; }
+  .nav-badge { background:none; color:#d0021b; font-family:var(--font); font-size:11px; font-weight:700; padding:0; }
+  .user { border-top:1px solid #121212; }
+  .avatar { background:#f7f7f7; border-color:#e2e2e2; font-weight:700; }
+  .top { height:64px; border-bottom:2px solid #121212; }
+  .crumbs { font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .crumbs b { font-weight:700; }
+  .search { border-color:#121212; height:34px; }
+  .search kbd { border-color:#e2e2e2; font-family:var(--font); }
+  .icon-btn { border-color:#121212; color:#121212; height:34px; width:34px; }
+  .icon-btn .dot { background:#d0021b; }
+  .page { gap:24px; }
+  .page-head { border-bottom:1px solid #121212; padding-bottom:20px; align-items:flex-end; }
+  .eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#121212; margin-bottom:6px; }
+  h1 { font-size:42px; font-weight:700; letter-spacing:-.01em; line-height:1.05; }
+  .lead { font-family:var(--font-display); font-size:18px; line-height:1.4; color:#363636; max-width:52ch; margin-top:8px; }
+  .seg, .tabs { border:1px solid #121212; padding:0; gap:0; background:#fff; }
+  .seg button, .tabs button { border-radius:0; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#666; padding:7px 12px; }
+  .seg button + button, .tabs button + button { border-left:1px solid #121212; }
+  .seg button.is-active, .tabs button.is-active { background:#121212; color:#fff; }
+  .btn { height:34px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; border-color:#121212; }
+  .btn:not(.btn-primary) { background:#fff; }
+  .btn:not(.btn-primary):hover { background:#f7f7f7; }
+  .btn-primary { border-color:#567b95; }
+  .kpis { gap:0; }
+  .kpi { border:0; padding:4px 20px 0; border-left:1px solid #e2e2e2; }
+  .kpi:first-child { border-left:0; padding-left:0; }
+  .kpi-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#666; }
+  .kpi-value { font-size:40px; font-weight:700; letter-spacing:-.01em; }
+  .delta { padding:0; font-weight:700; }
+  .kpi-note { text-transform:uppercase; letter-spacing:.05em; font-size:11px; }
+  .spark { width:100%; margin:8px 0 0; }
+  .kpi:first-child .spark { margin-left:0; }
+  .spark-line { stroke-width:1.25; }
+  .row { gap:0; border-top:2px solid #121212; }
+  .card { border:0; padding:14px 0 0; background:none; }
+  .row > .card:first-child { padding-right:28px; border-right:1px solid #121212; }
+  .row > .card:last-child { padding-left:28px; }
+  .card-head { padding-bottom:0; }
+  h2 { font-size:22px; font-weight:700; letter-spacing:-.005em; }
+  .card-sub { font-family:var(--font-display); font-size:15px; color:#363636; }
+  .link { font-size:13px; }
+  .chip { background:none; color:#121212; font-family:var(--font-display); font-size:20px; padding:0; }
+  .legend { text-transform:uppercase; letter-spacing:.05em; font-size:10px; font-weight:600; }
+  .sw { border-radius:0; }
+  .axis { text-transform:uppercase; font-size:10px; letter-spacing:.03em; }
+  .line-cur { stroke-width:1.75; }
+  .line-prev { stroke-width:1.25; stroke-dasharray:3 3; }
+  .bar-cur, .bar-prev { rx:0; }
+  .tip { border-color:#121212; }
+  .tip b { text-transform:uppercase; letter-spacing:.05em; font-size:11px; }
+  .donut-track { stroke:#f7f7f7; }
+  .donut-center b { font-size:26px; font-weight:700; }
+  .donut-center small { text-transform:uppercase; letter-spacing:.06em; font-size:10px; font-weight:700; }
+  .channels li { border-top-color:#e2e2e2; }
+  .channels li:first-child { border-top-color:#121212; }
+  .ch-name { font-family:var(--font-display); font-size:15px; }
+  .ch-val { font-weight:700; }
+  .table-wrap { margin:0; }
+  .table th { padding:8px 16px 8px 0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#121212; border-top:1px solid #121212; border-bottom:1px solid #121212; }
+  .table td { padding:11px 16px 11px 0; border-bottom-color:#e2e2e2; }
+  .table th:last-child, .table td:last-child { padding-right:0; }
+  .table tbody tr:hover { background:none; }
+  .table tbody tr:hover .cust { text-decoration:underline; }
+  .table td.mono { font-weight:600; color:#666; }
+  .cust { font-family:var(--font-display); font-size:15px; font-weight:600; }
+  .avatar.sm { display:none; }
+  .table td.num { font-family:var(--font-display); font-size:15px; font-weight:700; }
+  .status { border:0; padding:0; border-radius:0; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; background:none !important; }
+  .status i { border-radius:0; width:5px; height:5px; }
+  .s-refunded { color:#999; text-decoration:line-through; }
+  .progress { height:6px; border-radius:0; background:#e2e2e2; }
+  .goal-split { gap:0; border-top:1px solid #e2e2e2; border-bottom:1px solid #e2e2e2; }
+  .goal-split div { background:none; padding:10px 0; }
+  .goal-split div + div { border-left:1px solid #e2e2e2; padding-left:16px; }
+  .goal-split small { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+  .goal-split b { font-family:var(--font-display); font-size:24px; font-weight:700; }
+  .divider { background:#121212; }
+  .sub-head { font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .tasks label { font-family:var(--font-display); font-size:15px; border-bottom:1px solid #e2e2e2; }
+  .tasks input { border-color:#121212; }
+  .tasks input:checked { background:#121212; border-color:#121212; }
+  .toggle-row { border-top:0; color:#363636; }
+  .switch { background:#e2e2e2; }
+  .switch:checked { background:#121212; }
+  .switch::after { border-radius:999px; }
+  @media (max-width:1100px) {
+    .kpi:nth-child(3) { border-left:0; padding-left:0; }
+    .kpi:nth-child(-n+2) { border-bottom:1px solid #e2e2e2; padding-bottom:12px; }
+    .row > .card:first-child { padding-right:0; border-right:0; }
+    .row > .card:last-child { padding-left:0; margin-top:24px; border-top:1px solid #121212; }
+  }
+  @media (max-width:520px) {
+    h1 { font-size:32px; }
+    .kpi { padding:4px 12px 0; }
+    .kpi:nth-child(odd) { padding-left:0; border-left:0; }
+    .kpi:nth-child(even) { border-left:1px solid #e2e2e2; }
+    .kpi-value { font-size:30px; }
+    .spark { width:100%; margin:8px 0 0; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <div class="topbar">
-    <span class="date">Friday, June 5, 2026</span>
-    <span class="mkt">Output value tie · <b>Claude −7% ↓</b></span>
-  </div>
-  <div class="masthead">The Agent Times</div>
-  <nav class="topnav">
-    <a href="index.html">All reports</a>
-    <a href="codex-max20/Codex-Max20-report.html">Codex $200</a>
-    <a href="claude-max20/Claude-Max20-report.html">Claude Max 20x</a>
-    <a class="active" href="#">Real Analysis</a>
-  </nav>
-  <div class="livestrip">
-    <span class="live">● Methodology audit</span>
-    <span class="sep">|</span>
-    <a href="#">Is the comparison honest?</a>
-    <span class="ago">updated 2m ago</span>
-  </div>
-
-  <div class="lead">
-    <div class="tagline"><span class="dot"></span><span class="kicker" style="color:var(--red)">Methodology Audit</span></div>
-    <h1>Most of the "value" is <span class="muted2">cache, not work.</span></h1>
-    <div class="byline">By agents-analysis · Token Value Desk</div>
-    <p class="lede">The reports say Codex $200 is worth ~$8,600/mo and Claude $200 ~$18,900/mo. Here is the proof that comparing those two numbers as "Claude is worth 2× more" is misleading - and what is actually true.</p>
-  </div>
-
-  <div class="stats num">
-    <div class="stat"><div class="k">Your tokens today</div><div class="v">92.7%</div><div class="d">are cache reads, not new work</div></div>
-    <div class="stat"><div class="k">That are output</div><div class="v">0.6%</div><div class="d">the only real "work" line</div></div>
-    <div class="stat"><div class="k">Real output value</div><div class="v">≈ tie</div><div class="d">$977 vs $911 / mo</div></div>
-    <div class="stat"><div class="k">The 2× gap</div><div class="v">artifact</div><div class="d">cache pricing + extrapolation</div></div>
-  </div>
-
-  <!-- 1 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">01 / The Symptom</div>
-      <h2>Your tokens today: where they go vs where the dollars go</h2>
-      <p>Measured from your own logs (<span class="sans" style="font-size:14px">~/.claude/projects</span>, deduped by request, 2026-05-30). Almost everything is cache. Output - the actual work - is a sliver of the count and a small share of the dollars.</p>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">N</span>
+      <span class="brand-name">Northwind</span>
+      <span class="brand-plan">Pro</span>
     </div>
-    <div class="grid-2">
-      <div class="panel">
-        <div class="ptitle">Token count</div>
-        <div class="psub">89.8M tokens today</div>
-        <div class="chart-box"><canvas id="countD"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="ptitle">API-equivalent dollars</div>
-        <div class="psub">$113 today, at Opus list</div>
-        <div class="chart-box"><canvas id="dollarD"></canvas></div>
-      </div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a class="nav-item is-active" href="#"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4v4h6V4zM4 20h6v-4H4z"/></svg><span>Overview</span></a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0"/></svg><span>Orders</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M16 19a4 4 0 0 0-8 0M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM21 18a3 3 0 0 0-4-2.8M17 10a2.5 2.5 0 1 0 0-5"/></svg><span>Customers</span></a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span>Products</span></a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Reports</span></a>
+      <div class="nav-label">Account</div>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg><span>Billing</span></a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a7.7 7.7 0 0 0 0-6l-2 .5a6 6 0 0 0-1.6-1.6l.5-2a7.7 7.7 0 0 0-6 0l.5 2A6 6 0 0 0 7.2 9.5l-2-.5a7.7 7.7 0 0 0 0 6l2-.5a6 6 0 0 0 1.6 1.6l-.5 2a7.7 7.7 0 0 0 6 0l-.5-2a6 6 0 0 0 1.6-1.6z"/></svg><span>Settings</span></a>
+    </nav>
+    <div class="user">
+      <span class="avatar">MC</span>
+      <span class="user-meta"><b>Maya Chen</b><small>maya@northwind.co</small></span>
     </div>
-    <div class="legend">
-      <span><i style="background:var(--s3)"></i> Cache read</span>
-      <span><i style="background:var(--s2)"></i> Cache write</span>
-      <span><i style="background:var(--s1)"></i> Output (real work)</span>
-      <span><i style="background:var(--s4)"></i> Fresh input</span>
-    </div>
-    <p class="note"><b>~87% of the dollars are caching overhead; ~12% is output.</b> Caching does not stop the model re-reading the whole context on every call - it just makes the re-read cheap. The token count stays huge because it equals context size × number of calls (~110K re-read × 758 calls today).</p>
-  </section>
+  </aside>
 
-  <!-- 2 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">02 / The Core Proof</div>
-      <h2>Both $200 plans, decomposed to the same monthly basis</h2>
-      <p>Each plan's value split into output vs cache, priced at its own provider's API list, scaled to 100% of monthly quota. The output slivers (black) are nearly identical. The entire headline gap is the gray cache bars.</p>
-    </div>
-    <div class="single">
-      <div class="panel">
-        <div class="chart-box tall"><canvas id="decomp"></canvas></div>
-        <div class="legend">
-          <span><i style="background:var(--s1)"></i> Output (real work)</span>
-          <span><i style="background:var(--s3)"></i> Cache re-read ($0.50/1M)</span>
-          <span><i style="background:var(--s2)"></i> First read (input / cache-write)</span>
+  <main class="main">
+    <header class="top">
+      <div class="crumbs"><span>Northwind</span><span class="crumb-sep">/</span><b>Overview</b></div>
+      <label class="search">
+        <svg viewBox="0 0 24 24"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+        <input type="search" placeholder="Search orders, customers…" />
+        <kbd>⌘K</kbd>
+      </label>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg><i class="dot"></i></button>
+    </header>
+
+    <div class="page">
+      <section class="page-head">
+        <div class="page-title">
+          <p class="eyebrow">Monday, November 2</p>
+          <h1>Good morning, Maya</h1>
+          <p class="lead">Revenue is up 12.4% on the previous 30 days. Two orders need your attention.</p>
         </div>
-        <p class="note">Codex total <b>$8,589</b> · Claude total <b>$18,891</b>. Output: <b>$977 vs $911</b>. Input/cache side: <b>$7,612 vs $17,980 (2.4×)</b> - that is where 100% of the gap lives.</p>
-      </div>
-    </div>
-  </section>
+        <div class="actions">
+          <div class="seg" role="tablist" data-group="range">
+            <button>7d</button><button class="is-active">30d</button><button>90d</button>
+          </div>
+          <button class="btn">Export</button>
+          <button class="btn btn-primary">New report</button>
+        </div>
+      </section>
 
-  <!-- 3 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">03 / The Punchline</div>
-      <h2>Strip away cache: the real work is a tie</h2>
-      <p>Output is the least gameable metric - the tokens the model actually generated for you. On a monthly, full-quota basis the two $200 plans are within ~7% of each other.</p>
-    </div>
-    <div class="big-callout">
-      <div class="lbl">Output value per month (real work)</div>
-      <div class="row num">
-        <div><div class="v">$977</div><div class="lbl" style="margin-top:8px">Codex $200</div></div>
-        <div class="eq">≈</div>
-        <div><div class="v">$911</div><div class="lbl" style="margin-top:8px">Claude $200</div></div>
-      </div>
-      <p class="cap">In raw output tokens: ~32.6M/mo (Codex) vs ~36.4M/mo (Claude) - a 1.12× edge, nowhere near the 2× the headline implies.</p>
-    </div>
-  </section>
+      <section class="kpis">
+        <article class="kpi">
+          <div class="kpi-label">Revenue</div>
+          <div class="kpi-value">$48,290</div>
+          <div class="kpi-foot"><span class="delta up">+12.4%</span><span class="kpi-note">vs previous</span></div>
+          <svg class="spark" data-spark="12,14,13,16,15,18,17,21,20,24" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+        </article>
+        <article class="kpi">
+          <div class="kpi-label">Orders</div>
+          <div class="kpi-value">1,284</div>
+          <div class="kpi-foot"><span class="delta up">+8.1%</span><span class="kpi-note">vs previous</span></div>
+          <svg class="spark" data-spark="20,22,21,23,22,25,24,24,26,27" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+        </article>
+        <article class="kpi">
+          <div class="kpi-label">New customers</div>
+          <div class="kpi-value">342</div>
+          <div class="kpi-foot"><span class="delta up">+3.2%</span><span class="kpi-note">vs previous</span></div>
+          <svg class="spark" data-spark="10,11,10,12,11,11,12,13,12,13" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+        </article>
+        <article class="kpi">
+          <div class="kpi-label">Conversion</div>
+          <div class="kpi-value">3.6%</div>
+          <div class="kpi-foot"><span class="delta down">−0.4%</span><span class="kpi-note">vs previous</span></div>
+          <svg class="spark" data-spark="18,17,18,16,17,15,16,15,14,14" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+        </article>
+      </section>
 
-  <!-- 4 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">04 / Why The Headline Looks 2×</div>
-      <h2>Three calculation asymmetries inflate Claude's number</h2>
-      <p>None of these reflect more work delivered. They reflect how the number was built.</p>
-    </div>
-    <div class="three">
-      <div class="mini">
-        <div class="mt">Extrapolation multiplier</div>
-        <div class="ms">lower = more reliable</div>
-        <div class="cwrap"><canvas id="aExtrap"></canvas></div>
-        <p class="note" style="margin-top:14px;padding-top:14px">Codex was measured at 99% quota. Claude was one day at 10%, multiplied ×10 - any error amplified 10×.</p>
-      </div>
-      <div class="mini">
-        <div class="mt">Price to cache context</div>
-        <div class="ms">first read, per 1M</div>
-        <div class="cwrap"><canvas id="aPrice"></canvas></div>
-        <p class="note" style="margin-top:14px;padding-top:14px">Anthropic charges 2× for a "cache write" vs OpenAI's normal input. Same behavior, pricier meter.</p>
-      </div>
-      <div class="mini">
-        <div class="mt">Context re-reads</div>
-        <div class="ms">per output token</div>
-        <div class="cwrap"><canvas id="aReread"></canvas></div>
-        <p class="note" style="margin-top:14px;padding-top:14px">Claude re-reads ~2× more context per unit of output, bloating the cache-read line.</p>
-      </div>
-    </div>
-  </section>
+      <section class="row">
+        <article class="card chart-card">
+          <div class="card-head">
+            <div>
+              <h2 id="chart-title">Revenue</h2>
+              <p class="card-sub" id="chart-sub">Daily, last 30 days against the previous period</p>
+            </div>
+            <div class="tabs" role="tablist" data-group="metric">
+              <button class="is-active" data-metric="revenue">Revenue</button><button data-metric="orders">Orders</button>
+            </div>
+          </div>
+          <div class="legend" id="legend">
+            <span><i class="sw sw-1"></i>This period</span>
+            <span><i class="sw sw-2"></i>Previous period</span>
+          </div>
+          <div class="chart" id="main-chart"><div class="tip" id="tip"></div></div>
+        </article>
 
-  <!-- 5 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">05 / Watch The Gap Melt</div>
-      <h2>Remove the artifacts and $18.9k slides toward $8.6k</h2>
-      <p>Starting from Claude's headline, undo each calculation artifact in turn. The gap to Codex's measured number shrinks at every step.</p>
-    </div>
-    <div class="single">
-      <div class="panel">
-        <div class="chart-box tall"><canvas id="bridge"></canvas></div>
-        <p class="note">Re-pricing cache writes at Codex's rate: $18,891 → <b>$15,562</b>. Adjusting the one-day ×10 extrapolation for a plausibly heavy sample day (÷1.5): → <b>~$12,600</b>. Codex, essentially measured: <b>$8,589</b>. The residual is genuine extra context churn, not extra work.</p>
-      </div>
-    </div>
-  </section>
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2>Sales by channel</h2>
+              <p class="card-sub">Share of revenue</p>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <svg class="donut" id="donut" viewBox="0 0 120 120"></svg>
+            <div class="donut-center"><b>$48.3k</b><small>total</small></div>
+          </div>
+          <ul class="channels" id="channels"></ul>
+        </article>
+      </section>
 
-  <!-- 6 -->
-  <section>
-    <div class="sec-head">
-      <div class="step">06 / The Honest Answer</div>
-      <h2>What is actually true</h2>
+      <section class="row">
+        <article class="card table-card">
+          <div class="card-head">
+            <div>
+              <h2>Recent orders</h2>
+              <p class="card-sub">Last 6 of 1,284</p>
+            </div>
+            <a class="link" href="#">View all</a>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th>Date</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">#3210</td><td><span class="cust"><span class="avatar sm">OK</span>Olivia Kent</span></td><td><span class="status s-paid"><i></i>Paid</span></td><td class="muted">Nov 2, 09:14</td><td class="num">$1,240.00</td></tr>
+                <tr><td class="mono">#3209</td><td><span class="cust"><span class="avatar sm">LB</span>Liam Brooks</span></td><td><span class="status s-pending"><i></i>Pending</span></td><td class="muted">Nov 2, 08:51</td><td class="num">$389.50</td></tr>
+                <tr><td class="mono">#3208</td><td><span class="cust"><span class="avatar sm">SR</span>Sofia Ramos</span></td><td><span class="status s-paid"><i></i>Paid</span></td><td class="muted">Nov 1, 18:03</td><td class="num">$2,015.00</td></tr>
+                <tr><td class="mono">#3207</td><td><span class="cust"><span class="avatar sm">NW</span>Noah Walsh</span></td><td><span class="status s-failed"><i></i>Failed</span></td><td class="muted">Nov 1, 16:40</td><td class="num">$129.00</td></tr>
+                <tr><td class="mono">#3206</td><td><span class="cust"><span class="avatar sm">AT</span>Ava Turner</span></td><td><span class="status s-refunded"><i></i>Refunded</span></td><td class="muted">Nov 1, 11:22</td><td class="num">$74.90</td></tr>
+                <tr><td class="mono">#3205</td><td><span class="cust"><span class="avatar sm">EM</span>Ethan Moore</span></td><td><span class="status s-paid"><i></i>Paid</span></td><td class="muted">Oct 31, 21:47</td><td class="num">$860.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2>November goal</h2>
+              <p class="card-sub">$31,400 of $60,000</p>
+            </div>
+            <span class="chip">52%</span>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:52%"></div></div>
+          <div class="goal-split">
+            <div><small>Days left</small><b>28</b></div>
+            <div><small>Daily target</small><b>$1,021</b></div>
+          </div>
+          <div class="divider"></div>
+          <h3 class="sub-head">Today</h3>
+          <ul class="tasks">
+            <li><label><input type="checkbox" checked /><span>Ship 14 paid orders</span></label></li>
+            <li><label><input type="checkbox" /><span>Retry payment for #3207</span></label></li>
+            <li><label><input type="checkbox" /><span>Reply to Liam about #3209</span></label></li>
+          </ul>
+          <label class="toggle-row">
+            <span>Email me the daily report</span>
+            <input type="checkbox" class="switch" checked />
+          </label>
+        </article>
+      </section>
     </div>
-    <table class="verdict-table">
-      <tr>
-        <td>Which $200 plan does more real work?</td>
-        <td><span class="tag tie">tie</span>Roughly equal - output ~$977 vs ~$911 / mo.</td>
-      </tr>
-      <tr>
-        <td>Which API would bill more for this usage at full quota?</td>
-        <td>Claude - but because it charges more for the same caching and the figure is a ×10 extrapolation, not because you get more done.</td>
-      </tr>
-      <tr>
-        <td>Is "$9k vs $20k = Claude worth 2×" a fair comparison?</td>
-        <td><span class="tag no">no</span>It compares a measurement to a one-day ×10 guess, across two pricing models that treat caching differently, on a metric dominated by context overhead.</td>
-      </tr>
-    </table>
-    <p class="note">The deeper trap is the word <b>"value."</b> API-equivalent value measures what the provider's meter would charge, so it rewards verbose context, heavy cache re-reads, and a pricier cache-write rate. A plan can score "2× more valuable" while delivering identical output. That is exactly what happened here.</p>
-  </section>
-
-  <footer>
-    <span class="eyebrow">Confidence &amp; Sources</span>
-    <ul>
-      <li><b>Proven from data</b> (high): your usage is 92.7% cache / 0.6% output; output value is ~equal; 100% of the gap is cache; first-read price is $5 (Codex) vs $10 (Claude); scale factors ×4.38 vs ×43.33.</li>
-      <li><b>Inferred from the math</b> (high): normalizing cache-write price drops Claude to ~$15.6k; the ×10 extrapolation makes the headline unreliable.</li>
-      <li><b>External reporting</b> (medium): exact subscription-limit weighting, Opus-vs-Sonnet ratio, and the 2026 cache-TTL change are documented by press, not by this repo's data.</li>
-      <li>Data: <span class="sans" style="font-size:13px">result/melvynx/codex/2026-05-30T09-13-16Z</span>, <span class="sans" style="font-size:13px">result/taka-foo/claude</span>. Full write-up: <a href="real-analysis.md">real-analysis.md</a>.</li>
-      <li>Sources: <a href="https://support.claude.com/en/articles/14552983-models-usage-and-limits-in-claude-code">Anthropic limits</a> · <a href="https://www.theregister.com/2026/03/31/anthropic_claude_code_limits/">The Register</a> · <a href="https://www.xda-developers.com/anthropic-quietly-nerfed-claude-code-hour-cache-token-budget/">XDA cache nerf</a>.</li>
-    </ul>
-    <div class="sig">Real Analysis · generated from agents-analysis data · API-equivalent value is not the provider's real cost.</div>
-  </footer>
-
+  </main>
 </div>
 
 <script>
-  // grayscale palette + single red accent (NYT data viz)
-  const FG="#121212", S2="#666666", S3="#bbbbbb", S4="#e2e2e2", RED="#d0021b", GRID="#e2e2e2";
-  document.documentElement.style.setProperty('--s1', FG);
-  document.documentElement.style.setProperty('--s2', S2);
-  document.documentElement.style.setProperty('--s3', S3);
-  document.documentElement.style.setProperty('--s4', S4);
+(() => {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n) => css.getPropertyValue(n).trim();
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
 
-  Chart.defaults.font.family = "Libre Franklin, Helvetica, Arial, sans-serif";
-  Chart.defaults.color = "#999";
-  Chart.defaults.font.size = 12;
-  const usd = (v) => "$" + v.toLocaleString("en-US",{maximumFractionDigits:0});
-  const tip = { backgroundColor:"#121212", padding:10, cornerRadius:0, titleFont:{family:"Libre Franklin"}, bodyFont:{family:"Libre Franklin"} };
+  // Deterministic data: 30 days ending Nov 2.
+  const rnd = (s) => () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  const r1 = rnd(7), r2 = rnd(42);
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(2026, 9, 4 + i);
+    const wk = [0, 6].includes(d.getDay()) ? 0.82 : 1;
+    return {
+      label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      revenue: Math.round((1250 + i * 16 + r1() * 420) * wk),
+      prev: Math.round((1180 + i * 6 + r2() * 360) * wk),
+      orders: Math.round((34 + i * 0.5 + r1() * 12) * wk),
+      prevOrders: Math.round((32 + i * 0.2 + r2() * 10) * wk),
+    };
+  });
+  const money = (n) => "$" + n.toLocaleString("en-US");
 
-  function dough(id, data, fmt){
-    new Chart(document.getElementById(id), {
-      type:"doughnut",
-      data:{ labels:["Cache read","Cache write","Output","Fresh input"],
-        datasets:[{ data, backgroundColor:[S3,S2,FG,S4], borderColor:"#fff", borderWidth:3, hoverOffset:6 }] },
-      options:{ responsive:true, maintainAspectRatio:false, cutout:"60%",
-        plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{ label:(c)=>c.label+": "+fmt(c.parsed) }} } }
-    });
-  }
-  dough("countD", [83.3,5.7,0.5,0.3], (v)=>v+"M tokens");
-  dough("dollarD", [41.64,56.93,13.23,1.48], (v)=>"$"+v.toFixed(2));
-
-  new Chart(document.getElementById("decomp"), {
-    type:"bar",
-    data:{ labels:["Codex $200","Claude $200"],
-      datasets:[
-        { label:"Output (real work)", data:[977,911], backgroundColor:FG },
-        { label:"Cache re-read", data:[5303,11319], backgroundColor:S3 },
-        { label:"First read (input/cache-write)", data:[2309,6661], backgroundColor:S2 }
-      ] },
-    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{ label:(c)=>c.dataset.label+": "+usd(c.parsed.x) }} },
-      scales:{ x:{ stacked:true, grid:{color:GRID}, border:{display:false}, ticks:{ callback:(v)=>"$"+(v/1000)+"k" } },
-               y:{ stacked:true, grid:{display:false}, border:{color:FG}, ticks:{ font:{family:"Source Serif 4",size:15,weight:700}, color:FG } } } }
+  // Sparklines
+  document.querySelectorAll("[data-spark]").forEach((svg) => {
+    const pts = svg.dataset.spark.split(",").map(Number);
+    const min = Math.min(...pts), max = Math.max(...pts);
+    const xy = pts.map((p, i) => [(i / (pts.length - 1)) * 100, 28 - ((p - min) / (max - min || 1)) * 24]);
+    const d = xy.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    el("path", { d: d + " L100 32 L0 32 Z", class: "spark-area" }, svg);
+    el("path", { d, class: "spark-line", "vector-effect": "non-scaling-stroke" }, svg);
   });
 
-  function mini(id, vals, fmt, max){
-    new Chart(document.getElementById(id), {
-      type:"bar",
-      data:{ labels:["Codex","Claude"], datasets:[{ data:vals, backgroundColor:[S2,FG], barPercentage:0.6 }] },
-      options:{ responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{ label:(c)=>fmt(c.parsed.y) }} },
-        scales:{ x:{ grid:{display:false}, border:{color:FG}, ticks:{font:{family:"Libre Franklin",size:12}} },
-                 y:{ grid:{color:GRID}, border:{display:false}, max, ticks:{ callback:fmt } } } }
+  // Main chart
+  const box = document.getElementById("main-chart");
+  const tip = document.getElementById("tip");
+  let metric = "revenue";
+  function draw() {
+    box.querySelector("svg")?.remove();
+    const W = box.clientWidth, H = box.clientHeight || 260;
+    const pad = { l: 44, r: 8, t: 10, b: 26 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const cur = days.map((d) => (metric === "revenue" ? d.revenue : d.orders));
+    const prv = days.map((d) => (metric === "revenue" ? d.prev : d.prevOrders));
+    const top = Math.ceil(Math.max(...cur, ...prv) / (metric === "revenue" ? 500 : 10)) * (metric === "revenue" ? 500 : 10);
+    const x = (i) => pad.l + (i / (days.length - 1)) * iw;
+    const y = (n) => pad.t + ih - (n / top) * ih;
+    const svg = el("svg", { width: W, height: H, class: "chart-svg" });
+    box.prepend(svg);
+    for (let k = 0; k <= 4; k++) {
+      const val = (top / 4) * k, yy = y(val);
+      el("line", { x1: pad.l, x2: W - pad.r, y1: yy, y2: yy, class: "grid-line" }, svg);
+      const t = el("text", { x: pad.l - 8, y: yy + 4, "text-anchor": "end", class: "axis" }, svg);
+      t.textContent = metric === "revenue" ? (val >= 1000 ? "$" + val / 1000 + "k" : "$" + val) : val;
+    }
+    [0, 7, 14, 21, 29].forEach((i) => {
+      const t = el("text", { x: x(i), y: H - 6, "text-anchor": i === 0 ? "start" : i === 29 ? "end" : "middle", class: "axis" }, svg);
+      t.textContent = days[i].label;
     });
+    if (metric === "revenue") {
+      const line = (arr) => arr.map((n, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(n).toFixed(1)).join(" ");
+      const grad = el("linearGradient", { id: "fill", x1: 0, y1: 0, x2: 0, y2: 1 }, el("defs", {}, svg));
+      el("stop", { offset: "0%", "stop-color": v("--c1"), "stop-opacity": v("--area-opacity") || "0.18" }, grad);
+      el("stop", { offset: "100%", "stop-color": v("--c1"), "stop-opacity": 0 }, grad);
+      el("path", { d: line(prv), class: "line-prev" }, svg);
+      el("path", { d: line(cur) + ` L${x(29)} ${y(0)} L${x(0)} ${y(0)} Z`, fill: "url(#fill)", class: "area" }, svg);
+      el("path", { d: line(cur), class: "line-cur" }, svg);
+    } else {
+      const bw = (iw / days.length) * 0.36;
+      cur.forEach((n, i) => {
+        const cx = pad.l + ((i + 0.5) / days.length) * iw;
+        el("rect", { x: cx - bw - 1, y: y(prv[i]), width: bw, height: y(0) - y(prv[i]), class: "bar-prev" }, svg);
+        el("rect", { x: cx + 1, y: y(n), width: bw, height: y(0) - y(n), class: "bar-cur" }, svg);
+      });
+    }
+    const guide = el("line", { y1: pad.t, y2: pad.t + ih, class: "guide", visibility: "hidden" }, svg);
+    const dot = el("circle", { r: 4, class: "dot-cur", visibility: "hidden" }, svg);
+    svg.onmousemove = (e) => {
+      const r = svg.getBoundingClientRect();
+      const i = Math.max(0, Math.min(29, Math.round(((e.clientX - r.left - pad.l) / iw) * 29)));
+      const gx = metric === "revenue" ? x(i) : pad.l + ((i + 0.5) / days.length) * iw;
+      guide.setAttribute("x1", gx); guide.setAttribute("x2", gx); guide.setAttribute("visibility", "visible");
+      if (metric === "revenue") { dot.setAttribute("cx", gx); dot.setAttribute("cy", y(cur[i])); dot.setAttribute("visibility", "visible"); }
+      const fmt = metric === "revenue" ? money : (n) => n + " orders";
+      tip.innerHTML = `<b>${days[i].label}</b><span><i class="sw sw-1"></i>${fmt(cur[i])}</span><span><i class="sw sw-2"></i>${fmt(prv[i])}</span>`;
+      tip.style.left = Math.min(gx + 12, W - 150) + "px";
+      tip.classList.add("on");
+    };
+    svg.onmouseleave = () => { guide.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.classList.remove("on"); };
   }
-  mini("aExtrap", [4.38,43.33], (v)=>"×"+(typeof v==="number"?v.toFixed(v<10?1:0):v), 48);
-  mini("aPrice", [5,10], (v)=>"$"+v, 12);
-  mini("aReread", [326,621], (v)=>v.toFixed(0), 700);
+  draw();
+  new ResizeObserver(draw).observe(box);
 
-  new Chart(document.getElementById("bridge"), {
-    type:"bar",
-    data:{ labels:["Claude headline","− cache-write premium","− 1-day extrapolation","Codex (measured)"],
-      datasets:[{ data:[18891,15562,12600,8589], backgroundColor:[RED,S2,S3,FG], barPercentage:0.62 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{ label:(c)=>usd(c.parsed.y)+" / mo" }} },
-      scales:{ x:{ grid:{display:false}, border:{color:FG}, ticks:{font:{family:"Libre Franklin",size:11}} },
-               y:{ grid:{color:GRID}, border:{display:false}, ticks:{ callback:(v)=>"$"+(v/1000)+"k" } } } }
+  // Segmented controls and tabs
+  document.querySelectorAll("[data-group]").forEach((g) =>
+    g.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      g.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
+      if (b.dataset.metric) {
+        metric = b.dataset.metric;
+        document.getElementById("chart-title").textContent = metric === "revenue" ? "Revenue" : "Orders";
+        draw();
+      }
+    })
+  );
+
+  // Donut
+  const channels = [["Organic search", 18420], ["Paid ads", 11240], ["Email", 8890], ["Referral", 5810], ["Social", 3930]];
+  const total = channels.reduce((s, c) => s + c[1], 0);
+  const donut = document.getElementById("donut");
+  const R = 48, C = 2 * Math.PI * R;
+  let acc = 0;
+  el("circle", { cx: 60, cy: 60, r: R, class: "donut-track" }, donut);
+  channels.forEach(([, val], i) => {
+    const len = (val / total) * C;
+    el("circle", { cx: 60, cy: 60, r: R, class: "donut-seg seg-" + (i + 1), "stroke-dasharray": `${Math.max(len - 2, 0)} ${C}`, "stroke-dashoffset": -acc, transform: "rotate(-90 60 60)" }, donut);
+    acc += len;
   });
+  document.getElementById("channels").innerHTML = channels
+    .map(([name, val], i) => `<li><i class="sw sw-${i + 1}"></i><span class="ch-name">${name}</span><span class="ch-val">${money(val)}</span><span class="ch-pct">${Math.round((val / total) * 100)}%</span></li>`)
+    .join("");
+})();
 </script>
-
-<script>
-  // force Chart.js to reflow on viewport changes (belt-and-suspenders)
-  (function(){
-    function resizeAll(){ if(window.Chart && Chart.instances){ Object.values(Chart.instances).forEach(function(c){ try{c.resize();}catch(e){} }); } }
-    var t; window.addEventListener('resize', function(){ clearTimeout(t); t=setTimeout(resizeAll,120); });
-    window.addEventListener('orientationchange', function(){ setTimeout(resizeAll,200); });
-  })();
-</script>
-
 </body>
 </html>

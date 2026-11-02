@@ -20,15 +20,13 @@
   .meta { padding:14px 16px; }
   .name { font-weight:600; font-family:ui-monospace,monospace; font-size:14px; }
   .desc { color:var(--muted); font-size:14px; margin-top:2px; }
-  .more { color:var(--muted); font-size:14px; margin-top:32px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Pick your style</h1>
-  <p class="lead">The same page in each style. Click one to see it full size, then tell your agent the name you like.</p>
+  <p class="lead">The same dashboard in each style: numbers, charts, a table and app controls. Click one to see it full size, then tell your agent the name you like.</p>
   <div class="grid" id="grid"></div>
-  <p class="more">Also available without a preview: <b>grid</b> (technical spec-sheet landing), <b>black-grid</b> (austere black developer tool), <b>ios-app</b> (iPhone app screens).</p>
 </div>
 <script>
   const styles = [
@@ -42,6 +40,9 @@
     ["dusk", "Dark data dashboard over a twilight sky"],
     ["luma", "Black canvas, rounded cards, friendly events app"],
     ["testspirite", "Light paper dashboard, neat and calm"],
+    ["grid", "Technical spec sheet on a visible grid"],
+    ["black-grid", "Austere black developer tool on a grid"],
+    ["ios-app", "White paper and ink, one yellow spark, native iPhone feel"],
   ];
   const grid = document.getElementById("grid");
   for (const [name, desc] of styles) {
