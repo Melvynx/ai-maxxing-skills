@@ -14,6 +14,7 @@ This is the owner's server, running 24/7. Every tool below is already signed in:
 | Put an app online with HTTPS and the sign-in page | `expose` | `expose status` |
 | Who can sign in (email + code, admin or member) | `expose user` | `expose user list` |
 | The agent itself: model, chat, dashboard | `hermes-setup` | `hermes-setup check` |
+| Who may talk to the agent on Discord (the `Hermes access` role; they join the server first) | `hermes-discord access add\|remove <username>` | `hermes-discord access list` |
 | More skills from the ai-maxxing package | `hermes-setup add <skill>`, see the `ai-maxxing-skills` skill | `hermes-setup catalog` |
 
 ## Cloudflare on this server

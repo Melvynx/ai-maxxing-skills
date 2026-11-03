@@ -11,13 +11,7 @@ Telegram, about 3 minutes:
 3. In their own Terminal they run `ssh -t hermes 'hermes gateway setup'`, choose Telegram, paste the token and type their ID as the only allowed user. The wizard saves `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_USERS` in `~/.hermes/.env`.
 4. Run `hermes-setup gateway`, then the user sends "hello" to their bot. If the bot answers with a pairing code instead of a reply, approve it with `ssh hermes 'hermes pairing approve telegram <CODE>'`.
 
-Discord, about 5 minutes:
-
-1. Open https://discord.com/developers/applications in Chrome AI (the user signs in if asked). New Application, any name, then the Bot tab: turn on "Message Content Intent" and save. The user clicks "Reset Token" and copies it themselves; never read it from the page.
-2. In the OAuth2 tab, URL Generator: scopes `bot` and `applications.commands`, permissions "Send Messages", "Read Message History", "View Channels" and "Attach Files". The user opens the generated link and adds the bot to their own server.
-3. Their user ID: Discord Settings, Advanced, turn on Developer Mode, then right click their name and "Copy User ID".
-4. In their own Terminal they run `ssh -t hermes 'hermes gateway setup'`, choose Discord, paste the token and their ID. The wizard saves `DISCORD_BOT_TOKEN` and `DISCORD_ALLOWED_USERS`.
-5. Run `hermes-setup gateway`, then the user sends "hello" to the bot in a direct message. A pairing code means `ssh hermes 'hermes pairing approve discord <CODE>'`.
+Discord: follow [discord.md](discord.md). You create the bot in Chrome AI, its access goes to the server without being printed, and `hermes-discord` turns on its intents, allows the owner, and makes a private channel and an access role in the user's server.
 
 Only the IDs in the allowed list can talk to the agent; never set `GATEWAY_ALLOW_ALL_USERS`. If the bot stays silent, read `ssh hermes 'journalctl --user -u hermes-gateway -n 50 --no-pager'` (or without `--user` for a system service) and `ssh hermes 'hermes doctor'`.
 
