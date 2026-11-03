@@ -3,7 +3,7 @@ name: codex-images
 description: Batch-generate raster images through Codex CLI and its built-in image_gen. Use when the user needs several images at once, prompt arrays, catalog variants, or images built from reference pictures (YouTube thumbnails, product shots).
 ---
 
-Needs the Codex CLI installed and signed in (`codex --version`). If it is missing, tell the user to install it with `npm i -g @openai/codex` and run `codex` once to sign in.
+Needs the Codex CLI installed and signed in: check `codex --version` and `codex login status`. If either fails, read [references/setup-codex.md](references/setup-codex.md) and guide the user through it before going on.
 
 Install the bundled CLI at the target repo root (`scripts/image_gen` is in this skill's folder). If `.codex/scripts/image_gen` already exists, inspect it before replacing.
 
