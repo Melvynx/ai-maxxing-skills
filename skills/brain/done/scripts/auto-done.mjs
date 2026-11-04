@@ -34,7 +34,7 @@ const IDLE_MINUTES = 20;
 const MIN_PROMPTS = 2;
 const GIVE_UP_HOURS = 24; // a too-short conversation is dropped after this
 const MAX_CHARS = 250_000; // keep the end of very long conversations
-const CLAUDE_MODEL = "sonnet"; // Codex runs with the user's own default model
+const CLAUDE_MODEL = { done: "sonnet", dream: "opus" }; // the daily dream gets the strongest model; Codex runs with the user's own default
 const RETRY_MINUTES = 30;
 const MAX_ATTEMPTS = 3;
 const LIMIT_HOURS = 3; // an agent that hit its usage limit is skipped this long
@@ -317,7 +317,7 @@ function run(jobPath) {
   const args =
     agent === "codex"
       ? ["exec", "--ephemeral", "--skip-git-repo-check", "-s", "workspace-write", "-C", cwd, "-"]
-      : ["-p", "--model", CLAUDE_MODEL, "--no-session-persistence", "--permission-mode", "acceptEdits", "--allowedTools", CLAUDE_TOOLS];
+      : ["-p", "--model", CLAUDE_MODEL[kind], "--no-session-persistence", "--permission-mode", "acceptEdits", "--allowedTools", CLAUDE_TOOLS];
   const child = spawn(bin, args, {
     cwd,
     stdio: [fs.openSync(path.join(dir, `${id}.prompt.txt`), "r"), log, log], // prompt on stdin: no quoting issues

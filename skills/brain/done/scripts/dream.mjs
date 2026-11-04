@@ -40,10 +40,13 @@ export function git(cwd, args, timeout = 20_000) {
 
 // The last commit named "dream..." that only touched what a dream may touch: a change to
 // the scripts named "dream: ..." is not a dream, and undo-dream must never take it back.
-export function lastDream(brain) {
+// A dream taken back with undo-dream is skipped, so the next one reads its days again.
+export function lastDream(brain, { skipUndone = true } = {}) {
   try {
+    const undone = skipUndone ? git(brain, ["log", "-50", "--grep=This reverts commit", "--format=%B"]) : "";
     for (const line of git(brain, ["log", "-20", "--grep=^dream", "--format=%H %ct %s"]).split("\n").filter(Boolean)) {
       const [hash, at, ...subject] = line.split(" ");
+      if (undone.includes(`This reverts commit ${hash}`)) continue;
       const files = git(brain, ["diff-tree", "--no-commit-id", "--name-only", "-r", "--root", hash]).split("\n").filter(Boolean);
       if (files.length && files.every((f) => ALLOWED.test(f))) return { hash, at: Number(at) * 1000, subject: subject.join(" ") };
     }
@@ -211,7 +214,7 @@ function hasStatus(text) {
 
 // Takes the last dream back with a new commit (nothing is lost: the dream stays in git).
 export function undoDream(brain) {
-  const last = lastDream(brain);
+  const last = lastDream(brain, { skipUndone: false }); // run twice, it says "already undone"
   if (!last.hash) return "No dream to undo.";
   if (git(brain, ["log", "--format=%H", `--grep=This reverts commit ${last.hash}`])) return `Already undone: ${last.subject}`;
   git(brain, ["revert", "--no-edit", last.hash]);
