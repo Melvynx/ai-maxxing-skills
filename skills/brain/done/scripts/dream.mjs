@@ -29,6 +29,11 @@ const SIGNAL = new RegExp(
 const NOT_USER =
   /^\s*(This session is being continued from a previous conversation|Background \(from the session|\[Request interrupted by user|<(cross-session-message|side-sessions-event|ci-monitor-event|command-name|command-message)[\s>])/;
 
+// The patch kept aside, untrimmed: a trim cuts its last blank context lines and git can no longer apply it.
+function diff(wt, from) {
+  return execFileSync("git", ["-C", wt, "diff", from, "HEAD"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+}
+
 export function git(cwd, args, timeout = 20_000) {
   return execFileSync("git", ["-C", cwd, ...args], {
     encoding: "utf8",
@@ -254,7 +259,7 @@ export function closeDream(brain, copy, message) {
   git(wt, ["commit", "-q", "-m", subject]);
 
   const problems = checkDream(wt, base);
-  if (problems.length) return { changed: true, problems, patch: git(wt, ["diff", base, "HEAD"]) + "\n", subject };
+  if (problems.length) return { changed: true, problems, patch: diff(wt, base), subject };
 
   // the brain moved while the dream ran (a save, the user): replay the dream on top
   const head = git(brain, ["rev-parse", "HEAD"]);
@@ -265,13 +270,13 @@ export function closeDream(brain, copy, message) {
       try {
         git(wt, ["rebase", "--abort"]);
       } catch {}
-      return { changed: true, conflict: true, patch: git(wt, ["diff", base, "HEAD"]) + "\n", subject };
+      return { changed: true, conflict: true, patch: diff(wt, base), subject };
     }
   }
   try {
     git(brain, ["merge", "-q", "--ff-only", git(wt, ["rev-parse", "HEAD"])]); // refuses when the user is editing a file the dream changed
   } catch {
-    return { changed: true, conflict: true, patch: git(wt, ["diff", "HEAD~1", "HEAD"]) + "\n", subject };
+    return { changed: true, conflict: true, patch: diff(wt, "HEAD~1"), subject };
   }
   return { changed: true, merged: true, subject };
 }
