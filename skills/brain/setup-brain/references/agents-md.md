@@ -61,6 +61,6 @@ The brain skills live in this folder: `.agents/skills/<name>/`, the single sourc
 - `/create-project`: a short interview, then the project folder with its `About.md` and `Roadmap.md`. Use it for every new project.
 - `projects`: load, list or archive a project ("load project X").
 - `/done`: at the end of a work session, updates the project's `About.md` (with the reason behind each decision), `Roadmap.md` and today's journal, then commits the brain. When the user forgets, it runs on its own in the background about 20 minutes after the conversation goes quiet.
-- `/dream`: tidies the whole brain from what was said and saved since the last dream (merges duplicates, fixes facts that are no longer true, real dates instead of "tomorrow"). It also runs on its own in the background about once a day, in a copy checked before it reaches the brain; "annule le dernier rêve" takes the last one back.
+- `/dream`: tidies the whole brain from what was said and saved since the last dream (each rule written once in one place, facts that are no longer true fixed, real dates instead of "tomorrow"). It also runs on its own in the background about once a day, in a copy checked before it reaches the brain; "annule le dernier rêve" takes the last one back.
 - `/cleanup`: proposes what to archive, merge or move. Offer it when `projects/` holds projects untouched for 60 days.
 ```

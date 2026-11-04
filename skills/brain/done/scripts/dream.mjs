@@ -209,9 +209,13 @@ function filesToCheck(root, since) {
 }
 
 function memoryFiles(root) {
-  return git(root, ["ls-files", "-z", "AGENTS.md", "projects", "notes"])
-    .split("\0")
-    .filter((f) => MEMORY.test(f) && fs.existsSync(path.join(root, f)));
+  try {
+    return git(root, ["ls-files", "-z", "AGENTS.md", "projects", "notes"])
+      .split("\0")
+      .filter((f) => MEMORY.test(f) && fs.existsSync(path.join(root, f)));
+  } catch {
+    return []; // not a git repo yet: the notes still work, without these two parts
+  }
 }
 
 function short(text, max) {
