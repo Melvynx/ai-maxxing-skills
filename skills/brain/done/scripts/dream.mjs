@@ -16,6 +16,7 @@ const FIRST_DAYS = 7; // the first dream reads this far back
 const MAX_CHARS = 150_000;
 const MAX_CONVERSATIONS = 100; // Anthropic's Dreams take 1 to 100 sessions
 const MAX_SIGNALS = 50;
+const MAX_SIGNAL_CHARS = 800; // a correction is short; a long message is a brief or a paste
 const MAX_AGENTS_LINES = 200;
 const ALLOWED = /^(AGENTS\.md$|projects\/|notes\/)/; // where a dream may write
 // What the user says to correct the agent or set a rule, in English and French.
@@ -23,6 +24,10 @@ const SIGNAL = new RegExp(
   String.raw`^\s*(no|non|nope|nan)(?!\p{L})|(?<!\p{L})(wrong|actually|instead|i said|i told you|always|never|remember|from now on|don['’]t|stop doing|pas comme ça|c['’]est faux|en fait|plutôt|j['’]ai dit|je t['’]ai dit|toujours|jamais|retiens|souviens|désormais|à partir de maintenant|arrête|ne fais pas|n['’]oublie pas)(?!\p{L})`,
   "iu",
 );
+// Lines the tools write as the user that the user never typed: summaries after a context
+// reset, briefs from another session, app events.
+const NOT_USER =
+  /^\s*(This session is being continued from a previous conversation|Background \(from the session|\[Request interrupted by user|<(cross-session-message|side-sessions-event|ci-monitor-event|command-name|command-message)[\s>])/;
 
 export function git(cwd, args, timeout = 20_000) {
   return execFileSync("git", ["-C", cwd, ...args], {
@@ -58,10 +63,14 @@ export function writeDreamNotes(brain, file) {
       continue;
     }
     const convo = readConversation(lines, 0, { id: t.id, since });
-    if (convo.background || !convo.userTexts.length) continue;
+    const said = convo.userTexts.filter((x) => !NOT_USER.test(x));
+    if (convo.background || !said.length) continue;
     const when = new Date(t.lastActive).toISOString().slice(0, 16).replace("T", " ");
-    for (const x of convo.userTexts) if (SIGNAL.test(x)) signals.push(`- ${when} (${t.tool}): ${short(x, 300)}`);
-    parts.push(`### ${when} (${t.tool}, ${t.id})\n\n${convo.userTexts.map((x) => `- ${short(x, 1500)}`).join("\n")}`);
+    for (const x of said) {
+      const own = x.replace(/<pasted_content[^>]*>[\s\S]*?(<\/pasted_content[^>]*>|$)/g, "").trim(); // a paste is not the user's words
+      if (own && own.length <= MAX_SIGNAL_CHARS && SIGNAL.test(own)) signals.push(`- ${when} (${t.tool}): ${short(own, 300)}`);
+    }
+    parts.push(`### ${when} (${t.tool}, ${t.id})\n\n${said.map((x) => `- ${short(x, 1500)}`).join("\n")}`);
   }
   let text = parts.join("\n\n") || "(no conversation found on disk)";
   if (text.length > MAX_CHARS) text = "[... start cut ...]\n\n" + text.slice(-MAX_CHARS);
