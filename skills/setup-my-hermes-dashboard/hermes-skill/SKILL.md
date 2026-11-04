@@ -25,7 +25,7 @@ The owner has a personal web dashboard next to you. Every module on it is one th
 
 To push data from a cron or a task (a morning report, today's numbers), the module needs a write route (step 5 of the recipe). Then `dashboard-cli post /api/v1/<name> '<json>'`. If `dashboard-cli get /api/v1/whoami` says there is no key, run `dashboard key` once.
 
-Several people may sign in (`expose user list`): admins see everything, members see the modules but not System monitoring (Conversations, Infra, Models, the Hermes link) or the API keys. A module that only admins should see or change uses `getViewer()` or `requireAdmin()` from `src/server/viewer.ts` (see the AGENTS.md). To let someone in: `expose user add <email> member --invite`.
+Several people may sign in (`expose user list`): admins see everything, members see the modules but not System monitoring (Conversations, Infra, Models, the Hermes link), the API keys or the Team page. A module that only admins should see or change uses `getViewer()` or `requireAdmin()` from `src/server/viewer.ts` (see the AGENTS.md). To let someone in: `expose user add <email> member --invite`. Admins can also add and remove members on the Team page (`/team`); when it says the list is unavailable, they ask you.
 
 An Infra task on your board (title "Fix: ...") came from the owner pressing "Fix": follow it, never open a port in the firewall, and ask the owner before anything that could cut their access (SSH, firewall, a restart of the server). `dashboard-cli get /api/v1/infra` gives the last check and audit.
 

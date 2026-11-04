@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /** One key per module. A new module adds its key here, a drawing in DRAWINGS and a name in SECTION_NAMES. */
-export type Section = "hermes" | "conversations" | "infra" | "models";
+export type Section = "hermes" | "conversations" | "infra" | "models" | "team";
 
 /** Indigo tile shared by every mark; `public/favicon.svg` is the Hermes drawing on the same tile. */
 function Tile({ className, section, children }: { className?: string; section: Section; children: React.ReactNode }) {
@@ -61,6 +61,15 @@ const DRAWINGS: Record<Section, React.ReactNode> = {
       <path d="M16 11.5l1.2 3.3 3.3 1.2-3.3 1.2-1.2 3.3-1.2-3.3-3.3-1.2 3.3-1.2z" fill="#4f46e5" />
     </>
   ),
+  // Two people, one in front: the team.
+  team: (
+    <>
+      <circle cx="20.5" cy="11.5" r="3.3" fill="#c7d2fe" />
+      <path d="M14.5 24c.4-4 2.9-6.5 6-6.5s5.6 2.5 6 6.5z" fill="#c7d2fe" />
+      <circle cx="12.5" cy="12" r="3.8" fill="#fff" />
+      <path d="M5.5 25.5c.5-4.6 3.3-7.4 7-7.4s6.5 2.8 7 7.4z" fill="#fff" />
+    </>
+  ),
 };
 
 export function SectionMark({ section, className }: { section: Section; className?: string }) {
@@ -76,6 +85,7 @@ export const SECTION_NAMES: Record<Section, string> = {
   conversations: "Conversations",
   infra: "Infra",
   models: "Models",
+  team: "Team",
 };
 
 /** Page heading: the section mark + its name (the name is visually hidden on phones, where the header is tight). */

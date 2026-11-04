@@ -12,7 +12,9 @@ The owner's personal dashboard, next to their Hermes agent. It ships with no mod
 The gate signs people in by email code and tells the dashboard who is there. Users and roles live on the server (`expose user list`, `expose user add <email> member --invite`).
 
 - `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `email` is null on a saved IP or for a call from the server itself (both count as admin).
-- Admins see everything. Members see every module, but not System monitoring (Conversations, Infra, Models, the Hermes link) or the API keys page.
+- Admins see everything. Members see every module, but not System monitoring (Conversations, Infra, Models, the Hermes link), the API keys page or the Team page.
+- **Team** (`/team`, built in, `src/server/gate.ts`): the list of who can sign in, with their role. An admin adds a member (with or without an invite email) or removes one. Admins never change from there, and nobody removes themself: to make someone an admin, the owner asks Hermes. `expose` runs as root only; when the service cannot run it, the page says the list is unavailable and to ask Hermes. `GATE_COMMANDS` in `/etc/dashboard.env`: `on` (the default in production), `dry-run` (the default elsewhere: it only says what it would run) or `off`.
+- API keys and Team sit in the account menu at the bottom of the rail (`KEYS` and `TEAM` in `src/components/hub/sidebar.tsx`), with the theme and sign out. Modules never go there (they go in `ITEMS`).
 - A module or action that only admins should have: call `requireAdmin()` at the top of its server function (it throws for a member), and hide its sidebar line or button when `Route.useLoaderData()` or the root loader's `viewer.role` is not `"admin"`. Hiding alone is not enough: always check on the server too.
 - A module whose data is per person (my tasks, my notes): store `getViewer().email` with each row and filter on it.
 

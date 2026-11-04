@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as ModelsRouteImport } from './routes/models'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as InfraIndexRouteImport } from './routes/infra.index'
 import { Route as InfraAuditRouteImport } from './routes/infra.audit'
@@ -39,6 +40,11 @@ const ConversationsRoute = ConversationsRouteImport.update({
 const ModelsRoute = ModelsRouteImport.update({
   id: '/models',
   path: '/models',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
   '/models': typeof ModelsRoute
+  '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
   '/models': typeof ModelsRoute
+  '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
   '/models': typeof ModelsRoute
+  '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/conversations'
     | '/models'
+    | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/conversations'
     | '/models'
+    | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/conversations'
     | '/models'
+    | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   ApiKeysRoute: typeof ApiKeysRoute
   ConversationsRoute: typeof ConversationsRoute
   ModelsRoute: typeof ModelsRoute
+  TeamRoute: typeof TeamRoute
   ApiSplatRoute: typeof ApiSplatRoute
   InfraAuditRoute: typeof InfraAuditRoute
   InfraHealthRoute: typeof InfraHealthRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/models'
       fullPath: '/models'
       preLoaderRoute: typeof ModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiKeysRoute: ApiKeysRoute,
   ConversationsRoute: ConversationsRoute,
   ModelsRoute: ModelsRoute,
+  TeamRoute: TeamRoute,
   ApiSplatRoute: ApiSplatRoute,
   InfraAuditRoute: InfraAuditRoute,
   InfraHealthRoute: InfraHealthRoute,

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getApp } from "@/server/app";
 import { toConversations, type Conversation } from "@/server/conversations";
 import { SCOPES, type PublicKey } from "@/server/db/api-keys";
+import { gateEmail, type Access, type GateMode, type GateResult } from "@/server/gate";
 import type { HermesStatus } from "@/server/hermes";
 import type { Tone } from "@/server/infra/model";
 import { chooseModel, readModels, type ChooseAnswer, type ModelsData } from "@/server/models";
@@ -12,7 +13,7 @@ import { getViewer, requireAdmin, type Viewer } from "@/server/viewer";
 /**
  * What the pages read and change. Pages sit behind the gate of the server (sign-in or saved IP), so these need no
  * key. The gate also says who is there (see viewer.ts): members see the modules, only admins get System monitoring
- * (Conversations, Infra, Models, the Hermes link) and the API keys. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
+ * (Conversations, Infra, Models, the Hermes link), the API keys and the Team page. A Hermes read is caught on its own: a stopped Hermes shows as "unavailable" instead of breaking the page.
  */
 export const orNull = <T>(promise: Promise<T>) => promise.catch(() => null);
 
@@ -64,6 +65,34 @@ export const revokeKey = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     requireAdmin();
     return { key: getApp().keys.revoke(data.id) };
+  });
+
+/** Null for a member. `users` is null when the server's gate cannot be asked from here (see gate.ts). */
+export type TeamPage = { mode: GateMode; you: string | null; users: Access[] | null };
+
+/** Who can sign in to the dashboard, with their role. */
+export const getTeam = createServerFn({ method: "GET" }).handler(async (): Promise<TeamPage | null> => {
+  const viewer = getViewer();
+  if (viewer.role !== "admin") return null;
+  const { gate } = getApp();
+  const list = await gate.listAccess();
+  return { mode: gate.mode, you: viewer.email, users: list.available ? list.users : null };
+});
+
+/** Lets someone sign in as a member. `invite` emails them the link. */
+export const addMember = createServerFn({ method: "POST" })
+  .validator(z.object({ email: gateEmail, invite: z.boolean() }))
+  .handler(async ({ data }): Promise<GateResult> => {
+    requireAdmin();
+    return getApp().gate.grantAccess(data.email, { invite: data.invite });
+  });
+
+/** Takes a member's access away. Never an admin, never yourself. */
+export const removeMember = createServerFn({ method: "POST" })
+  .validator(z.object({ email: gateEmail }))
+  .handler(async ({ data }): Promise<GateResult> => {
+    const viewer = requireAdmin();
+    return getApp().gate.revokeAccess(data.email, viewer.email);
   });
 
 /** Null for a member. `conversations` is null when Hermes does not answer. */
