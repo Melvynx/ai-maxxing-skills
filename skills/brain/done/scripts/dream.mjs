@@ -38,13 +38,17 @@ export function git(cwd, args, timeout = 20_000) {
   }).trim();
 }
 
+// The last commit named "dream..." that only touched what a dream may touch: a change to
+// the scripts named "dream: ..." is not a dream, and undo-dream must never take it back.
 export function lastDream(brain) {
   try {
-    const [hash, at, ...subject] = git(brain, ["log", "-1", "--grep=^dream", "--format=%H %ct %s"]).split(" ");
-    return { hash: hash || "", at: Number(at || 0) * 1000, subject: subject.join(" ") };
-  } catch {
-    return { hash: "", at: 0, subject: "" };
-  }
+    for (const line of git(brain, ["log", "-20", "--grep=^dream", "--format=%H %ct %s"]).split("\n").filter(Boolean)) {
+      const [hash, at, ...subject] = line.split(" ");
+      const files = git(brain, ["diff-tree", "--no-commit-id", "--name-only", "-r", "--root", hash]).split("\n").filter(Boolean);
+      if (files.length && files.every((f) => ALLOWED.test(f))) return { hash, at: Number(at) * 1000, subject: subject.join(" ") };
+    }
+  } catch {}
+  return { hash: "", at: 0, subject: "" };
 }
 
 // What the user said in the brain since the last dream, in every tool: the signal first.

@@ -9,7 +9,7 @@ metadata:
 
 The method is the one Anthropic uses for Claude's own memory (Auto Dream in Claude Code, Dreams in Managed Agents): orient, gather only the signal, consolidate into the files that exist, keep the index short, and let the result be reviewed before it counts.
 
-1. **Orient.** Find the last dream: `git log -1 --grep='^dream' --format='%H %ci'` (none: the last 7 days). List what moved since: `git log --format='%h %ci %s' <hash>..HEAD` and `git diff --stat <hash>..HEAD`. Read the brain `AGENTS.md` (and its `## Dream` section when there is one: the user's own focus for dreams, follow it), the journal files of those days and the `About.md` of every project they touched.
+1. **Orient.** Find the last dream: `node .agents/skills/done/scripts/auto-done.mjs status` prints it (a `dream: ...` commit that only touched `projects/`, `notes/` and `AGENTS.md`; none: the last 7 days). List what moved since: `git log --format='%h %ci %s' <hash>..HEAD` and `git diff --stat <hash>..HEAD`. Read the brain `AGENTS.md` (and its `## Dream` section when there is one: the user's own focus for dreams, follow it), the journal files of those days and the `About.md` of every project they touched.
 2. **Gather the signal.** In this order, and stop as soon as you know what to fix:
    - The journal and the `done` commits since the last dream.
    - Facts in the files that the latest saves contradict (a date passed, a status changed, a number replaced).
