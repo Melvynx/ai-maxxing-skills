@@ -304,7 +304,7 @@ function run(jobPath) {
     if (kind === "dream") {
       copy = openCopy(brain, id);
       cwd = copy.wt;
-      writeDreamNotes(brain, path.join(cwd, ".tmp", "dream-notes.md"));
+      writeDreamNotes(brain, path.join(cwd, ".tmp", "dream-notes.md"), cwd);
     } else before = dirtyFiles(brain);
   } catch (e) {
     result.note = `could not start: ${e.message}`;

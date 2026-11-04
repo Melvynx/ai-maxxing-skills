@@ -55,7 +55,9 @@ export function lastDream(brain, { skipUndone = true } = {}) {
 }
 
 // What the user said in the brain since the last dream, in every tool: the signal first.
-export function writeDreamNotes(brain, file) {
+// Then the files whose rules to check one by one, and the lines found twice. `root` is the
+// copy the dream works in (the brain itself when run by hand).
+export function writeDreamNotes(brain, file, root = brain) {
   const since = lastDream(brain).at || Date.now() - FIRST_DAYS * 86_400_000;
   const signals = [];
   const parts = [];
@@ -79,6 +81,10 @@ export function writeDreamNotes(brain, file) {
     }
     parts.push(`### ${when} (${t.tool}, ${t.id})\n\n${said.map((x) => `- ${short(x, 1500)}`).join("\n")}`);
   }
+  const check = filesToCheck(root, since);
+  const twice = findDuplicates(root).map(
+    (d) => `- ${d.a.at} and ${d.b.at}\n  - ${short(d.a.line, 200)}\n  - ${short(d.b.line, 200)}`,
+  );
   let text = parts.join("\n\n") || "(no conversation found on disk)";
   if (text.length > MAX_CHARS) text = "[... start cut ...]\n\n" + text.slice(-MAX_CHARS);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -94,12 +100,113 @@ Corrections, rules and "remember" lines, the last ${MAX_SIGNALS}. Start here.
 
 ${signals.slice(-MAX_SIGNALS).join("\n") || "(none)"}
 
+## Rules to check
+
+Read each of these files whole and make every rule and fact in it unique (the "One rule, one place" step). The files changed since the last dream come first, then a few others in turn:
+
+${check.map((c) => `- ${c.file} (${c.why})`).join("\n") || "(none)"}
+
+## Possible duplicates
+
+Lines with nearly the same words in two places, found by the script. A first pass only: the same rule in other words or another language is yours to find.
+
+${twice.join("\n") || "(none)"}
+
 ## Conversations
 
 ${text}
 `,
   );
   return parts.length;
+}
+
+// Lines that say nearly the same words in two places of the brain (journal left out: it is
+// history). Only a first pass: the same rule in two languages or other words is for the
+// dream itself to find.
+const STOP = new Set(
+  "the and for that this with from are was were has have not but you your its into when then than they them their all any can will would also only just more most very each what which who our out about over after before because pour que qui les des une dans est sur pas par avec sont ont aux ses son elle ils nous vous mais plus tout tous fait faire comme sans sous entre deja aussi donc car leur leurs cette ces".split(" "),
+);
+// where the facts and rules live (a project's files/ hold raw material: drafts, transcripts)
+const MEMORY = /^(AGENTS\.md|projects\/(.+\/)?(About|Roadmap)\.md|notes\/(?!journal\/).+\.md)$/;
+const MAX_CHECK = 10; // files checked rule by rule in one dream
+const IN_TURN = 3; // of which, files not changed but due for a check
+const MIN_WORDS = 6;
+const MIN_SAME = 0.6;
+const MAX_PAIRS = 40;
+
+export function findDuplicates(root) {
+  const files = memoryFiles(root);
+  const lines = [];
+  for (const file of files) {
+    let text;
+    try {
+      text = fs.readFileSync(path.join(root, file), "utf8");
+    } catch {
+      continue;
+    }
+    text.split("\n").forEach((raw, i) => {
+      const line = raw.trim();
+      if (line.length < 40 || line.length > 800 || /^[|#>]/.test(line)) return; // tables, titles and quotes are not rules
+      const words = new Set(
+        line
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
+          .split(/[^a-z0-9]+/)
+          .filter((w) => w.length > 2 && !STOP.has(w))
+          .map((w) => w.slice(0, 6)), // "rules" and "rule", "emails" and "email"
+      );
+      if (words.size >= MIN_WORDS) lines.push({ at: `${file}:${i + 1}`, file, line, words: [...words] });
+    });
+  }
+  // only compare lines that share a rare word
+  const index = new Map();
+  lines.forEach((l, n) => l.words.forEach((w) => (index.get(w) || index.set(w, []).get(w)).push(n)));
+  const pairs = [];
+  lines.forEach((a, n) => {
+    const shared = new Map();
+    for (const w of a.words) {
+      const hits = index.get(w);
+      if (hits.length > 200) continue;
+      for (const m of hits) if (m > n) shared.set(m, (shared.get(m) || 0) + 1);
+    }
+    for (const [m, same] of shared) {
+      const b = lines[m];
+      const score = same / (a.words.length + b.words.length - same);
+      if (score >= MIN_SAME) pairs.push({ score, a, b });
+    }
+  });
+  return pairs.sort((x, y) => y.score - x.score).slice(0, MAX_PAIRS);
+}
+
+// The memory files changed since the last dream, most changed first, then a few others in
+// turn, longest first, so old duplicates get found too: every file comes back in a few weeks.
+function filesToCheck(root, since) {
+  const lines = (f) => fs.readFileSync(path.join(root, f), "utf8").split("\n").length;
+  const all = memoryFiles(root);
+  const count = new Map();
+  try {
+    for (const f of git(root, ["log", `--since=@${Math.floor(since / 1000)}`, "--name-only", "--format=", "--", "AGENTS.md", "projects", "notes"]).split("\n")) {
+      if (all.includes(f)) count.set(f, (count.get(f) || 0) + 1);
+    }
+  } catch {}
+  const changed = [...count].sort((a, b) => b[1] - a[1]).slice(0, MAX_CHECK - IN_TURN);
+  const rest = all
+    .filter((f) => !count.has(f))
+    .map((f) => [f, lines(f)])
+    .sort((a, b) => b[1] - a[1]);
+  const start = rest.length ? (Math.floor(Date.now() / 86_400_000) * IN_TURN) % rest.length : 0;
+  const turn = [...rest.slice(start), ...rest.slice(0, start)].slice(0, IN_TURN);
+  return [
+    ...changed.map(([file, n]) => ({ file, why: `${n} change${n > 1 ? "s" : ""}, ${lines(file)} lines` })),
+    ...turn.map(([file, n]) => ({ file, why: `in turn, ${n} lines` })),
+  ];
+}
+
+function memoryFiles(root) {
+  return git(root, ["ls-files", "-z", "AGENTS.md", "projects", "notes"])
+    .split("\0")
+    .filter((f) => MEMORY.test(f) && fs.existsSync(path.join(root, f)));
 }
 
 function short(text, max) {

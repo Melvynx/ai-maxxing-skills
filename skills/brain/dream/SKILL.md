@@ -19,16 +19,23 @@ The method is the one Anthropic uses for Claude's own memory (Auto Dream in Clau
 3. **Consolidate.** Into the files that exist, never into a new summary file. For each project touched:
    - Before you write any line, search the brain for it: Grep two or three key words, in English and in the user's language. When it is already written, in any words, write nothing. When it is written twice or more, merge those lines into one (the newest wording, the oldest date) instead of adding another.
    - Write a missing fact or decision where it belongs, and a reason only when the user gave one (the `## Decisions` format of the done skill).
-   - When two lines say the same thing, keep one. When a newer fact contradicts an older one, fix the wrong one at its source and keep the newer: one fact, one place.
+   - Duplicates and contradictions are the next step's job: do it for every file there, not only the ones you edit here.
    - Replace relative dates ("tomorrow", "next week", "jeudi") with the real date, from the day they were written.
    - Remove what is no longer true from the current state: a finished task stays only as a ticked line in `Roadmap.md`, a done launch becomes one line of result.
    - Set `updated:` to today on each `About.md` you changed, and `status: done` when the user said a project is finished (`/cleanup` archives it later).
    - A file that needs no change stays untouched. "Nothing to change" is a good dream.
-4. **Notes.** Fold into the project each journal line, idea or todo that clearly belongs to one, and leave the journal files themselves as they are (a journal is history). Merge duplicate ideas and todos into one line. A todo the user said is done becomes ticked, never deleted.
-5. **Patterns.** A correction or rule that came back in two conversations or more and is not written yet (search first, as in step 3): write it once where it applies, the project's `About.md` or the brain `AGENTS.md` for all the brain. A rule for every folder, or a workflow done twice that could become a skill, becomes a line in `notes/todos/` ("Proposal: ...") for the user to decide.
-6. **Index.** The brain `AGENTS.md` is an index, not a store: one line per hub or project (a link and what it is), the rules, nothing else, under 200 lines. Move any detail into its `About.md`. Fix paths and links that point to files that moved, remove lines that point to nothing.
-7. **Save.** Add one line to `notes/journal/<today>.md`: `dream: <what moved, in a few words>`. Commit with a message `dream: <what changed>`, only the files you changed, and push when the brain has a GitHub copy. When nothing needed a change, commit nothing.
-8. **Tell.** In 3 to 5 short lines: what you merged, fixed or moved, every proposal you left in `notes/todos/`, and that `node .agents/skills/done/scripts/auto-done.mjs undo-dream` takes it all back.
+4. **One rule, one place.** Never skipped: this is what keeps the brain true. Take the files listed under `## Rules to check` in the notes (by hand: the `About.md` of every project touched, and the brain `AGENTS.md`) and every pair under `## Possible duplicates`. Read each file whole and list its rules and facts: each decision, each "always", "never", "only", "because" line, each price, number, date, id and path. Then:
+   - **Same meaning, twice or more**, in any words or any language, in this file, another project or `AGENTS.md`: keep one line. Keep it in the narrowest place that covers every case (one project: its `About.md`; the whole brain: `AGENTS.md`), with the newest wording and the date it was first decided, plus "(confirmed <dates>)" when the user said it again. Remove the other lines; leave a link only where the other file needs it.
+   - **Two lines that disagree**: the newer one wins when it clearly replaces the old (a later date, "now", "instead", a new price or name). Fix the old line at its source, or remove it when the new one already says everything. When nothing says which is right, keep both and add a todo for the user that quotes both lines with their files.
+   - **A rule made for one past event** (one launch, one email) that a general rule now covers: fold it into the general one.
+   - Before you leave a file, Grep the brain for each rule you kept (two or three key words, both languages): a copy elsewhere is the same duplicate.
+
+   Count what you merged and what you asked: the commit message and the last step give these numbers. A false merge is worse than a duplicate: merge only lines that say the same thing, and keep every detail one of them adds.
+5. **Notes.** Fold into the project each journal line, idea or todo that clearly belongs to one, and leave the journal files themselves as they are (a journal is history). Merge duplicate ideas and todos into one line. A todo the user said is done becomes ticked, never deleted.
+6. **Patterns.** A correction or rule that came back in two conversations or more and is not written yet (search first, as in step 3): write it once where it applies, the project's `About.md` or the brain `AGENTS.md` for all the brain. A rule for every folder, or a workflow done twice that could become a skill, becomes a line in `notes/todos/` ("Proposal: ...") for the user to decide.
+7. **Index.** The brain `AGENTS.md` is an index, not a store: one line per hub or project (a link and what it is), the rules, nothing else, under 200 lines. Move any detail into its `About.md`. Fix paths and links that point to files that moved, remove lines that point to nothing.
+8. **Save.** Add one line to `notes/journal/<today>.md`: `dream: <what moved, in a few words>`. Commit with a message `dream: <what changed>, <n> duplicates merged, <n> asked`, only the files you changed, and push when the brain has a GitHub copy. When nothing needed a change, commit nothing.
+9. **Tell.** In 3 to 5 short lines: the duplicates you merged and the contradictions you fixed or asked about (with the numbers), what else you fixed or moved, every proposal you left in `notes/todos/`, and that `node .agents/skills/done/scripts/auto-done.mjs undo-dream` takes it all back.
 
 Never:
 
@@ -44,7 +51,7 @@ When the user asks to undo the last dream ("annule le dernier rêve"), run `node
 The script of the done skill ([../done/scripts/auto-done.mjs](../done/scripts/auto-done.mjs)) runs this skill on its own, in the background, at most once a day: when the last dream is 24 hours old, at least 5 conversations or saves happened since, nothing is left to save and no brain conversation was active in the last 20 minutes. The prompt then says "automatic mode". Like Anthropic's Dreams, it never touches the brain directly:
 
 - You work in a copy of the brain (a separate git worktree at its last commit). `.tmp/dream-notes.md` holds what the user said since the last dream.
-- Do not commit or push: write the commit message `dream: <what changed>` in `.tmp/dream.commit` and stop.
+- Do not commit or push: write the commit message `dream: <what changed>, <n> duplicates merged, <n> asked` in `.tmp/dream.commit` and stop.
 - The script then checks your changes and puts them in the brain as one commit, or keeps them aside as a patch in `.tmp/auto-done/` when they break a rule above: a file deleted or renamed, a file outside `AGENTS.md`, `projects/` and `notes/`, a long file cut by more than half, an `About.md` without its `status:`, an `AGENTS.md` over 200 lines. A run that fails or passes 45 minutes is thrown away whole.
 - Ask nothing and wait for nothing. Whatever would need the user becomes a line in `notes/todos/`.
 - Make only changes you are sure of. When in doubt, leave the file as it is.
