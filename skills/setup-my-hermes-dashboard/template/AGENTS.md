@@ -56,7 +56,7 @@ Change it in place. To remove one, delete its route and its lines in `ITEMS`, `S
 
 ## Commands
 
-- `dashboard deploy`: install, typecheck, test, build, restart, health check.
+- `dashboard deploy`: install, typecheck, test, build, restart, health check. The service runs a copy of each build in `.releases/`, through the `.live` link, so a new build never breaks the page online; the 3 newest copies are kept.
 - `dashboard status`: service state, health, public `url`, local address.
 - `dashboard logs`: the last lines of the service log.
 - `dashboard hermes <path>`: a Hermes API answer as JSON.

@@ -85,6 +85,13 @@ EOF
       exit 4
     }
 
+    # The service runs a copy of the build in .releases/, reached through the .live link: the next build rewrites
+    # .output without pulling chunks from under the running server, and a failed build leaves it untouched.
+    release="$DIR/.releases/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$DIR/.releases"
+    cp -a "$DIR/.output" "$release"
+    ln -sfn "$release" "$DIR/.live.new" && mv -Tf "$DIR/.live.new" "$DIR/.live"
+
     if [ -f "$UNIT" ] && ! grep -q "Managed by dashboard.sh" "$UNIT"; then
       echo "a dashboard service already exists and was not made by this script: not touching it" >&2
       exit 3
@@ -102,7 +109,7 @@ Type=simple
 User=$(id -un)
 WorkingDirectory=$DIR
 EnvironmentFile=$ENV_FILE
-ExecStart=$(command -v node) .output/server/index.mjs
+ExecStart=$(command -v node) $DIR/.live/server/index.mjs
 Restart=on-failure
 RestartSec=3
 UMask=0077
@@ -120,6 +127,8 @@ EOF
     for _ in $(seq 1 30); do
       if out="$(health)"; then
         echo "dashboard ok on 127.0.0.1:$PORT, hermes $(printf '%s' "$out" | jq -r '.hermes')"
+        # Keeps the 3 newest builds; older ones are only build output.
+        ls -1d "$DIR"/.releases/*/ 2>/dev/null | head -n -3 | xargs -r rm -rf
         exit 0
       fi
       sleep 1

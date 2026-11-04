@@ -1,5 +1,7 @@
 .data/
 .output/
+/.releases/
+/.live
 .nitro/
 .tanstack/
 node_modules/
