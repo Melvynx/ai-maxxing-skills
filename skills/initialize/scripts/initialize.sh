@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Install the base skills in every folder, for Claude Code and Codex, all from the AI Maxxing kit,
+# Install the base skills (initialize itself included, so it can be rerun) in every folder, for Claude Code and Codex, all from the AI Maxxing kit,
 # then the settings (Claude Code and Codex stop asking before each action, dangerous commands stay blocked) and the cc / cx shortcuts.
 # Every skill lands once in ~/.agents/skills; ~/.claude/skills only links to it.
 # Run again any time to update.
 set -u
 
-SKILLS="skill-manager show-me grill-me wait-what connect-tool use-style"
+SKILLS="initialize skill-manager show-me grill-me wait-what connect-tool use-style"
 # Developer skills an older version of this script installed: listed at the end, never removed here.
 OLD="apex arena app-icon appstore-connect agents-manager hooks-manager rules-manager environments-manager audit-memories audit-skills audit-test"
 
