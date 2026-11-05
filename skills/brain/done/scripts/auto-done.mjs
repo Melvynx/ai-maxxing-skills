@@ -314,10 +314,12 @@ function run(jobPath) {
 
   const bin = findBin(agent);
   // Codex runs sandboxed (no .git, no network); Claude only gets read-only git. The script commits.
+  // A dream may also search and read the web, to check a fact instead of asking the user.
+  const web = kind === "dream";
   const args =
     agent === "codex"
-      ? ["exec", "--ephemeral", "--skip-git-repo-check", "-s", "workspace-write", "-C", cwd, "-"]
-      : ["-p", "--model", CLAUDE_MODEL[kind], "--no-session-persistence", "--permission-mode", "acceptEdits", "--allowedTools", CLAUDE_TOOLS];
+      ? [...(web ? ["--search"] : []), "exec", "--ephemeral", "--skip-git-repo-check", "-s", "workspace-write", "-C", cwd, "-"]
+      : ["-p", "--model", CLAUDE_MODEL[kind], "--no-session-persistence", "--permission-mode", "acceptEdits", "--allowedTools", CLAUDE_TOOLS + (web ? ",WebSearch,WebFetch" : "")];
   const child = spawn(bin, args, {
     cwd,
     stdio: [fs.openSync(path.join(dir, `${id}.prompt.txt`), "r"), log, log], // prompt on stdin: no quoting issues
