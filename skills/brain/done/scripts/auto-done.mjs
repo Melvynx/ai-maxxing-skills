@@ -458,7 +458,7 @@ function status(brain, dir, state) {
   line("Running", r ? `${r.kind} ${r.id}, ${Math.round((now - r.started) / 60_000)} min${alive(r.pid) ? "" : " (ended, seen at next sweep)"}` : "nothing");
   const waiting = Object.entries(state.sessions || {}).filter(([, s]) => !s.background && s.retryAt > now);
   if (waiting.length) line("Retrying", waiting.map(([id, s]) => `${id.slice(0, 8)} (attempt ${s.attempts || 0}, ${new Date(s.retryAt).toLocaleTimeString()})`).join(", "));
-  line("Dream due", dreamDue(brain, state) ? "yes, at the next quiet sweep" : `no (last run ${ago(state.dream?.lastRun)})`);
+  line("Dream due", dreamDue(brain, state) ? "yes, at the next quiet sweep" : `no (last ${ago(Math.max(lastDream(brain).at, state.dream?.lastRun || 0))})`);
   const patches = fs.readdirSync(dir).filter((f) => f.endsWith(".patch"));
   if (patches.length) line("Kept aside", patches.map((f) => `.tmp/auto-done/${f}`).join(", "));
   console.log("\nLast runs:");
