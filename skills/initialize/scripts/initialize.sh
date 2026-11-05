@@ -84,6 +84,40 @@ alias cxc="codex resume --last"
 }
 step "shortcuts" shortcuts
 
+# 5. Status bar under the Claude Code prompt: folder, git branch, model, cost, context used and the 5-hour / weekly limits.
+#    Runs with Bun (installed when missing). A rerun updates the code but keeps the user's statusline.config.json,
+#    and a status bar the user set up themselves (another command) is never replaced.
+statusline() {
+  local dir="$HOME/.claude/scripts/statusline" src tmp bun
+  if ! command -v bun >/dev/null 2>&1 && [ ! -x "$HOME/.bun/bin/bun" ]; then
+    curl -fsSL https://bun.sh/install | bash >/dev/null || npm install -g bun >/dev/null || return 1
+  fi
+  bun="$(command -v bun || echo "$HOME/.bun/bin/bun")"
+  # STATUSLINE_SRC: a local copy of skills/initialize/statusline, to test without GitHub
+  src="${STATUSLINE_SRC:-}"
+  if [ -z "$src" ]; then
+    tmp="$(mktemp -d)"
+    curl -fsSL https://codeload.github.com/Melvynx/ai-maxxing-skills/tar.gz/main \
+      | tar -xz -C "$tmp" --strip-components=3 ai-maxxing-skills-main/skills/initialize/statusline || return 1
+    src="$tmp"
+  fi
+  mkdir -p "$dir/data"
+  [ -f "$dir/statusline.config.json" ] && cp "$dir/statusline.config.json" "$dir/.config.keep"
+  cp -R "$src/." "$dir/" && [ -f "$dir/.config.keep" ] && mv "$dir/.config.keep" "$dir/statusline.config.json"
+  [ -n "${tmp:-}" ] && rm -rf "$tmp"
+  (cd "$dir" && "$bun" install --production >/dev/null 2>&1) || return 1
+  node -e '
+    const fs = require("fs"), [p, cmd] = process.argv.slice(1);
+    let s = {};
+    try { s = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
+    const own = s.statusLine && !String(s.statusLine.command || "").includes("scripts/statusline/src/index.ts");
+    if (own) { console.log("kept your own status bar"); process.exit(0); }
+    s.statusLine = { type: "command", command: cmd, padding: 0 };
+    fs.writeFileSync(p, JSON.stringify(s, null, 2) + "\n");
+  ' "$HOME/.claude/settings.json" "$bun $dir/src/index.ts"
+}
+step "status bar" statusline
+
 echo
 for s in $SKILLS; do
   if [ -f "$HOME/.agents/skills/$s/SKILL.md" ] && [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then

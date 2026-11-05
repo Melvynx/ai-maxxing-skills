@@ -1,0 +1,13 @@
+{
+	"name": "statusline",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"start": "bun src/index.ts",
+		"config": "bun src/commands/interactive-config.ts"
+	},
+	"dependencies": {
+		"picocolors": "^1.1.1",
+		"table": "^6.9.0"
+	}
+}
