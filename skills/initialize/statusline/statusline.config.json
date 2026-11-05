@@ -49,7 +49,7 @@
 		"overheadTokens": 0
 	},
 	"limits": {
-		"enabled": false,
+		"enabled": true,
 		"showTimeLeft": true,
 		"showPacingDelta": true,
 		"cost": {

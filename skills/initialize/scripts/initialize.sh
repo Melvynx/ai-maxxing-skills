@@ -90,7 +90,7 @@ step "shortcuts" shortcuts
 statusline() {
   local dir="$HOME/.claude/scripts/statusline" src tmp bun
   if ! command -v bun >/dev/null 2>&1 && [ ! -x "$HOME/.bun/bin/bun" ]; then
-    curl -fsSL https://bun.sh/install | bash >/dev/null || npm install -g bun >/dev/null || return 1
+    curl -fsSL https://bun.sh/install | bash >/dev/null 2>&1 || npm install -g bun >/dev/null 2>&1 || return 1
   fi
   bun="$(command -v bun || echo "$HOME/.bun/bin/bun")"
   # STATUSLINE_SRC: a local copy of skills/initialize/statusline, to test without GitHub
