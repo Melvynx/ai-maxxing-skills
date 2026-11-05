@@ -84,27 +84,29 @@ alias cxc="codex resume --last"
 }
 step "shortcuts" shortcuts
 
+# The status bar and the usage band come from this kit's initialize folder, downloaded once.
+# KIT_SRC: a local copy of skills/initialize, to test without GitHub.
+kit="${KIT_SRC:-}"
+if [ -z "$kit" ]; then
+  kit="$(mktemp -d)"
+  trap 'rm -rf "$kit"' EXIT
+  curl -fsSL https://codeload.github.com/Melvynx/ai-maxxing-skills/tar.gz/main \
+    | tar -xz -C "$kit" --strip-components=3 ai-maxxing-skills-main/skills/initialize
+fi
+
 # 5. Status bar under the Claude Code prompt: folder, git branch, model, cost, context used and the 5-hour / weekly limits.
 #    Runs with Bun (installed when missing). A rerun updates the code but keeps the user's statusline.config.json,
 #    and a status bar the user set up themselves (another command) is never replaced.
 statusline() {
-  local dir="$HOME/.claude/scripts/statusline" src tmp bun
+  local dir="$HOME/.claude/scripts/statusline" bun
+  [ -f "$kit/statusline/package.json" ] || return 1
   if ! command -v bun >/dev/null 2>&1 && [ ! -x "$HOME/.bun/bin/bun" ]; then
     curl -fsSL https://bun.sh/install | bash >/dev/null 2>&1 || npm install -g bun >/dev/null 2>&1 || return 1
   fi
   bun="$(command -v bun || echo "$HOME/.bun/bin/bun")"
-  # STATUSLINE_SRC: a local copy of skills/initialize/statusline, to test without GitHub
-  src="${STATUSLINE_SRC:-}"
-  if [ -z "$src" ]; then
-    tmp="$(mktemp -d)"
-    curl -fsSL https://codeload.github.com/Melvynx/ai-maxxing-skills/tar.gz/main \
-      | tar -xz -C "$tmp" --strip-components=4 ai-maxxing-skills-main/skills/initialize/statusline || return 1
-    src="$tmp"
-  fi
   mkdir -p "$dir/data"
   [ -f "$dir/statusline.config.json" ] && cp "$dir/statusline.config.json" "$dir/.config.keep"
-  cp -R "$src/." "$dir/" && [ -f "$dir/.config.keep" ] && mv "$dir/.config.keep" "$dir/statusline.config.json"
-  [ -n "${tmp:-}" ] && rm -rf "$tmp"
+  cp -R "$kit/statusline/." "$dir/" && [ -f "$dir/.config.keep" ] && mv "$dir/.config.keep" "$dir/statusline.config.json"
   (cd "$dir" && "$bun" install --production >/dev/null 2>&1) || return 1
   node -e '
     const fs = require("fs"), [p, cmd] = process.argv.slice(1);
@@ -117,6 +119,28 @@ statusline() {
   ' "$HOME/.claude/settings.json" "$bun $dir/src/index.ts"
 }
 step "status bar" statusline
+
+# 6. Usage band above the prompt in the Claude desktop app (and the terminal): context, session cost,
+#    5-hour and weekly limits. A Claude Code mod in ~/.claude/mods/aiblueprint, the same folder AIBlueprint
+#    uses, so it never shows twice. Its folder is added to CLAUDE_CODE_PLUGIN_DIRS, keeping the user's others.
+band() {
+  local dir="$HOME/.claude/mods/aiblueprint"
+  [ -f "$kit/claude-mod/.claude-plugin/plugin.json" ] || return 1
+  mkdir -p "$dir" && cp -R "$kit/claude-mod/." "$dir/" || return 1
+  node -e '
+    const fs = require("fs"), path = require("path"), os = require("os"), [p, dir] = process.argv.slice(1);
+    let s = {};
+    try { s = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
+    s.env = s.env || {};
+    s.env.CLAUDE_CODE_ENABLE_FUNCTION_HOOKS = "1";
+    const full = d => path.resolve(d.replace(/^~(?=\/|$)/, os.homedir()));
+    const dirs = (s.env.CLAUDE_CODE_PLUGIN_DIRS || "").split(":").filter(Boolean);
+    if (!dirs.some(d => full(d) === full(dir))) dirs.push(dir);
+    s.env.CLAUDE_CODE_PLUGIN_DIRS = dirs.join(":");
+    fs.writeFileSync(p, JSON.stringify(s, null, 2) + "\n");
+  ' "$HOME/.claude/settings.json" "$dir"
+}
+step "usage band" band
 
 echo
 for s in $SKILLS; do
