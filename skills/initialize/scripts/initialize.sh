@@ -3,6 +3,7 @@
 # then the settings (Claude Code and Codex stop asking before each action, dangerous commands stay blocked) and the cc / cx shortcuts.
 # Every skill lands once in ~/.agents/skills; ~/.claude/skills only links to it.
 # Run again any time to update.
+# NO_BYPASS=1: leaves the "stop asking" settings to the user (Claude Code and Codex settings screens); the rest installs as usual.
 set -u
 
 SKILLS="initialize skill-manager show-me grill-me wait-what connect-tool use-style"
@@ -40,12 +41,12 @@ claude_settings() {
     let s = {};
     try { s = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
     s.permissions = s.permissions || {};
-    s.permissions.defaultMode = "bypassPermissions";
+    if (!process.argv[2]) s.permissions.defaultMode = "bypassPermissions";
     s.permissions.deny = s.permissions.deny || [];
     for (const r of ["Bash(rm -rf *)", "Bash(sudo *)", "Bash(curl * | bash)", "Bash(wget * | bash)", "Read(./.env)", "Read(./.env.*)"])
       if (!s.permissions.deny.includes(r)) s.permissions.deny.push(r);
     fs.writeFileSync(p, JSON.stringify(s, null, 2) + "\n");
-  ' "$HOME/.claude/settings.json"
+  ' "$HOME/.claude/settings.json" "${NO_BYPASS:-}"
 }
 step "claude settings" claude_settings
 
@@ -59,7 +60,7 @@ codex_settings() {
   # top-level keys must come before any [section]
   { printf "$add"; cat "$f"; } > "$f.tmp" && mv "$f.tmp" "$f"
 }
-step "codex settings" codex_settings
+[ -n "${NO_BYPASS:-}" ] || step "codex settings" codex_settings
 
 # 4. Shortcuts: cc (Claude Code without questions), ccc (same, continues the last conversation), cx and cxc (Codex).
 #    Replaces the block an older run wrote (old marker name included), so it is never added twice.
