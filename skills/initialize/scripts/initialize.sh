@@ -98,7 +98,7 @@ statusline() {
   if [ -z "$src" ]; then
     tmp="$(mktemp -d)"
     curl -fsSL https://codeload.github.com/Melvynx/ai-maxxing-skills/tar.gz/main \
-      | tar -xz -C "$tmp" --strip-components=3 ai-maxxing-skills-main/skills/initialize/statusline || return 1
+      | tar -xz -C "$tmp" --strip-components=4 ai-maxxing-skills-main/skills/initialize/statusline || return 1
     src="$tmp"
   fi
   mkdir -p "$dir/data"
