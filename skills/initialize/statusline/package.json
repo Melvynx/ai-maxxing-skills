@@ -3,11 +3,9 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"start": "bun src/index.ts",
-		"config": "bun src/commands/interactive-config.ts"
+		"start": "bun src/index.ts"
 	},
 	"dependencies": {
-		"picocolors": "^1.1.1",
-		"table": "^6.9.0"
+		"picocolors": "^1.1.1"
 	}
 }
