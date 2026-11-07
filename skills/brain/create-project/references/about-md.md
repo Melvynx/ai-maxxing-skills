@@ -8,7 +8,7 @@ updated: <today, YYYY-MM-DD>
 
 # <Name>
 
-<One paragraph: what it is and the goal.>
+<One paragraph: what it is and the goal, then what it covers and what it does not ("Not here: ... (see <project>)"), so every fact lands in one project.>
 
 ## Key info
 - Links, ids, accounts, paths

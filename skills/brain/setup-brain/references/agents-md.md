@@ -36,7 +36,7 @@ Hubs (sub-projects go inside, not next to them):
 
 Each project has:
 
-- `About.md` (required): status + what it is, key ids/links, current state. Read it first, update it when something important changes.
+- `About.md` (required): status + what it is and what it does not cover, key ids/links, current state. Read it first, update it when something important changes.
 - `Roadmap.md` (optional): plain checkbox todo list, only if the project has real open tasks.
 - `files/` for text notes, `assets/` for inputs, `output/` for deliverables, each created with its first file only.
 
