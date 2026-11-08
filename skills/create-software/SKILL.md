@@ -1,6 +1,6 @@
 ---
 name: create-software
-description: Create and deploy a public web app on Cloudflare with TanStack Start, shadcn/ui, Convex, Better Auth, Lumail and optional Stripe, with an admin area, API and CLI so AI controls it. Use when the user wants to build or ship a SaaS, course platform, membership or client portal people sign up to or pay for.
+description: Create and deploy a public web app on Cloudflare with TanStack Start, shadcn/ui, Convex, Better Auth, Lumail and optional Stripe, with an admin area, API and CLI so AI controls it. Use when asked to build or ship a SaaS, course platform, membership or client portal people sign up to or pay for.
 argument-hint: "<what the app does, domain or subdomain>"
 disable-model-invocation: true
 user-invocable: true
