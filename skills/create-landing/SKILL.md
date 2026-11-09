@@ -17,7 +17,7 @@ Keep this stack, with no Convex, no Better Auth and no database:
 - Email form: TanStack Form + `zod`, a server function that calls the Lumail API.
 - Buy button, only if it sells: a Stripe Checkout payment link or the user's Codeline checkout URL.
 - Video, optional: a Tella embed from the URL the user pastes.
-- Hosting, domain, DNS: Cloudflare Workers with `@cloudflare/vite-plugin`, deployed with `cf`.
+- Hosting, domain, DNS: Cloudflare Workers with `@cloudflare/vite-plugin`, deployed with `cf`, then automatically by a GitHub Action on every push to `main`.
 - Code: Git and one private GitHub repo.
 
 1. Check access and fix what fails with the matching setup skill (`setup-github`, `setup-cloudflare`, `setup-convex`, `setup-lumail`, `setup-node` when `npx` is missing) first. When a login needs the browser, give the exact link or code and wait for "done".
@@ -46,7 +46,8 @@ Keep this stack, with no Convex, no Better Auth and no database:
    Keep double opt-in on, since a landing form is cold and the email is not verified. Add a hidden honeypot field, reject empty or fake emails on the server, and go to `/merci` after a success. If the brief asks for a welcome email or lead magnet, create the tag workflow with the `lumail` skill.
 8. If it sells, link the buy button to the Stripe payment link or the Codeline checkout with the success URL set to `/merci`. Never collect card details on the page.
 9. Add analytics only if the user asks: one privacy-friendly script, nothing that needs a cookie banner.
-10. Deploy on Cloudflare. `wrangler.jsonc` gets `main: "@tanstack/react-start/server-entry"`, `compatibility_flags: ["nodejs_compat"]` and the custom domain in `routes` with `custom_domain: true`. Set `LUMAIL_API_KEY` as a Cloudflare secret, then build and deploy with `cf` (`cf build`, `cf deploy`, or `cf cli search "deploy worker"`), never by hand in the dashboard; see the `cloudflare` skill. If the domain is not in the user's Cloudflare account, tell them to move the name servers or buy it there.
-11. Prove it on the live URL: every section shows on desktop and at phone width with no horizontal scroll, every link and button works, a real email signup lands on `/merci` and shows up in Lumail with the right tag and its confirmation email arrives, the buy button opens the right checkout and price, Lighthouse on mobile scores 90 or more in performance and accessibility, and a chat link preview shows the title, description and image. Fix every error you see before saying it is live.
+10. Deploy on Cloudflare. `wrangler.jsonc` gets `main: "@tanstack/react-start/server-entry"`, `compatibility_flags: ["nodejs_compat"]` and the custom domain in `routes` with `custom_domain: true`. Set `LUMAIL_API_KEY` as a Cloudflare secret, then build and deploy once with `cf` (`cf build`, `cf deploy`, or `cf cli search "deploy worker"`), never by hand in the dashboard; see the `cloudflare` skill. If the domain is not in the user's Cloudflare account, tell them to move the name servers or buy it there.
+    Then always set up auto deploy, by default, without asking: `.github/workflows/deploy.yml` builds and deploys the Worker on every push to `main`, with the `CLOUDFLARE_API_TOKEN` GitHub secret. Follow [references/auto-deploy.md](references/auto-deploy.md). From then on every redeploy is a push, watched with `gh run watch`.
+11. Prove it on the live URL: every section shows on desktop and at phone width with no horizontal scroll, every link and button works, a real email signup lands on `/merci` and shows up in Lumail with the right tag and its confirmation email arrives, the buy button opens the right checkout and price, Lighthouse on mobile scores 90 or more in performance and accessibility, a chat link preview shows the title, description and image, and a push to `main` turns the GitHub Action green and the change shows on the live URL. Fix every error you see before saying it is live.
 
-Reply with the live URL, the Lumail tag the signups get, and what is left to do.
+Reply with the live URL, the Lumail tag the signups get, that every push to `main` now goes live on its own, and what is left to do.
