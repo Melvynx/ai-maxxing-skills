@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """instagram CLI: one file, Python 3 standard library only. Made with connect-instagram-developer-platform.
 
-Talks to the Instagram API with Instagram Login (graph.instagram.com) with the user's own Meta app:
-profile, posts, comments, DMs, publishing. The access lasts 60 days and renews itself when used.
+Talks to the Instagram API with Unified Login (graph.facebook.com) with the user's own Meta app:
+profile, posts, comments, DMs, publishing. The access has no expiry date; every call uses the Instagram account id.
 """
 
 import getpass, json, os, sys, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
 TOOL = "instagram"
-HOST = "https://graph.instagram.com"
+HOST = "https://graph.facebook.com"
+VERSION = "v27.0"
 CONFIG = Path.home() / ".config" / f"{TOOL}-cli" / "config.json"
-RENEW_AFTER = 20 * 86400  # renew the 60-day access when it is older than this (Meta needs it at least 24 h old)
 CONFIRM = {"send", "reply-comment", "hide-comment", "publish"}  # acts in the user's name: need --yes
 
 
@@ -32,8 +32,7 @@ def save(cfg):
 
 def http(method, path, params=None, body=None, token=None):
     cfg = load()
-    version = cfg.get("api_version", "")
-    url = f"{HOST}/{version + '/' if version and not path.startswith(('access_token', 'refresh_access_token')) else ''}{path.lstrip('/')}"
+    url = f"{HOST}/{cfg.get('api_version', VERSION)}/{path.lstrip('/')}"
     params = {k: v for k, v in (params or {}).items() if v is not None}
     headers = {"User-Agent": f"{TOOL}-cli", "Accept": "application/json"}
     if token:
@@ -55,7 +54,7 @@ def http(method, path, params=None, body=None, token=None):
         except ValueError:
             msg, code = raw[:300], None
         if code == 190:
-            fail("the Instagram access expired or was removed. Run /connect-instagram-developer-platform again")
+            fail("the Instagram access was removed or refused by Meta. Run /connect-instagram-developer-platform again")
         if code == 10 or "outside of allowed window" in msg:
             fail(f"{msg} (Instagram only lets you answer a DM within 24 hours of the person's last message)")
         fail(f"HTTP {e.code} on {method} /{path.lstrip('/')}: {msg}")
@@ -65,15 +64,12 @@ def token():
     cfg = load()
     if not cfg.get("access_token"):
         fail("not connected. Run /connect-instagram-developer-platform (or: login)")
-    if time.time() - cfg.get("token_saved_at", 0) > RENEW_AFTER:
-        try:
-            res = http("GET", "refresh_access_token", {"grant_type": "ig_refresh_token", "access_token": cfg["access_token"]})
-            cfg.update(access_token=res["access_token"], token_saved_at=time.time(),
-                       expires_at=time.time() + int(res.get("expires_in", 5184000)))
-            save(cfg)
-        except SystemExit:
-            pass  # still valid for now, try again next time
     return cfg["access_token"]
+
+
+def ig():
+    """The Instagram account id every call is made on."""
+    return load().get("user_id") or fail("not connected. Run /connect-instagram-developer-platform (or: login)")
 
 
 def api(method, path, params=None, body=None):
@@ -105,29 +101,25 @@ def cmd_login(args, opts):
         path = Path(opts["from"]).expanduser()
         keys = json.loads(path.read_text())
     elif sys.stdin.isatty():
-        keys = {"app_id": input("Instagram app ID: ").strip(),
-                "app_secret": getpass.getpass("Instagram app secret (hidden): ").strip(),
+        keys = {"app_id": input("Meta app ID: ").strip(),
+                "app_secret": getpass.getpass("Meta app secret (hidden): ").strip(),
                 "access_token": getpass.getpass("Access token (hidden): ").strip()}
     else:
         keys = json.loads(sys.stdin.read())
     keys.get("access_token") or fail("no access token")
-    access, expires_in = keys["access_token"].strip(), None
-    if keys.get("app_secret"):
-        try:  # a 1-hour access becomes a 60-day one; an access that already lasts 60 days is kept as it is
-            res = http("GET", "access_token", {"grant_type": "ig_exchange_token", "client_secret": keys["app_secret"],
-                                               "access_token": access})
-            access, expires_in = res["access_token"], int(res.get("expires_in", 5184000))
-        except SystemExit:
-            pass
-    me = http("GET", "me", {"fields": "user_id,username,account_type"}, token=access)
+    access = keys["access_token"].strip()
+    accounts = http("GET", "me/assigned_instagram_accounts", {"fields": "id,username"}, token=access).get("data", [])
+    if not accounts:  # an access tied to a Facebook user: look through its pages instead
+        pages = http("GET", "me/accounts", {"fields": "instagram_business_account{id,username}"}, token=access).get("data", [])
+        accounts = [p["instagram_business_account"] for p in pages if p.get("instagram_business_account")]
+    accounts or fail("this access sees no Instagram account. Check the account is Professional and was added as Instagram Tester and accepted")
+    me = accounts[0]
     cfg.update(app_id=keys.get("app_id"), app_secret=keys.get("app_secret"), access_token=access,
-               token_saved_at=time.time(), user_id=me.get("user_id") or me.get("id"), username=me.get("username"))
-    if expires_in:
-        cfg["expires_at"] = time.time() + expires_in
+               token_saved_at=time.time(), user_id=me["id"], username=me.get("username"))
     save(cfg)
     if opts.get("from"):
         path.unlink()  # saved in the config: the keys file is not needed any more
-    print(f"connected=@{me.get('username')} account_type={me.get('account_type')} user_id={cfg['user_id']}")
+    print(f"connected=@{me.get('username')} user_id={me['id']}")
 
 
 def cmd_logout(args, opts):
@@ -136,26 +128,16 @@ def cmd_logout(args, opts):
     print("Access removed from this computer. To cut it at Meta too: Instagram > Settings > Website permissions > Apps and websites.")
 
 
-def cmd_renew(args, opts):
-    """Renew the 60-day access now (it also renews itself when used)"""
-    cfg = load()
-    res = http("GET", "refresh_access_token", {"grant_type": "ig_refresh_token", "access_token": token()})
-    cfg.update(access_token=res["access_token"], token_saved_at=time.time(),
-               expires_at=time.time() + int(res.get("expires_in", 5184000)))
-    save(cfg)
-    print(f"renewed, valid {int(res.get('expires_in', 5184000)) // 86400} days")
-
-
 # ---- reads ------------------------------------------------------------------
 
 def cmd_me(args, opts):
     """Your account: username, followers, posts"""
-    out(api("GET", "me", {"fields": "user_id,username,name,account_type,followers_count,follows_count,media_count"}))
+    out(api("GET", ig(), {"fields": "id,username,name,followers_count,follows_count,media_count"}))
 
 
 def cmd_posts(args, opts):
     """Your latest posts with likes and comments: posts [--max 10]"""
-    out(page("me/media", {"fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count"}, int(opts.get("max", 10))))
+    out(page(f"{ig()}/media", {"fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count"}, int(opts.get("max", 10))))
 
 
 def cmd_post_stats(args, opts):
@@ -173,7 +155,7 @@ def cmd_comments(args, opts):
 
 def cmd_dms(args, opts):
     """Latest DM conversations with the last message: dms [--max 10]"""
-    convs = page("me/conversations", {"platform": "instagram", "fields": "id,updated_time,participants,messages.limit(1){message,from,created_time}"},
+    convs = page(f"{ig()}/conversations", {"platform": "instagram", "fields": "id,updated_time,participants,messages.limit(1){message,from,created_time}"},
                  int(opts.get("max", 10)))
     me = str(load().get("user_id"))
     rows = []
@@ -199,7 +181,7 @@ def cmd_messages(args, opts):
 def cmd_send(args, opts):
     """Send a DM (within 24 h of their last message): send <with_id> <text> --yes"""
     len(args) >= 2 or fail("send <with_id from dms> <text>")
-    out(api("POST", "me/messages", body={"recipient": {"id": args[0]}, "message": {"text": " ".join(args[1:])}}))
+    out(api("POST", f"{ig()}/messages", body={"recipient": {"id": args[0]}, "message": {"text": " ".join(args[1:])}}))
 
 
 def cmd_reply_comment(args, opts):
@@ -222,7 +204,7 @@ def cmd_publish(args, opts):
         params.update(media_type="REELS", video_url=opts["video"])
     else:
         params["image_url"] = args[0]
-    creation = api("POST", "me/media", params)["id"]
+    creation = api("POST", f"{ig()}/media", params)["id"]
     for _ in range(60):  # Meta processes the file before it can go live
         status = api("GET", creation, {"fields": "status_code"}).get("status_code")
         if status in (None, "FINISHED"):
@@ -230,12 +212,12 @@ def cmd_publish(args, opts):
         if status == "ERROR":
             fail("Meta could not process the file (check the link is public and the format is supported)")
         time.sleep(5)
-    res = api("POST", "me/media_publish", {"creation_id": creation})
+    res = api("POST", f"{ig()}/media_publish", {"creation_id": creation})
     out({"id": res["id"], **api("GET", res["id"], {"fields": "permalink"})})
 
 
 def cmd_api(args, opts):
-    """Any call: api <METHOD> <path> [--query k=v]... [--data JSON] (e.g. api GET me/stories --query fields=id,permalink)"""
+    """Any call: api <METHOD> <path> [--query k=v]... [--data JSON] (the account id is in `me`: api GET <id>/stories --query fields=id,permalink)"""
     len(args) >= 2 or fail("api <METHOD> <path>")
     method = args[0].upper()
     if method != "GET" and "yes" not in opts:
