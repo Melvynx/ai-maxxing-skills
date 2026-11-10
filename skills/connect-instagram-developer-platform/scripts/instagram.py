@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """instagram CLI: one file, Python 3 standard library only. Made with connect-instagram-developer-platform.
 
-Talks to the Instagram API with Unified Login (graph.facebook.com) with the user's own Meta app:
-profile, posts, comments, DMs, publishing. The access has no expiry date; every call uses the Instagram account id.
+Two ways to reach the same Instagram account, chosen at login:
+  - "meta":   the user's own Meta app, Unified Login (graph.facebook.com). Free. The access has no expiry date.
+  - "zernio": a Zernio account (https://zernio.com, REST API) that holds the Instagram connection. Simple, paid past 2 accounts.
+Commands: profile, posts, comments, DMs, publishing.
 """
 
-import getpass, json, os, sys, time, urllib.error, urllib.parse, urllib.request
+import getpass, json, os, sys, time, uuid, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
 TOOL = "instagram"
 HOST = "https://graph.facebook.com"
+ZERNIO = "https://zernio.com/api/v1"
 VERSION = "v27.0"
 CONFIG = Path.home() / ".config" / f"{TOOL}-cli" / "config.json"
 CONFIRM = {"send", "reply-comment", "hide-comment", "publish"}  # acts in the user's name: need --yes
@@ -60,6 +63,33 @@ def http(method, path, params=None, body=None, token=None):
         fail(f"HTTP {e.code} on {method} /{path.lstrip('/')}: {msg}")
 
 
+def zhttp(method, path, params=None, body=None):
+    cfg = load()
+    key = cfg.get("zernio_key") or fail("not connected. Run /connect-instagram-developer-platform (or: login --zernio)")
+    params = {k: v for k, v in (params or {}).items() if v is not None}
+    url = f"{ZERNIO}/{path.lstrip('/')}" + ("?" + urllib.parse.urlencode(params) if params else "")
+    headers = {"Authorization": f"Bearer {key}", "User-Agent": f"{TOOL}-cli", "Accept": "application/json"}
+    data = None
+    if body is not None:
+        data, headers["Content-Type"] = json.dumps(body).encode(), "application/json"
+        if method == "POST":
+            headers["Idempotency-Key"] = str(uuid.uuid4())
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, data=data, method=method, headers=headers)) as res:
+            raw = res.read()
+            return json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as e:
+        fail(f"Zernio HTTP {e.code} on {method} /{path.lstrip('/')}: {e.read().decode()[:300]}")
+
+
+def zernio():
+    return load().get("provider") == "zernio"
+
+
+def zaccount():
+    return load().get("account_id") or fail("not connected. Run /connect-instagram-developer-platform (or: login --zernio)")
+
+
 def token():
     cfg = load()
     if not cfg.get("access_token"):
@@ -97,6 +127,8 @@ def page(path, params, limit):
 def cmd_login(args, opts):
     """Save the access: login --from <keys.json> (app_id, app_secret, access_token; deleted once connected), or type them"""
     cfg = load()
+    if opts.get("zernio"):
+        return login_zernio(cfg, opts)
     if opts.get("from"):
         path = Path(opts["from"]).expanduser()
         keys = json.loads(path.read_text())
@@ -122,6 +154,45 @@ def cmd_login(args, opts):
     print(f"connected=@{me.get('username')} user_id={me['id']}")
 
 
+def login_zernio(cfg, opts):
+    """login --zernio [--from <keys.json>]: keys.json holds {"zernio_key": "sk_..."}; reads the key from stdin or a hidden prompt otherwise"""
+    if opts.get("from"):
+        path = Path(opts["from"]).expanduser()
+        key = json.loads(path.read_text()).get("zernio_key", "")
+    elif sys.stdin.isatty():
+        key = getpass.getpass("Zernio API key (hidden): ")
+    else:
+        key = sys.stdin.read()
+    key = key.strip()
+    key.startswith("sk_") or fail("the Zernio key starts with sk_ (zernio.com/dashboard/api-keys)")
+    cfg.update(provider="zernio", zernio_key=key)
+    save(cfg)
+    accounts = zhttp("GET", "accounts")
+    accounts = accounts.get("accounts", accounts.get("data", accounts)) if isinstance(accounts, dict) else accounts
+    ig = [a for a in accounts if a.get("platform") == "instagram"]
+    ig or fail("no Instagram account in Zernio yet. Connect it first: instagram.py zernio-connect")
+    a = ig[0]
+    cfg.update(account_id=a.get("_id") or a.get("id"), profile_id=(a.get("profileId") or {}).get("_id") if isinstance(a.get("profileId"), dict) else a.get("profileId"),
+               username=a.get("username") or a.get("name"))
+    save(cfg)
+    if opts.get("from"):
+        path.unlink()
+    print(f"connected=@{cfg['username']} via Zernio account_id={cfg['account_id']}")
+
+
+def cmd_zernio_connect(args, opts):
+    """Zernio only: print the link where the owner connects their Instagram: zernio-connect [--login-method instagram_login|facebook_login]"""
+    cfg = load()
+    cfg.get("zernio_key") or fail("save the Zernio key first: login --zernio")
+    profile = cfg.get("profile_id")
+    if not profile:
+        profiles = zhttp("GET", "profiles")
+        profiles = profiles.get("profiles", profiles.get("data", profiles)) if isinstance(profiles, dict) else profiles
+        profile = (profiles[0].get("_id") or profiles[0].get("id")) if profiles else fail("no Zernio profile: create one at zernio.com/dashboard")
+    res = zhttp("GET", "connect/instagram", {"profileId": profile, "loginMethod": opts.get("login-method")})
+    print(res.get("authUrl") or json.dumps(res))
+
+
 def cmd_logout(args, opts):
     """Forget the access on this computer"""
     CONFIG.unlink(missing_ok=True)
@@ -132,17 +203,23 @@ def cmd_logout(args, opts):
 
 def cmd_me(args, opts):
     """Your account: username, followers, posts"""
+    if zernio():
+        return out(zhttp("GET", "accounts"))
     out(api("GET", ig(), {"fields": "id,username,name,followers_count,follows_count,media_count"}))
 
 
 def cmd_posts(args, opts):
     """Your latest posts with likes and comments: posts [--max 10]"""
+    if zernio():
+        return out(zhttp("GET", "analytics", {"accountId": zaccount(), "platform": "instagram", "limit": int(opts.get("max", 10))}))
     out(page(f"{ig()}/media", {"fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count"}, int(opts.get("max", 10))))
 
 
 def cmd_post_stats(args, opts):
     """Stats of one post: post-stats <mediaId> [--metrics views,reach,likes,comments,shares,saved]"""
     args or fail("post-stats <mediaId>")
+    if zernio():
+        return out(zhttp("GET", "analytics", {"postId": args[0], "accountId": zaccount()}))
     res = api("GET", f"{args[0]}/insights", {"metric": opts.get("metrics", "views,reach,likes,comments,shares,saved")})
     out({m["name"]: (m.get("values") or [{}])[0].get("value", m.get("total_value", {}).get("value")) for m in res.get("data", [])})
 
@@ -150,11 +227,15 @@ def cmd_post_stats(args, opts):
 def cmd_comments(args, opts):
     """Comments on a post: comments <mediaId> [--max 20]"""
     args or fail("comments <mediaId>")
+    if zernio():
+        return out(zhttp("GET", f"inbox/comments/{args[0]}", {"accountId": zaccount(), "limit": int(opts.get("max", 20))}))
     out(page(f"{args[0]}/comments", {"fields": "id,text,username,timestamp,like_count,replies{id,text,username}"}, int(opts.get("max", 20))))
 
 
 def cmd_dms(args, opts):
     """Latest DM conversations with the last message: dms [--max 10]"""
+    if zernio():
+        return out(zhttp("GET", "inbox/conversations", {"accountId": zaccount(), "status": "active", "limit": int(opts.get("max", 10))}))
     convs = page(f"{ig()}/conversations", {"platform": "instagram", "fields": "id,updated_time,participants,messages.limit(1){message,from,created_time}"},
                  int(opts.get("max", 10)))
     me = str(load().get("user_id"))
@@ -171,6 +252,8 @@ def cmd_dms(args, opts):
 def cmd_messages(args, opts):
     """Messages of one conversation, newest first: messages <conversationId> [--max 20]"""
     args or fail("messages <conversationId>")
+    if zernio():
+        return out(zhttp("GET", f"inbox/conversations/{args[0]}/messages", {"accountId": zaccount(), "limit": int(opts.get("max", 20))}))
     res = api("GET", args[0], {"fields": f"messages.limit({min(int(opts.get('max', 20)), 50)}){{id,created_time,from,to,message}}"})
     out([{"id": m["id"], "date": m.get("created_time"), "from": (m.get("from") or {}).get("username"),
           "from_id": (m.get("from") or {}).get("id"), "text": m.get("message")} for m in (res.get("messages") or {}).get("data", [])])
@@ -181,24 +264,32 @@ def cmd_messages(args, opts):
 def cmd_send(args, opts):
     """Send a DM (within 24 h of their last message): send <with_id> <text> --yes"""
     len(args) >= 2 or fail("send <with_id from dms> <text>")
+    if zernio():  # with Zernio the first argument is the conversation id
+        return out(zhttp("POST", f"inbox/conversations/{args[0]}/messages", body={"accountId": zaccount(), "message": " ".join(args[1:])}))
     out(api("POST", f"{ig()}/messages", body={"recipient": {"id": args[0]}, "message": {"text": " ".join(args[1:])}}))
 
 
 def cmd_reply_comment(args, opts):
     """Answer a comment publicly: reply-comment <commentId> <text> --yes"""
     len(args) >= 2 or fail("reply-comment <commentId> <text>")
+    zernio() and fail("with Zernio use: api POST inbox/comments/<postId> --data '{...}' (see https://docs.zernio.com/comments)")
     out(api("POST", f"{args[0]}/replies", {"message": " ".join(args[1:])}))
 
 
 def cmd_hide_comment(args, opts):
     """Hide a comment (or --show to show it again): hide-comment <commentId> --yes"""
     args or fail("hide-comment <commentId>")
+    zernio() and fail("with Zernio use api (see https://docs.zernio.com/comments)")
     out(api("POST", args[0], {"hide": "false" if "show" in opts else "true"}))
 
 
 def cmd_publish(args, opts):
     """Publish a photo from a public link: publish <image_url> [--caption ..] --yes (reels: --video <url>)"""
     (args or opts.get("video")) or fail("publish <public image url> [--caption ..]")
+    if zernio():
+        item = {"type": "video", "url": opts["video"]} if opts.get("video") else {"type": "image", "url": args[0]}
+        return out(zhttp("POST", "posts", body={"content": opts.get("caption", ""), "mediaItems": [item], "publishNow": True,
+                                                 "platforms": [{"platform": "instagram", "accountId": zaccount()}]}))
     params = {"caption": opts.get("caption")}
     if opts.get("video"):
         params.update(media_type="REELS", video_url=opts["video"])
@@ -222,6 +313,8 @@ def cmd_api(args, opts):
     method = args[0].upper()
     if method != "GET" and "yes" not in opts:
         fail("this acts on the account, add --yes")
+    if zernio():
+        return out(zhttp(method, args[1], dict(opts["query"]) or None, json.loads(opts["data"]) if opts.get("data") else None))
     out(api(method, args[1], dict(opts["query"]) or None, json.loads(opts["data"]) if opts.get("data") else None))
 
 
@@ -238,7 +331,7 @@ def main():
     args, opts, argv = [], {"query": []}, sys.argv[1:]
     while argv:
         a = argv.pop(0)
-        if a in ("--yes", "--show"):
+        if a in ("--yes", "--show", "--zernio"):
             opts[a[2:]] = True
         elif a.startswith("--"):
             name, eq, value = a[2:].partition("=")
