@@ -6,7 +6,7 @@
 # NO_BYPASS=1: leaves the "stop asking" settings to the user (Claude Code and Codex settings screens); the rest installs as usual.
 set -u
 
-SKILLS="initialize skill-manager show-me grill-me wait-what connect-tool use-style"
+SKILLS="initialize skill-manager show-me grill-me wait-what connect-tool use-style better"
 # Developer skills an older version of this script installed: listed at the end, never removed here.
 OLD="apex arena app-icon appstore-connect agents-manager hooks-manager rules-manager environments-manager audit-memories audit-skills audit-test"
 
