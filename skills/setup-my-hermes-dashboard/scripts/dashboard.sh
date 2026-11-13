@@ -17,6 +17,8 @@
 # none, the code only shows in the Convex logs.
 # Exit codes: 0 ok, 2 bad usage, 3 missing install, 4 checks or build failed, 5 the service does not answer.
 set -euo pipefail
+# Hermes installs to ~/.local/bin, which a non-interactive ssh session does not have on its PATH.
+export PATH="$HOME/.local/bin:$PATH"
 
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 DIR="${DASHBOARD_DIR:-$HOME/projects/dashboard}"
