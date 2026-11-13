@@ -1,7 +1,6 @@
 import { ApiKeys } from "./db/api-keys";
 import { openDb, readPepper, type Db } from "./db/client";
 import { loadSettings, type Settings } from "./env";
-import { Gate } from "./gate";
 import { Hermes } from "./hermes";
 import { Infra } from "./infra/infra";
 
@@ -14,8 +13,6 @@ export interface App {
   keys: ApiKeys;
   /** Built-in module: server health, the daily audit and fix tasks (src/server/infra). */
   infra: Infra;
-  /** Built-in: who can sign in, through the server's gate (src/server/gate.ts), for the Team page. */
-  gate: Gate;
 }
 
 let app: App | null = null;
@@ -31,7 +28,6 @@ export function getApp(): App {
     db,
     keys: new ApiKeys(db, readPepper(settings.dataDir)),
     infra: new Infra(db, hermes, settings),
-    gate: new Gate(),
   };
   if (settings.infraChecks) app.infra.start();
   return app;

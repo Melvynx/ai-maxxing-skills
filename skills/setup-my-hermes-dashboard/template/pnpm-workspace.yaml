@@ -1,0 +1,3 @@
+allowBuilds:
+  # The esbuild install script only checks its binary, which the platform package already ships.
+  esbuild: false

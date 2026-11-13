@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getApp } from "@/server/app";
 import { orNull } from "@/server/functions";
-import { getViewer, requireAdmin } from "@/server/viewer";
+import { adminOrNull, requireAdmin } from "@/server/viewer";
 
 import { FixExistsError } from "./fixes";
 import type { AuditJob, AuditReport, Fix, HealthMark, HealthRun } from "./model";
@@ -16,7 +16,7 @@ import type { AuditJob, AuditReport, Fix, HealthMark, HealthRun } from "./model"
 export type InfraHealthPage = { run: HealthRun | null; history: HealthMark[]; fixes: Fix[]; now: number };
 
 export const getInfraHealth = createServerFn({ method: "GET" }).handler(async (): Promise<InfraHealthPage | null> => {
-  if (getViewer().role !== "admin") return null;
+  if (!(await adminOrNull())) return null;
   const { infra } = getApp();
   // The first visit before the first timed run still shows something.
   const run = infra.health.latest() ?? (await orNull(infra.health.run()));
@@ -25,7 +25,7 @@ export const getInfraHealth = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const checkInfraNow = createServerFn({ method: "POST" }).handler(async (): Promise<HealthRun> => {
-  requireAdmin();
+  await requireAdmin();
   return getApp().infra.health.runIfStale();
 });
 
@@ -33,7 +33,7 @@ export const checkInfraNow = createServerFn({ method: "POST" }).handler(async ()
 export type InfraAuditPage = { reachable: boolean; job: AuditJob | null; reports: AuditReport[]; fixes: Fix[]; now: number };
 
 export const getInfraAudit = createServerFn({ method: "GET" }).handler(async (): Promise<InfraAuditPage | null> => {
-  if (getViewer().role !== "admin") return null;
+  if (!(await adminOrNull())) return null;
   const { infra } = getApp();
   const job = await infra.audit.job().then(
     (value) => ({ reachable: true, job: value }),
@@ -45,12 +45,12 @@ export const getInfraAudit = createServerFn({ method: "GET" }).handler(async ():
 });
 
 export const enableInfraAudit = createServerFn({ method: "POST" }).handler(async (): Promise<AuditJob> => {
-  requireAdmin();
+  await requireAdmin();
   return getApp().infra.audit.enable();
 });
 
 export const runInfraAudit = createServerFn({ method: "POST" }).handler(async (): Promise<{ ok: true }> => {
-  requireAdmin();
+  await requireAdmin();
   await getApp().infra.audit.runNow();
   return { ok: true };
 });
@@ -69,7 +69,7 @@ export const launchInfraFix = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }): Promise<LaunchAnswer> => {
-    const viewer = requireAdmin();
+    const viewer = await requireAdmin();
     try {
       return { fix: await getApp().infra.fixes.launch({ ...data, actor: viewer.email }), exists: false };
     } catch (error) {

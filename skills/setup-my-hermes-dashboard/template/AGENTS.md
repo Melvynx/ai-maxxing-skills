@@ -3,17 +3,19 @@
 The owner's personal dashboard, next to their Hermes agent. It ships with no module on purpose: the owner asks for the modules they want ("a morning report", "my sales of the day", "my Instagram stats") and the agent builds them here. Build only what was asked, one module at a time. One part is built in for admins: **System monitoring** (see below).
 
 - Stack: TanStack Start (React 19, file routes, server functions), Vite, Tailwind 4, Radix, lucide icons, sonner toasts, zod, SQLite through better-sqlite3 and drizzle. Tests with vitest. Node 24, pnpm.
-- Runs on the server as the `dashboard` service on `127.0.0.1:8794`, published at its `url` (see `dashboard status`) behind the server's sign-in gate. Never bind another address, never open a port.
+- Runs on the server as the `dashboard` service on `127.0.0.1:8794`, published at its `url` (see `dashboard status`) with `expose add ... --own-signin`: the dashboard signs people in itself. Never bind another address, never open a port.
 - Data: `$DATA_DIR/dashboard.sqlite3` (`~/.local/share/dashboard` on the server). Settings: `/etc/dashboard.env`.
 - Never print a key, a token or the Hermes session token. Never delete the database or `key-pepper`.
 
 ## Who is signed in
 
-The gate signs people in by email code and tells the dashboard who is there. Users and roles live on the server (`expose user list`, `expose user add <email> member --invite`).
+The dashboard signs people in itself with Better Auth on Convex (`convex/`): an email, then a 6-digit code sent by Lumail (`convex/email.ts`), a session of 30 days renewed once a day. Only emails on the Team list get a code; `DASHBOARD_OWNER` (the owner's email, a Convex variable set by `dashboard deploy`) is always an admin. No IP is let in without signing in. On the server: `dashboard member list`, `dashboard member add <email> [admin|member] --invite`, `dashboard member remove <email>`.
 
-- `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `email` is null on a saved IP or for a call from the server itself (both count as admin).
+- `/login` is the sign-in page; `/api/auth/*` passes the sign-in calls to Convex (`src/server/auth.ts`), so the browser only talks to the dashboard. Every page needs a session (`src/routes/__root.tsx` sends anyone else to `/login`); `/api/v1/*` keeps its API keys. Never add another way in.
+
+- `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `requireViewer()` throws when nobody is signed in; a removed member is out at once.
 - Admins see everything. Members see every module, but not System monitoring (Conversations, Infra, Models, the Hermes link), the API keys page or the Team page.
-- **Team** (`/team`, built in, `src/server/gate.ts`): the list of who can sign in, with their role. An admin adds a member (with or without an invite email) or removes one. Admins never change from there, and nobody removes themself: to make someone an admin, the owner asks Hermes. `expose` runs as root only; when the service cannot run it, the page says the list is unavailable and to ask Hermes. `GATE_COMMANDS` in `/etc/dashboard.env`: `on` (the default in production), `dry-run` (the default elsewhere: it only says what it would run) or `off`.
+- **Team** (`/team`, built in, `convex/members.ts`): the list of who can sign in, with their role. An admin adds a member (with or without an invite email) or removes one. Admins never change from there, nobody removes themself and the owner is never removed: to make someone an admin, the owner asks Hermes (`dashboard member add <email> admin`).
 - API keys and Team sit in the account menu at the bottom of the rail (`KEYS` and `TEAM` in `src/components/hub/sidebar.tsx`), with the theme and sign out. Modules never go there (they go in `ITEMS`).
 - A module or action that only admins should have: call `requireAdmin()` at the top of its server function (it throws for a member), and hide its sidebar line or button when `Route.useLoaderData()` or the root loader's `viewer.role` is not `"admin"`. Hiding alone is not enough: always check on the server too.
 - A module whose data is per person (my tasks, my notes): store `getViewer().email` with each row and filter on it.

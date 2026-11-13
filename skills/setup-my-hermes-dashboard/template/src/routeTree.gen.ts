@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as ConversationsRouteImport } from './routes/conversations'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ModelsRouteImport } from './routes/models'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as InfraIndexRouteImport } from './routes/infra.index'
 import { Route as InfraAuditRouteImport } from './routes/infra.audit'
 import { Route as InfraHealthRouteImport } from './routes/infra.health'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiV1InfraRouteImport } from './routes/api/v1/infra'
 import { Route as ApiV1WhoamiRouteImport } from './routes/api/v1/whoami'
@@ -35,6 +37,11 @@ const ApiKeysRoute = ApiKeysRouteImport.update({
 const ConversationsRoute = ConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModelsRoute = ModelsRouteImport.update({
@@ -67,6 +74,11 @@ const InfraHealthRoute = InfraHealthRouteImport.update({
   path: '/infra/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
   id: '/api/v1/health',
   path: '/api/v1/health',
@@ -87,12 +99,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
+  '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
   '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
   '/infra/': typeof InfraIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
@@ -101,12 +115,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
+  '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
   '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
   '/infra': typeof InfraIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
@@ -116,12 +132,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
   '/conversations': typeof ConversationsRoute
+  '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
   '/team': typeof TeamRoute
   '/api/$': typeof ApiSplatRoute
   '/infra/audit': typeof InfraAuditRoute
   '/infra/health': typeof InfraHealthRoute
   '/infra/': typeof InfraIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
@@ -132,12 +150,14 @@ export interface FileRouteTypes {
     | '/'
     | '/api-keys'
     | '/conversations'
+    | '/login'
     | '/models'
     | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
     | '/infra/'
+    | '/api/auth/$'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
@@ -146,12 +166,14 @@ export interface FileRouteTypes {
     | '/'
     | '/api-keys'
     | '/conversations'
+    | '/login'
     | '/models'
     | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
     | '/infra'
+    | '/api/auth/$'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
@@ -160,12 +182,14 @@ export interface FileRouteTypes {
     | '/'
     | '/api-keys'
     | '/conversations'
+    | '/login'
     | '/models'
     | '/team'
     | '/api/$'
     | '/infra/audit'
     | '/infra/health'
     | '/infra/'
+    | '/api/auth/$'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
@@ -175,12 +199,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
   ConversationsRoute: typeof ConversationsRoute
+  LoginRoute: typeof LoginRoute
   ModelsRoute: typeof ModelsRoute
   TeamRoute: typeof TeamRoute
   ApiSplatRoute: typeof ApiSplatRoute
   InfraAuditRoute: typeof InfraAuditRoute
   InfraHealthRoute: typeof InfraHealthRoute
   InfraIndexRoute: typeof InfraIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1HealthRoute: typeof ApiV1HealthRoute
   ApiV1InfraRoute: typeof ApiV1InfraRoute
   ApiV1WhoamiRoute: typeof ApiV1WhoamiRoute
@@ -207,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/conversations'
       fullPath: '/conversations'
       preLoaderRoute: typeof ConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/models': {
@@ -251,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InfraHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/health': {
       id: '/api/v1/health'
       path: '/api/v1/health'
@@ -279,12 +319,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
   ConversationsRoute: ConversationsRoute,
+  LoginRoute: LoginRoute,
   ModelsRoute: ModelsRoute,
   TeamRoute: TeamRoute,
   ApiSplatRoute: ApiSplatRoute,
   InfraAuditRoute: InfraAuditRoute,
   InfraHealthRoute: InfraHealthRoute,
   InfraIndexRoute: InfraIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1HealthRoute: ApiV1HealthRoute,
   ApiV1InfraRoute: ApiV1InfraRoute,
   ApiV1WhoamiRoute: ApiV1WhoamiRoute,

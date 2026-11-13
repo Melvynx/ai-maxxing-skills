@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 
 import { HubFrame } from "./sidebar";
 
+const signOut = vi.hoisted(() => vi.fn(async () => ({})));
+vi.mock("@/lib/auth-client", () => ({ authClient: { signOut } }));
+
 // The rail links with the router; a plain link is enough to read it here.
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
@@ -13,7 +16,7 @@ vi.mock("@tanstack/react-router", () => ({
   useRouterState: () => "/",
 }));
 
-const frame = (viewer: { email: string | null; role: "admin" | "member" }, collapsed = false) =>
+const frame = (viewer: { email: string; role: "admin" | "member" }, collapsed = false) =>
   render(
     <HubFrame initialCollapsed={collapsed} initialMonitoringOpen hermesUrl={null} viewer={viewer}>
       <p>page</p>
@@ -38,7 +41,18 @@ describe("sidebar", () => {
     expect(menu.getByRole("menuitem", { name: "API keys" })).toHaveAttribute("href", "/api-keys");
     expect(menu.getByRole("menuitem", { name: "Team" })).toHaveAttribute("href", "/team");
     expect(menu.getByRole("menuitem", { name: "Dark theme" })).toBeInTheDocument();
-    expect(menu.getByRole("menuitem", { name: "Sign out" })).toHaveAttribute("href", "/.gate/logout");
+    expect(menu.getByRole("menuitem", { name: "Sign out" })).toBeInTheDocument();
+  });
+
+  it("signs out through Better Auth, then goes to the sign-in page", async () => {
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+    frame({ email: "ada@example.com", role: "admin" });
+    const menu = await accountMenu();
+    await userEvent.setup().click(menu.getByRole("menuitem", { name: "Sign out" }));
+    expect(signOut).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(assign).toHaveBeenCalledWith("/login"));
+    vi.unstubAllGlobals();
   });
 
   it("gives members neither monitoring, API keys nor Team", async () => {
@@ -48,11 +62,6 @@ describe("sidebar", () => {
     expect(menu.queryByRole("menuitem", { name: "API keys" })).toBeNull();
     expect(menu.queryByRole("menuitem", { name: "Team" })).toBeNull();
     expect(menu.getByRole("menuitem", { name: "Sign out" })).toBeInTheDocument();
-  });
-
-  it("names an admin signed in by saved IP (no email)", () => {
-    frame({ email: null, role: "admin" });
-    expect(within(screen.getByTestId("hub-sidebar")).getByTestId("hub-account")).toHaveTextContent("IP access");
   });
 
   it("keeps every name on the icon-only rail", () => {

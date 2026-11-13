@@ -1,12 +1,13 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, redirect, Scripts } from "@tanstack/react-router";
 import * as React from "react";
 
 import { SectionMark } from "@/components/brand";
 import { HubFrame, savedCollapsed, savedMonitoringOpen } from "@/components/hub/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { SIGNED_OUT } from "@/lib/session";
 import { savedTheme } from "@/lib/theme";
-import { getLinks } from "@/server/functions";
+import { getSession, type Session } from "@/server/functions";
 
 import geistLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 
@@ -14,11 +15,27 @@ import styles from "../styles.css?url";
 
 const DESCRIPTION = "Your Hermes agent at a glance, with the modules you ask it for.";
 
+/**
+ * The session, asked on the server for every page it renders and at most once a minute in the browser (the server
+ * functions behind each page still check it on every call, so a removed member loses access at once).
+ */
+let known: { session: Session; at: number } | null = null;
+async function session(): Promise<Session> {
+  if (typeof window === "undefined") return getSession();
+  if (known && known.session.viewer && Date.now() - known.at < 60_000) return known.session;
+  known = { session: await getSession(), at: Date.now() };
+  return known.session;
+}
+
 export const Route = createRootRoute({
-  beforeLoad: () => ({ theme: savedTheme(), collapsed: savedCollapsed(), monitoringOpen: savedMonitoringOpen() }),
-  // Read once per visit: the public Hermes address only changes with a redeploy, and who is signed in with a sign-in.
-  loader: () => getLinks(),
-  staleTime: Infinity,
+  // Every page needs a session, except the sign-in page itself.
+  beforeLoad: async ({ location }) => {
+    const current = await session();
+    if (!current.viewer && location.pathname !== "/login") {
+      throw redirect({ to: "/login", search: { redirect: location.pathname === "/" ? undefined : location.href } });
+    }
+    return { theme: savedTheme(), collapsed: savedCollapsed(), monitoringOpen: savedMonitoringOpen(), session: current };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -48,7 +65,7 @@ export const Route = createRootRoute({
   }),
   component: () => <Outlet />,
   notFoundComponent: () => <Fallback testId="not-found" title="Page not found" detail="This page does not exist (anymore)." />,
-  errorComponent: ({ error }) => <Fallback title="Could not load the page" detail={error instanceof Error ? error.message : "Unknown error"} alert />,
+  errorComponent: ({ error }) => <PageError error={error} />,
   shellComponent: RootDocument,
 });
 
@@ -63,6 +80,18 @@ function Fallback({ title, detail, alert, testId }: { title: string; detail: str
       </a>
     </main>
   );
+}
+
+/** A session that ended while the page was open (signed out elsewhere, removed from the team): back to sign-in. */
+function PageError({ error }: { error: unknown }) {
+  const signedOut = error instanceof Error && error.message === SIGNED_OUT;
+  React.useEffect(() => {
+    if (!signedOut) return;
+    known = null;
+    window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+  }, [signedOut]);
+  if (signedOut) return null;
+  return <Fallback title="Could not load the page" detail={error instanceof Error ? error.message : "Unknown error"} alert />;
 }
 
 /** A tab opened before a deploy asks for chunks that no longer exist: reload once instead of silently failing. */
@@ -81,11 +110,8 @@ function useReloadOnStaleChunks() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { theme, collapsed, monitoringOpen } = Route.useRouteContext();
-  const links = Route.useLoaderData();
-  const hermesUrl = links?.hermesUrl ?? null;
-  // Before the loader answers (an error page), act as a member: nothing admin-only shows.
-  const viewer = links?.viewer ?? { email: null, role: "member" as const };
+  const { theme, collapsed, monitoringOpen, session: current } = Route.useRouteContext();
+  const viewer = current?.viewer ?? null;
   useReloadOnStaleChunks();
   return (
     <html lang="en" className={theme === "dark" ? "dark" : undefined} suppressHydrationWarning>
@@ -94,9 +120,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <ThemeProvider saved={theme}>
-          <HubFrame initialCollapsed={collapsed} initialMonitoringOpen={monitoringOpen} hermesUrl={hermesUrl} viewer={viewer}>
-            {children}
-          </HubFrame>
+          {/* Signed out (the sign-in page): no rail, nothing of the dashboard shows. */}
+          {viewer ? (
+            <HubFrame initialCollapsed={collapsed} initialMonitoringOpen={monitoringOpen} hermesUrl={current?.hermesUrl ?? null} viewer={viewer}>
+              {children}
+            </HubFrame>
+          ) : (
+            children
+          )}
           <Toaster position="bottom-right" />
         </ThemeProvider>
         <Scripts />

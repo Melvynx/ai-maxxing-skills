@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronDown, ChevronsUpDown, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, UserRound, Users, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, ChevronDown, ChevronsUpDown, House, KeyRound, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, Users, type LucideIcon } from "lucide-react";
 import { DropdownMenu, Tooltip } from "radix-ui";
 import * as React from "react";
 
 import { SectionMark, type Section } from "@/components/brand";
 import { useTheme } from "@/components/theme-provider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { authClient } from "@/lib/auth-client";
 import { readCookie, writeCookie } from "@/lib/cookie";
 import { cn } from "@/lib/utils";
 import type { Viewer } from "@/server/viewer";
@@ -214,8 +215,7 @@ function AccountMenu({ collapsed, viewer, onNavigate }: { collapsed: boolean; vi
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";
   const admin = viewer.role === "admin";
-  // A saved IP signs in as admin with no email (see `expose status`): say so instead of a blank account.
-  const email = viewer.email ?? (admin ? "IP access" : "Account");
+  const email = viewer.email;
   const role = admin ? "Admin" : "Member";
   return (
     <DropdownMenu.Root>
@@ -234,7 +234,7 @@ function AccountMenu({ collapsed, viewer, onNavigate }: { collapsed: boolean; vi
             data-testid="hub-account"
           >
             <span className="grid size-7 shrink-0 place-items-center rounded-md bg-brand/15 text-xs font-semibold uppercase text-brand" aria-hidden>
-              {viewer.email ? viewer.email.charAt(0) : <UserRound className="size-4" />}
+              {email.charAt(0)}
             </span>
             <span className={cn("grid min-w-0 flex-1", collapsed && "sr-only")}>
               <span className="truncate text-xs font-medium text-foreground" data-testid="hub-viewer">
@@ -283,17 +283,20 @@ function AccountMenu({ collapsed, viewer, onNavigate }: { collapsed: boolean; vi
             </span>
             {dark ? "Light theme" : "Dark theme"}
           </DropdownMenu.Item>
-          {/* The server's gate owns the session: its sign-out ends it for every page it protects. */}
-          <DropdownMenu.Item asChild className={MENU_ITEM}>
-            <a href="/.gate/logout" data-testid="logout">
-              <LogOut className={MENU_ICON} aria-hidden />
-              Sign out
-            </a>
+          {/* Ends the session on the server, then a full load on the sign-in page. */}
+          <DropdownMenu.Item className={MENU_ITEM} onSelect={() => void signOut()} data-testid="logout">
+            <LogOut className={MENU_ICON} aria-hidden />
+            Sign out
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );
+}
+
+async function signOut() {
+  await authClient.signOut().catch(() => null);
+  window.location.assign("/login");
 }
 
 function HomeLink({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {

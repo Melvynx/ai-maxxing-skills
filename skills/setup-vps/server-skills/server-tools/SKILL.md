@@ -37,7 +37,9 @@ People sign in with their email and a 6-digit code sent by Lumail (`expose statu
 - "Add <email> to the dashboard" or "give <email> access": `expose user add <email> member --invite` (it emails them the links they can open). Make someone `admin` only when the owner says so, in those words.
 - "Remove <email>": `expose user remove <email>`; it signs them out at once. The last admin cannot be removed.
 - `expose user list` shows everyone with their role.
-- An app behind the gate receives `X-Gate-User` (the email, empty for a saved IP) and `X-Gate-Role` (`admin` or `member`): use them to show who is there and to keep admin actions for admins, never a second password.
+- An app behind the gate receives `X-Gate-User` (the email) and `X-Gate-Role` (`admin` or `member`): use them to show who is there and to keep admin actions for admins, never a second password.
+- The dashboard has its own sign-in and its own list: "add <email> to the dashboard" is `dashboard member add <email> --invite`, not `expose user add`.
+- Saved IPs (`expose allow <ip>`) let anyone on that network in as admin, without signing in. Never add one unless the owner asks for a fixed office line, in those words; `expose ip-offer` stays off.
 
 ## Rules
 

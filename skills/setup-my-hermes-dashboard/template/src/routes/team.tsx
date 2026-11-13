@@ -1,5 +1,4 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { CircleAlert } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -7,7 +6,6 @@ import { AdminsOnly, Empty, Page, Table } from "@/components/hub/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Access } from "@/server/gate";
 import { addMember, getTeam, removeMember, type TeamPage as TeamData } from "@/server/functions";
 
 export const Route = createFileRoute("/team")({
@@ -35,26 +33,10 @@ function TeamPage() {
   return (
     <Page section="team" hint={HINT} testId="team">
       <div className="grid gap-6">
-        {team.users ? <TeamManager team={team} users={team.users} /> : <AskHermes />}
+        <TeamManager team={team} />
         <RolesLegend />
       </div>
     </Page>
-  );
-}
-
-/** The gate cannot be asked from here (see src/server/gate.ts): the owner changes access through Hermes or the server. */
-function AskHermes() {
-  return (
-    <section className="grid gap-2 rounded-xl border bg-card p-4 shadow-panel" role="status" data-testid="team-unavailable">
-      <p className="flex items-center gap-2 text-sm font-medium">
-        <CircleAlert className="size-4 text-warn" aria-hidden /> The access list cannot be read from here
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Ask Hermes: <span className="text-foreground">"add bob@example.com to the dashboard"</span>. Or run{" "}
-        <code className="font-mono text-xs">sudo expose user add bob@example.com member --invite</code> on the server (
-        <code className="font-mono text-xs">sudo expose user list</code> to see who has access).
-      </p>
-    </section>
   );
 }
 
@@ -70,12 +52,15 @@ function RolesLegend() {
           </div>
         ))}
       </dl>
-      <p className="text-xs text-muted-foreground">New people join as members. To make someone an admin, ask Hermes.</p>
+      <p className="text-xs text-muted-foreground">
+        New people join as members. To make someone an admin, ask Hermes (it runs <code className="font-mono">dashboard member add &lt;email&gt; admin</code> on the server).
+      </p>
     </section>
   );
 }
 
-function TeamManager({ team, users }: { team: TeamData; users: Access[] }) {
+function TeamManager({ team }: { team: TeamData }) {
+  const users = team.members;
   const router = useRouter();
   const [email, setEmail] = React.useState("");
   const [invite, setInvite] = React.useState(true);
@@ -86,9 +71,8 @@ function TeamManager({ team, users }: { team: TeamData; users: Access[] }) {
     event.preventDefault();
     setBusy(true);
     try {
-      const result = await addMember({ data: { email: email.trim(), invite } });
-      if (result.ran) toast.success(invite ? `${email.trim()} can sign in, invite sent` : `${email.trim()} can sign in`);
-      else toast.message("Dry run: nothing changed", { description: result.command.join(" ") });
+      const added = await addMember({ data: { email: email.trim(), invite } });
+      toast.success(invite ? `${added.email} can sign in, invite sent` : `${added.email} can sign in`);
       setEmail("");
       await router.invalidate();
     } catch (error) {
@@ -102,26 +86,19 @@ function TeamManager({ team, users }: { team: TeamData; users: Access[] }) {
     if (armed !== address) return setArmed(address);
     setArmed(null);
     try {
-      const result = await removeMember({ data: { email: address } });
-      if (result.ran) toast.success(`${address} can no longer sign in`);
-      else toast.message("Dry run: nothing changed", { description: result.command.join(" ") });
+      await removeMember({ data: { email: address } });
+      toast.success(`${address} can no longer sign in`);
       await router.invalidate();
     } catch (error) {
       toast.error(errorText(error, "Could not remove this person"));
     }
   }
 
-  const you = team.you?.toLowerCase() ?? null;
+  const you = team.you;
   const valid = /^\S+@\S+\.\S+$/.test(email.trim());
 
   return (
     <>
-      {team.mode === "dry-run" ? (
-        <p className="rounded-xl border border-brand/40 bg-brand/5 px-4 py-3 text-sm" data-testid="team-dry-run">
-          Dry run (<code className="font-mono text-xs">GATE_COMMANDS=dry-run</code>): changes only show the command they would run.
-        </p>
-      ) : null}
-
       <form onSubmit={add} className="grid gap-4 rounded-xl border bg-card p-4 shadow-panel" data-testid="team-add">
         <h2 className="font-medium">Add a member</h2>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -139,7 +116,7 @@ function TeamManager({ team, users }: { team: TeamData; users: Access[] }) {
       <section className="grid gap-2">
         <h2 className="font-medium">Who can sign in</h2>
         {users.length === 0 ? (
-          <Empty title="Nobody yet">Only a saved IP address can open the dashboard.</Empty>
+          <Empty title="Nobody yet">Add the first member above.</Empty>
         ) : (
           <Table head={["Email", "Role", ""]}>
             {users.map((user) => (
@@ -147,6 +124,7 @@ function TeamManager({ team, users }: { team: TeamData; users: Access[] }) {
                 <td className="px-3 py-2.5">
                   {user.email}
                   {user.email === you ? <span className="ml-2 text-xs text-muted-foreground">(you)</span> : null}
+                  {user.owner ? <span className="ml-2 text-xs text-muted-foreground">owner</span> : null}
                 </td>
                 <td className="px-3 py-2.5">
                   <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role === "admin" ? "Admin" : "Member"}</Badge>

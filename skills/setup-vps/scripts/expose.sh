@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Put pages of the VPS online behind one gate: Cloudflare Tunnel -> Caddy -> sign-in gate (gate.py) -> the app.
-# Everyone reaches the sign-in page (locked after repeated failures); saved IPs skip it. Two ways to sign in:
+# Everyone reaches the sign-in page (locked after repeated failures). Two ways to sign in:
 # email + 6-digit code sent by Lumail (the default once `mail` is set, many users with roles), or one email + password.
 # Run on the VPS as root (or with sudo). Needs ~/.config/cloudflare/env from import-keys.sh. Safe to rerun.
 #   expose.sh install [tunnel-name]          install cloudflared, Caddy and the gate, create or reuse the tunnel, start all
@@ -10,14 +10,19 @@
 #   expose.sh mail "<Name> <address>"        turn on sign-in codes: Lumail key on stdin, sends a test email to the first
 #                                            admin and only saves the key if it arrived. `mail off` goes back to password
 #   expose.sh login <email> [--stdin]        password sign-in instead: generate and print a password, or read it from stdin
-#   expose.sh allow <ip> / deny <ip>         save or forget an IP that skips the sign-in (IPv6 counts as its /64)
+#   expose.sh allow <ip> / deny <ip>         save or forget an IP that skips the sign-in (IPv6 counts as its /64);
+#                                            anyone on a saved network is let in as admin: only for a fixed office line
+#   expose.sh ip-offer on|off                offer admins to save their IP after they sign in (off by default)
 #   expose.sh unlock                         clear the failed sign-in counters and locks
-#   expose.sh add <hostname> <port> [--as-local] [--admins]  publish http://127.0.0.1:<port> at https://<hostname>
+#   expose.sh add <hostname> <port> [--as-local] [--admins | --own-signin]  publish http://127.0.0.1:<port> at
+#                                            https://<hostname>
 #   expose.sh remove <hostname>              take a hostname offline (tunnel route, DNS record, Caddy site)
 #   expose.sh status                         tunnel, gate, users, every hostname, and any route that skips the gate
 # --as-local sends Host and Origin as 127.0.0.1:<port>, for apps that only answer to localhost (the Hermes dashboard).
 # --admins keeps the site for admins: members who sign in get "restricted access". The app behind receives the
 # signed-in email and role in the X-Gate-User and X-Gate-Role headers (a saved IP counts as admin, with no email).
+# --own-signin skips the gate, for an app that signs people in itself (the owner's dashboard): Cloudflare still
+# shields it, and status lists it as own-signin, not UNPROTECTED. Never use it for an app without its own sign-in.
 # gate.py (and its font geist.woff2) must sit next to this script or in /usr/local/lib/vps-gate.
 # Exit codes: 0 ok, 2 bad usage, 3 missing setup, 4 DNS name already used by something else, 5 Cloudflare or Lumail error.
 set -euo pipefail
@@ -384,6 +389,16 @@ EOF
     echo "$cmd ok: saved IPs are now $(sed 's/[[:space:]]*#.*//' "$GATE_DATA/ips" | tr '\n' ' ')"
     ;;
 
+  ip-offer)
+    [ -d "$GATE_DATA" ] || { echo "run '$0 install' first" >&2; exit 3; }
+    case "${2:-}" in
+      on) : | gate_file offer-ip ;;
+      off) rm -f "$GATE_DATA/offer-ip" ;;
+      *) echo "usage: $0 ip-offer on|off" >&2; exit 2 ;;
+    esac
+    echo "ip-offer ok: $2"
+    ;;
+
   unlock)
     echo '{}' | gate_file state.json
     systemctl restart vps-gate
@@ -391,15 +406,17 @@ EOF
     ;;
 
   add)
-    host="${2:-}"; port="${3:-}"; as_local=""; snippet=gate
+    host="${2:-}"; port="${3:-}"; as_local=""; snippet=gate; own=0
     for arg in "${@:4}"; do
       case "$arg" in
         --as-local) as_local="$arg" ;;
         --admins) snippet=gate_admin ;;
+        --own-signin) own=1 ;;
         *) host="" ;;
       esac
     done
-    [ -n "$host" ] && [[ "$port" =~ ^[0-9]+$ ]] || { echo "usage: $0 add <hostname> <port> [--as-local] [--admins]" >&2; exit 2; }
+    [ "$own" -eq 1 ] && { [ "$snippet" = gate ] && [ -z "$as_local" ] || host=""; }
+    [ -n "$host" ] && [[ "$port" =~ ^[0-9]+$ ]] || { echo "usage: $0 add <hostname> <port> [--as-local] [--admins | --own-signin]" >&2; exit 2; }
     load_cf
     id="$(tunnel_id)"
     zone="$(zone_id_for "$host")"
@@ -410,6 +427,16 @@ EOF
     elif [ "$current" != "CNAME $target" ]; then
       echo "$host already points to $current: pick another name or ask the user before replacing it" >&2
       exit 4
+    fi
+    if [ "$own" -eq 1 ]; then
+      # No gate: the app answers sign-in itself. Gate headers are dropped so nothing behind can trust them.
+      printf '%s\n' "# own-signin: this app signs people in itself" "http://$host:$GATE_PORT {" \
+        "	request_header -X-Gate-User" "	request_header -X-Gate-Role" \
+        "	reverse_proxy 127.0.0.1:$port" "}" > "$CADDY_DIR/sites/$host.caddy"
+      reload_caddy
+      set_ingress "$host" add
+      echo "add ok: https://$host -> 127.0.0.1:$port (the app's own sign-in, no gate)"
+      exit 0
     fi
     {
       echo "http://$host:$GATE_PORT {"
@@ -464,21 +491,24 @@ EOF
     fi
     echo "users=$(sed 's/#.*//; /^[[:space:]]*$/d' "$GATE_DATA/users" 2>/dev/null | awk '{ printf "%s%s(%s)", (NR > 1 ? " " : ""), $1, $2 }')"
     echo "saved_ips=$(sed 's/[[:space:]]*#.*//' "$GATE_DATA/ips" 2>/dev/null | tr '\n' ' ')"
+    echo "ip_offer=$([ -e "$GATE_DATA/offer-ip" ] && echo on || echo off)"
     echo "locked_ips=$(jq -r --argjson now "$(date +%s)" '[.ips // {} | to_entries[] | select(.value.until > $now) | .key] | join(" ")' "$GATE_DATA/state.json" 2>/dev/null)"
     cfapi GET "/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/$id/configurations" \
       | jq -r --arg svc "http://localhost:$GATE_PORT" '.result.config.ingress[]? | select(.hostname) | if .service == $svc then "site=\(.hostname)" else "UNPROTECTED=\(.hostname) -> \(.service)" end' \
       | while IFS= read -r line; do
-          if [[ "$line" == site=* ]] && grep -q "import gate_admin" "$CADDY_DIR/sites/${line#site=}.caddy" 2>/dev/null; then line="$line admins-only"; fi
+          site="$CADDY_DIR/sites/${line#site=}.caddy"
+          if [[ "$line" == site=* ]] && grep -q "import gate_admin" "$site" 2>/dev/null; then line="$line admins-only"; fi
+          if [[ "$line" == site=* ]] && grep -q "^# own-signin" "$site" 2>/dev/null; then line="$line own-signin"; fi
           echo "$line"
         done
     for f in "$CADDY_DIR"/sites/*.caddy; do
       [ -e "$f" ] || continue
-      grep -q "import gate" "$f" || echo "UNPROTECTED_CADDY=$(basename "$f" .caddy)"
+      grep -q "import gate\|^# own-signin" "$f" || echo "UNPROTECTED_CADDY=$(basename "$f" .caddy)"
     done
     ;;
 
   *)
-    sed -n '2,23p' "$0" >&2
+    sed -n '2,27p' "$0" >&2
     exit 2
     ;;
 esac

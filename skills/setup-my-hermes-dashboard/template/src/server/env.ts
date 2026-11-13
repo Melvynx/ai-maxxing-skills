@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 
 export interface Settings {
-  /** First name used in the home greeting. */
+  /** First name used in the home greeting (`DASHBOARD_NAME`). `DASHBOARD_OWNER` is the owner's email, read by Convex. */
   owner: string;
   /** Public address of the Hermes dashboard (`https://hermes.<domain>`), linked from the sidebar. */
   hermesUrl: string | null;
@@ -24,7 +24,8 @@ export interface Settings {
 
 export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
   return {
-    owner: env.DASHBOARD_OWNER?.trim() || "",
+    // Older installs kept the first name in DASHBOARD_OWNER.
+    owner: env.DASHBOARD_NAME?.trim() || (env.DASHBOARD_OWNER?.includes("@") ? "" : env.DASHBOARD_OWNER?.trim()) || "",
     hermesUrl: env.HERMES_URL?.trim().replace(/\/+$/, "") || null,
     hermesApi: (env.HERMES_API?.trim() || "http://127.0.0.1:9119").replace(/\/+$/, ""),
     hermesToken: env.HERMES_DASHBOARD_SESSION_TOKEN?.trim() || null,

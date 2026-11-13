@@ -9,14 +9,16 @@ by Lumail: every email in `users` can sign in, as `admin` (every site) or `membe
 asked with /.gate/verify?need=admin). Without it, the one `login` email and password of the owner, who is admin.
 The answer to Caddy carries X-Gate-User and X-Gate-Role, so the app behind knows who is there.
 
-After signing in, an admin can save their IP so that network skips the sign-in (it then counts as admin). Mobile
-networks, VPNs and data centers can never be saved, and the user must confirm the network is not a public Wi-Fi.
+Saved IPs skip the sign-in and count as admin: anyone on that network gets in, so they are off by default. Only
+`expose allow <ip>` adds one (an office line). The sign-in page offers admins to save their IP only when the file
+`offer-ip` exists in GATE_DATA (`expose ip-offer on`); mobile networks, VPNs and data centers can never be saved,
+and the user must confirm the network is not a public Wi-Fi.
 Wrong codes or passwords lock the IP (5 tries, then 15 minutes, doubling up to 24 hours) and the whole sign-in page
 (30 failures in 15 minutes from all IPs). A code lasts 10 minutes and dies after 5 wrong tries.
 
 Files in GATE_DATA (default /var/lib/vps-gate): users ("email role" per line), lumail ("key=lum_..." and
-"from=Name <address>"), login ("email bcrypt-hash"), ips (one IP or CIDR per line, "#" comments), secret (cookie
-key), state.json (failure counters). The client IP comes from the X-Gate-IP header that Caddy sets from
+"from=Name <address>"), login ("email bcrypt-hash"), ips (one IP or CIDR per line, "#" comments), offer-ip (empty,
+turns the save-this-IP offer on), secret (cookie key), state.json (failure counters). The client IP comes from the X-Gate-IP header that Caddy sets from
 Cloudflare's CF-Connecting-IP.
 
 `gate.py test-mail <from> <to>` (Lumail key on stdin) and `gate.py invite <to> <url>...` send one email and exit.
@@ -137,6 +139,11 @@ def ip_saved(ip):
     except ValueError:
         return False
     return any(addr in net for net in read_networks())
+
+
+def ip_offer():
+    """The save-this-IP offer after sign-in, off unless the owner turned it on."""
+    return os.path.exists(path("offer-ip"))
 
 
 def network_of(ip):
@@ -610,11 +617,11 @@ class Gate(BaseHTTPRequestHandler):
                   + f'<a class="btn ghost" href="{html.escape(nxt)}">{html.escape(t["skip"])}</a>')
 
     def signed_in(self, email, role, nxt):
-        """A new session: admins on a network that can be saved are offered to save it first."""
+        """A new session: with the offer on, admins on a network that can be saved are offered to save it first."""
         clear_failures(self.ip)
         self.log(f"sign-in ok {email}")
         token = make_session(email)
-        if role == "admin" and not ip_saved(self.ip):
+        if role == "admin" and ip_offer() and not ip_saved(self.ip):
             can_save, isp, _ = network_check(self.ip)
             if can_save:
                 return self.save_page(token, nxt, isp)
@@ -722,7 +729,7 @@ class Gate(BaseHTTPRequestHandler):
             who = self.session()
             if not who or who[2] != "admin" or not hmac.compare_digest(f.get("csrf", ""), csrf_for(who[0])):
                 return self.send(302, headers={"Location": "/.gate/login?next=" + urllib.parse.quote(nxt, safe="")})
-            if f.get("action") != "save":
+            if f.get("action") != "save" or not ip_offer():
                 return self.send(302, headers={"Location": nxt})
             can_save, isp, why = network_check(self.ip)
             if not can_save:
