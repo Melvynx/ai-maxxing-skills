@@ -1,4 +1,4 @@
-import { etaLabel, etaTracker, parseEta, pickEta, remainingLabel, remainingShort, typicalSeconds } from "@/lib/chat/eta";
+import { etaLabel, etaTracker, parseEta, pickEta, remainingLabel, remainingShort, typicalSeconds, withoutEta } from "@/lib/chat/eta";
 
 describe("parseEta", () => {
   it("reads Hermes's estimate lines in their usual forms", () => {
@@ -87,5 +87,14 @@ describe("pickEta", () => {
     expect(pickEta({ seconds: 120, seenAt: 900 }, { seconds: 120, at: 500, estimated: true })).toEqual({ seconds: 120, at: 900 });
     expect(pickEta(null, stored)).toBe(stored);
     expect(pickEta(null, null)).toBeNull();
+  });
+});
+
+describe("withoutEta", () => {
+  it("drops the stopwatch lines and keeps the rest", () => {
+    expect(withoutEta("⏱️ Estimate: ~3 min\n\nLooking at your backups.")).toBe("Looking at your backups.");
+    expect(withoutEta("Step 2 done.\n⏱️ ~1 min left\nNext: the logs.")).toBe("Step 2 done.\nNext: the logs.");
+    expect(withoutEta("**⏱️ ~2 min left**")).toBe("");
+    expect(withoutEta("No estimate here.")).toBe("No estimate here.");
   });
 });

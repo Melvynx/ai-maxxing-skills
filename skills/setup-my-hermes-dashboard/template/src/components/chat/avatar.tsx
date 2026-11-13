@@ -1,19 +1,9 @@
-import { User } from "lucide-react";
 import * as React from "react";
 
 import { SectionMark } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
-/** The person writing: a round mark on a soft tint, next to their messages. */
-export function UserAvatar({ className }: { className?: string }) {
-  return (
-    <span className={cn("grid size-7 shrink-0 select-none place-items-center rounded-full bg-secondary text-secondary-foreground", className)} aria-hidden data-testid="chat-avatar">
-      <User className="size-3.5" />
-    </span>
-  );
-}
-
-/** Hermes's own mark, round like the person's. */
+/** Hermes's own mark, round. */
 export function HermesAvatar({ className }: { className?: string }) {
   return <SectionMark section="hermes" className={cn("size-7 shrink-0 rounded-full", className)} />;
 }

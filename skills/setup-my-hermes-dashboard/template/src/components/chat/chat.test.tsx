@@ -256,13 +256,31 @@ describe("conversation list and URL", () => {
 });
 
 describe("bylines and titles", () => {
-  it("shows « You » on the person's messages and Hermes on its answers", () => {
+  it("names Hermes on its answers, and keeps the person's bubble plain", () => {
     render(<UserMessage item={{ text: "Hi", images: [] }} />);
     const user = screen.getByTestId("chat-user");
-    expect(within(user).getByTestId("chat-byline")).toHaveTextContent("You");
-    expect(within(user).getByTestId("chat-avatar")).toBeInTheDocument();
+    expect(within(user).queryByTestId("chat-byline")).toBeNull();
+    expect(user).toHaveTextContent("Hi");
     render(<AssistantTurn parts={[{ kind: "text", text: "OK" }]} model={null} />);
     expect(within(screen.getByTestId("chat-assistant")).getByTestId("chat-byline")).toHaveTextContent("Hermes");
+  });
+
+  it("never shows Hermes's stopwatch lines in the text: the pill shows the time", () => {
+    render(
+      <AssistantTurn
+        parts={[
+          { kind: "text", text: "⏱️ Estimate: ~3 min\n\nChecking your backups." },
+          { kind: "tool", id: "t1", name: "terminal", preview: "", status: "done" },
+          { kind: "text", text: "⏱️ ~1 min left\n\nAll 12 backups are fine." },
+        ]}
+        model={null}
+        live
+      />,
+    );
+    const turn = screen.getByTestId("chat-assistant");
+    expect(turn).not.toHaveTextContent("⏱");
+    expect(turn).toHaveTextContent("Checking your backups.");
+    expect(turn).toHaveTextContent("All 12 backups are fine.");
   });
 
   it("renames in place: Enter keeps the new title, Escape gives up, an unchanged title is not sent", async () => {

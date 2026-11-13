@@ -6,9 +6,9 @@ import { answerIndex, type ApprovalPart, type ClarifyPart, type Part, type ToolP
 import type { UserItem } from "@/lib/chat/items";
 import { cn } from "@/lib/utils";
 
-import type { Eta } from "@/lib/chat/eta";
+import { withoutEta, type Eta } from "@/lib/chat/eta";
 
-import { HermesAvatar, messageTime, UserAvatar, useMounted } from "./avatar";
+import { HermesAvatar, messageTime, useMounted } from "./avatar";
 import { EtaPill } from "./eta";
 import { ChatMarkdown, CopyButton } from "./markdown";
 
@@ -90,11 +90,13 @@ function Reasoning({ text, live }: { text: string; live: boolean }) {
   return (
     <div className="min-w-0" data-testid="chat-reasoning">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
-        <Brain className={cn("size-4", live && "animate-pulse text-brand")} aria-hidden />
+        <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
+          <Brain className={cn("size-3.5", live && "animate-pulse text-brand")} />
+        </span>
         <span className="font-medium">{live ? "Thinking…" : "Thinking"}</span>
         <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} aria-hidden />
       </button>
-      {open ? <p className="mx-2 mt-1 mb-2 border-s-2 ps-3 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{text}</p> : null}
+      {open ? <p className="ms-4.5 me-2 mt-1 mb-2 border-s-2 ps-3 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{text}</p> : null}
     </div>
   );
 }
@@ -114,7 +116,7 @@ function ApprovalCard({ part, onAnswer }: { part: ApprovalPart; onAnswer?: (choi
     }
   };
   return (
-    <div className={cn("my-2 grid gap-3 rounded-xl border p-4", pending ? "border-warn-line bg-warn-soft" : "bg-card")} role="group" aria-label="Approval request" data-testid="chat-approval">
+    <div className={cn("m-2 grid gap-3 rounded-xl border p-4", pending ? "border-warn-line bg-warn-soft" : "bg-card")} role="group" aria-label="Approval request" data-testid="chat-approval">
       <div className="flex items-start gap-2.5">
         <ShieldAlert className={cn("mt-0.5 size-4 shrink-0", pending ? "text-warn" : "text-muted-foreground")} aria-hidden />
         <div className="grid min-w-0 gap-1">
@@ -155,7 +157,7 @@ function ClarifyCard({ part, onAnswer }: { part: ClarifyPart; onAnswer?: (answer
     }
   };
   return (
-    <div className={cn("my-2 grid gap-3 rounded-xl border p-4", pending ? "border-brand/40 bg-brand-soft" : "bg-card")} role="group" aria-label="Question from Hermes" data-testid="chat-clarify">
+    <div className={cn("m-2 grid gap-3 rounded-xl border p-4", pending ? "border-brand/40 bg-brand-soft" : "bg-card")} role="group" aria-label="Question from Hermes" data-testid="chat-clarify">
       <div className="flex items-start gap-2.5">
         <MessageCircleQuestion className={cn("mt-0.5 size-4 shrink-0", pending ? "text-brand" : "text-muted-foreground")} aria-hidden />
         <p className="text-sm font-semibold">{part.question || "Hermes has a question"}</p>
@@ -242,8 +244,10 @@ function Steps({ parts, live, answered, onApprove, onClarify }: { parts: Part[];
     const failed = tools.filter((t) => t.status === "error").length;
     const total = tools.reduce((s, t) => s + (t.duration ?? 0), 0);
     return (
-      <button type="button" onClick={() => setOpen(true)} aria-expanded={false} className="mb-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" data-testid="chat-steps-folded">
-        <Wrench className="size-3.5" aria-hidden />
+      <button type="button" onClick={() => setOpen(true)} aria-expanded={false} className="-mx-2 mb-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" data-testid="chat-steps-folded">
+        <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
+          <Wrench className="size-3.5" />
+        </span>
         <span>
           {tools.length === 1 ? `Used ${toolName(tools[0]!.name)}` : `${tools.length} steps`}
           {failed ? <span className="text-bad"> · {failed} failed</span> : null}
@@ -254,10 +258,12 @@ function Steps({ parts, live, answered, onApprove, onClarify }: { parts: Part[];
     );
   }
   return (
-    <div className="mb-1 grid gap-0.5" data-testid="chat-steps">
+    <div className="-mx-2 mb-1 grid gap-0.5" data-testid="chat-steps">
       {answered && open ? (
-        <button type="button" onClick={() => setOpen(false)} aria-expanded className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
-          <ChevronRight className="size-3.5 rotate-90" aria-hidden />
+        <button type="button" onClick={() => setOpen(false)} aria-expanded className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+          <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
+            <ChevronRight className="size-3.5 rotate-90" />
+          </span>
           Fold the steps
         </button>
       ) : null}
@@ -271,10 +277,12 @@ function Steps({ parts, live, answered, onApprove, onClarify }: { parts: Part[];
         if (part.kind === "reasoning") return <Reasoning key={i} text={part.text} live={live && i === parts.length - 1} />;
         if (part.kind === "approval") return <ApprovalCard key={i} part={part} onAnswer={onApprove ? (choice) => onApprove(part, choice) : undefined} />;
         if (part.kind === "clarify") return <ClarifyCard key={i} part={part} onAnswer={onClarify ? (answer) => onClarify(part, answer) : undefined} />;
-        // A comment on the way, never mixed with the answer.
+        // A comment on the way, never mixed with the answer (its stopwatch lines are the pill's job).
+        const comment = withoutEta(part.text).trim();
+        if (!comment) return null;
         return (
           <p key={i} className="px-2 py-1 text-sm leading-relaxed text-muted-foreground" data-testid="chat-commentary">
-            {part.text}
+            {comment}
           </p>
         );
       })}
@@ -283,10 +291,11 @@ function Steps({ parts, live, answered, onApprove, onClarify }: { parts: Part[];
 }
 
 /** « Hermes · 14:32 » / « You · yesterday 09:10 » above a message (the time only in the browser: it follows the viewer's zone). */
-function Byline({ name, at, end }: { name: string; at?: number | null; end?: boolean }) {
+function Byline({ name, at }: { name: string; at?: number | null }) {
   const mounted = useMounted();
   return (
-    <div className={cn("flex h-5 items-center gap-1.5 text-xs text-muted-foreground", end && "justify-end")} data-testid="chat-byline">
+    <div className="mb-1 flex h-7 items-center gap-2 text-xs text-muted-foreground sm:mb-0.5 sm:h-5 sm:gap-1.5" data-testid="chat-byline">
+      <HermesAvatar className="size-6 sm:hidden" />
       <span className="font-medium text-foreground/85">{name}</span>
       {mounted && at ? (
         <time dateTime={new Date(at).toISOString()} className="tabular-nums">
@@ -316,21 +325,22 @@ export function AssistantTurn({ at, parts, status, error, model, live = false, e
   const answerAt = answerIndex(parts);
   // While Hermes works, the last text may still turn into a comment before a tool: it is the answer only if nothing follows.
   const answer = answerAt === -1 ? null : (parts[answerAt] as { kind: "text"; text: string });
+  const answerText = answer ? withoutEta(answer.text) : "";
   const steps = answerAt === -1 ? parts : parts.slice(0, answerAt);
   const waiting = live && !answer && !steps.some((p) => p.kind === "tool" && p.status === "running") && !steps.some((p) => (p.kind === "approval" || p.kind === "clarify") && p.status === "pending");
   return (
-    <article className="group/turn grid min-w-0 grid-cols-[1.75rem_minmax(0,1fr)] gap-x-2.5 sm:gap-x-3" aria-label="Answer from Hermes" data-testid="chat-assistant">
-      <HermesAvatar className="mt-0.5" />
+    <article className="group/turn grid min-w-0 grid-cols-1 sm:grid-cols-[1.75rem_minmax(0,1fr)] sm:gap-x-3" aria-label="Answer from Hermes" data-testid="chat-assistant">
+      <HermesAvatar className="mt-0.5 hidden sm:block" />
       <div className="min-w-0">
       <Byline name="Hermes" at={at} />
       {steps.length ? <Steps parts={steps} live={live} answered={Boolean(answer)} onApprove={onApprove} onClarify={onClarify} /> : null}
-      {answer ? <ChatMarkdown text={answer.text} streaming={live} /> : null}
+      {answerText.trim() ? <ChatMarkdown text={answerText} streaming={live} /> : null}
       {waiting ? <Thinking label={status === "queued" ? "In the queue…" : steps.length ? "Hermes keeps going…" : "Hermes is thinking…"} /> : null}
       {live && eta ? <EtaPill eta={eta} /> : null}
       {status ? <EndLine status={status} error={error} /> : null}
       {!live ? (
         <div className={cn("mt-1.5 flex h-7 items-center gap-1 text-xs text-muted-foreground transition-opacity", last ? "opacity-100" : "opacity-100 sm:opacity-0 sm:group-hover/turn:opacity-100 sm:group-focus-within/turn:opacity-100")}>
-          {answer ? <CopyButton text={answer.text} label="Copy the answer" className="size-7 justify-center" /> : null}
+          {answerText.trim() ? <CopyButton text={answerText} label="Copy the answer" className="size-7 justify-center" /> : null}
           {last && onRegenerate ? (
             <button type="button" onClick={onRegenerate} className="inline-flex size-7 items-center justify-center rounded-md outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" aria-label="Regenerate the answer" title="Regenerate" data-testid="chat-regenerate">
               <RotateCcw className="size-3.5" aria-hidden />
@@ -389,9 +399,7 @@ export function UserMessage({ item, canEdit, onEdit }: { item: Pick<UserItem, "t
       </form>
     );
   return (
-    <div className="group/user flex min-w-0 justify-end gap-2.5 sm:gap-3" data-testid="chat-user">
-    <div className="flex min-w-0 max-w-[85%] flex-col items-end gap-1">
-      <Byline name="You" at={item.at} end />
+    <div className="group/user flex min-w-0 flex-col items-end gap-1 ps-10 sm:ps-16" data-testid="chat-user">
       {item.images.length ? (
         <div className="flex flex-wrap justify-end gap-2">
           {item.images.map((src, i) =>
@@ -405,8 +413,9 @@ export function UserMessage({ item, canEdit, onEdit }: { item: Pick<UserItem, "t
           )}
         </div>
       ) : null}
-      {item.text ? <div className="max-w-full rounded-2xl rounded-tr-md bg-secondary px-4 py-2.5 text-[0.9375rem] leading-[1.65] whitespace-pre-wrap break-words text-secondary-foreground">{item.text}</div> : null}
-      <div className="flex h-7 items-center gap-1 text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover/user:opacity-100 sm:group-focus-within/user:opacity-100">
+      {item.text ? <div className="max-w-full rounded-[1.25rem] rounded-br-md bg-secondary px-4 py-2.5 text-[0.9375rem] leading-[1.65] whitespace-pre-wrap break-words text-secondary-foreground">{item.text}</div> : null}
+      <div className="flex h-7 items-center gap-1 text-xs text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover/user:opacity-100 sm:group-focus-within/user:opacity-100">
+        <SentAt at={item.at} />
         {item.text ? <CopyButton text={item.text} label="Copy the message" className="size-7 justify-center" /> : null}
         {canEdit && onEdit ? (
           <button
@@ -425,7 +434,16 @@ export function UserMessage({ item, canEdit, onEdit }: { item: Pick<UserItem, "t
         ) : null}
       </div>
     </div>
-      <UserAvatar className="mt-0.5" />
-    </div>
+  );
+}
+
+/** When a message was sent, shown next to its actions (the time only in the browser: it follows the viewer's zone). */
+function SentAt({ at }: { at?: number | null }) {
+  const mounted = useMounted();
+  if (!mounted || !at) return null;
+  return (
+    <time dateTime={new Date(at).toISOString()} className="me-1 tabular-nums" data-testid="chat-sent-at">
+      {messageTime(at)}
+    </time>
   );
 }

@@ -294,6 +294,24 @@
   }
 }
 
+/* Chat: a light sweeping across a « Hermes is thinking… » line. */
+@keyframes chat-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@utility chat-shimmer {
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--muted-foreground) 35%, var(--foreground) 50%, var(--muted-foreground) 65%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: chat-shimmer 2.2s linear infinite;
+}
+
 /* Soft edges on horizontally scrolling rails. */
 @utility fade-x {
   mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);

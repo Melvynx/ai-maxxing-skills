@@ -170,6 +170,8 @@ const MAX_FRAME = 1_400;
  */
 export function HtmlArtifact({ code, live, renderCode }: { code: string; live: boolean; renderCode: (code: string) => React.ReactNode }) {
   const [view, setView] = React.useState<"preview" | "code">("preview");
+  // The frame stays hidden until the page inside reports its height: no blank white box while it loads.
+  const [shown, setShown] = React.useState(false);
   const frame = React.useRef<HTMLIFrameElement>(null);
   const box = React.useRef<HTMLDivElement>(null);
   const title = /<title>([^<]{1,80})<\/title>/i.exec(code)?.[1]?.trim() || "HTML preview";
@@ -181,8 +183,10 @@ export function HtmlArtifact({ code, live, renderCode }: { code: string; live: b
       if (!win || event.source !== win) return;
       const data = event.data as { type?: string; height?: number } | null;
       if (data?.type === "hub-frame-ready") win.postMessage({ type: "hub-html", html: code }, "*");
-      else if (data?.type === "hub-frame-size" && typeof data.height === "number" && frame.current)
+      else if (data?.type === "hub-frame-size" && typeof data.height === "number" && frame.current) {
         frame.current.style.height = `${Math.min(MAX_FRAME, Math.max(120, Math.ceil(data.height) + 2))}px`;
+        setShown(true);
+      }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -195,7 +199,11 @@ export function HtmlArtifact({ code, live, renderCode }: { code: string; live: b
         <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">{title}</span>
         {!live ? (
           <div className="ms-auto flex items-center gap-0.5">
-            <ToolButton onClick={() => setView(view === "preview" ? "code" : "preview")} label={view === "preview" ? "Show the code" : "Show the preview"}>
+            <ToolButton
+              onClick={() => {
+                setShown(false);
+                setView(view === "preview" ? "code" : "preview");
+              }} label={view === "preview" ? "Show the code" : "Show the preview"}>
               {view === "preview" ? <Code2 className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
             </ToolButton>
             {view === "preview" ? (
@@ -213,14 +221,21 @@ export function HtmlArtifact({ code, live, renderCode }: { code: string; live: b
       ) : view === "code" ? (
         <div className="[&>div]:my-0 [&>div]:rounded-none [&>div]:border-0">{renderCode(code)}</div>
       ) : (
-        <iframe
-          ref={frame}
-          src="/api/hermes-chat/frame"
-          title={title}
-          sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
-          className="block h-[420px] w-full bg-white [:fullscreen_&]:h-full!"
-          data-testid="chat-artifact-frame"
-        />
+        <div className="relative">
+          <iframe
+            ref={frame}
+            src="/api/hermes-chat/frame"
+            title={title}
+            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+            className={cn("block h-[420px] w-full bg-white transition-opacity duration-300 [:fullscreen_&]:h-full!", shown ? "opacity-100" : "opacity-0")}
+            data-testid="chat-artifact-frame"
+          />
+          {!shown ? (
+            <div className="absolute inset-0 grid place-items-center bg-muted/30 text-sm text-muted-foreground" aria-hidden>
+              <span className="chat-shimmer">Loading the preview…</span>
+            </div>
+          ) : null}
+        </div>
       )}
     </div>
   );

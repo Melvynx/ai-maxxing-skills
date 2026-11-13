@@ -119,7 +119,7 @@ export function ChatChart({ spec }: { spec: ChartSpec }) {
   const [box, width] = useWidth(560);
   const many = spec.series.length > 1;
   return (
-    <figure className="my-3 grid w-full max-w-2xl gap-3 rounded-xl border bg-card p-4 first:mt-0" data-testid="chat-chart" data-type={spec.type}>
+    <figure className="my-3 grid w-full gap-3 rounded-xl border bg-card p-4 first:mt-0" data-testid="chat-chart" data-type={spec.type}>
       {spec.title || many || spec.type !== "donut" ? (
         <figcaption className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
           {spec.title ? <span className="text-sm font-semibold">{spec.title}</span> : null}
@@ -267,7 +267,7 @@ const toneOf = (tile: StatTile) => tile.tone ?? (tile.delta?.trim().startsWith("
 
 export function ChatStats({ tiles }: { tiles: StatTile[] }) {
   return (
-    <div className={cn("my-3 grid gap-2 first:mt-0", tiles.length === 1 ? "max-w-60 grid-cols-1" : tiles.length === 2 || tiles.length === 4 ? "max-w-xl grid-cols-2" : "max-w-2xl grid-cols-2 sm:grid-cols-3")} data-testid="chat-stats">
+    <div className={cn("my-3 grid gap-2 first:mt-0", tiles.length === 1 ? "max-w-60 grid-cols-1" : tiles.length === 2 ? "grid-cols-2" : tiles.length === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3")} data-testid="chat-stats">
       {tiles.map((tile) => {
         const tone = toneOf(tile);
         return (

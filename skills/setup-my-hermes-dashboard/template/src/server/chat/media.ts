@@ -97,8 +97,12 @@ export const FRAME_CSP = [
   "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads",
 ].join("; ");
 
-/** Appended to the HTML: reports the document's height to the chat (the frame grows with it, up to a cap). */
-const REPORTER = `<script>(function(){var last=0;function send(){var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);if(h!==last){last=h;parent.postMessage({type:"hub-frame-size",height:h},"*");}}window.addEventListener("load",send);if(window.ResizeObserver){new ResizeObserver(send).observe(document.documentElement);}setInterval(send,1000);send();})();</script>`;
+/**
+ * Appended to the HTML: reports the document's height to the chat (the frame grows with it, up to a cap). A page sized
+ * on the viewport (`height: 100vh`) grows exactly as much as the frame does: once it does, it stops reporting, or the
+ * frame would grow forever.
+ */
+const REPORTER = `<script>(function(){var last=0,lastVh=0,fixed=false;function send(){if(fixed)return;var vh=window.innerHeight,h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);if(last&&vh!==lastVh&&h-last===vh-lastVh){fixed=true;return;}if(h!==last){last=h;lastVh=vh;parent.postMessage({type:"hub-frame-size",height:h},"*");}}window.addEventListener("load",send);if(window.ResizeObserver){new ResizeObserver(send).observe(document.documentElement);}setInterval(send,1000);send();})();</script>`;
 
 export const FRAME_SHELL = `<!doctype html><html><head><meta charset="utf-8"></head><body><script>(function(){var done=false;window.addEventListener("message",function(e){if(done||e.source!==parent||!e.data||e.data.type!=="hub-html"||typeof e.data.html!=="string")return;done=true;var html=e.data.html;document.open();document.write(html+${JSON.stringify(REPORTER).replace(/<\//g, "<\\/")});document.close();});parent.postMessage({type:"hub-frame-ready"},"*");})();</script></body></html>`;
 

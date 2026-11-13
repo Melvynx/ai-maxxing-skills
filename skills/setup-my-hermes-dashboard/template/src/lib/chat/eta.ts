@@ -114,3 +114,14 @@ export function pickEta(parsed: { seconds: number; seenAt: number } | null, stor
   }
   return stored ?? null;
 }
+
+/** The text without Hermes's stopwatch lines (« ⏱️ Estimate: ~3 min », « ⏱️ ~1 min left »): the pill already shows them. */
+export function withoutEta(text: string): string {
+  if (!text.includes("⏱")) return text;
+  return text
+    .split("\n")
+    .filter((line) => !/^\s*(?:[*_>-]\s*)*⏱/.test(line))
+    .join("\n")
+    .replace(/^\s*\n+/, "")
+    .replace(/\n{3,}/g, "\n\n");
+}
