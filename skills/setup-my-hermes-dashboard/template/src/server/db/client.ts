@@ -24,6 +24,19 @@ CREATE TABLE IF NOT EXISTS infra_fixes (
 );
 CREATE INDEX IF NOT EXISTS infra_fixes_key ON infra_fixes (key);
 CREATE TABLE IF NOT EXISTS infra_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS chat_conversations (
+  id TEXT PRIMARY KEY, email TEXT NOT NULL, session_id TEXT NOT NULL, title TEXT NOT NULL, title_source TEXT NOT NULL,
+  provider TEXT, model TEXT, reasoning TEXT, carry TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+  seen_at INTEGER, archived_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS chat_conversations_email ON chat_conversations (email, updated_at);
+CREATE TABLE IF NOT EXISTS chat_runs (
+  id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, session_id TEXT NOT NULL, email TEXT NOT NULL, input TEXT NOT NULL,
+  images TEXT NOT NULL, provider TEXT, model TEXT, status TEXT NOT NULL, error TEXT, created_at INTEGER NOT NULL,
+  ended_at INTEGER, eta_seconds INTEGER, eta_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS chat_runs_conversation ON chat_runs (conversation_id, created_at);
+CREATE TABLE IF NOT EXISTS chat_images (hash TEXT NOT NULL, email TEXT NOT NULL, thumb TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (hash, email));
 `;
 
 /** Opens (and creates) `<dataDir>/dashboard.sqlite3`: owner-only folder and file, WAL, synchronous FULL. */

@@ -8,6 +8,10 @@ export interface Settings {
   hermesUrl: string | null;
   /** Local Hermes dashboard API, never published by itself. */
   hermesApi: string;
+  /** Hermes's API Server (runs, sessions, model options) for the Chat page: `HERMES_API_SERVER_URL`, local only. */
+  hermesApiServer: string;
+  /** Its Bearer key (`HERMES_API_SERVER_KEY`): stays on the server, never sent to a browser. Null: the Chat is off. */
+  hermesApiServerKey: string | null;
   /** Fixed Hermes session token, when Hermes runs with `HERMES_DASHBOARD_SESSION_TOKEN`. Read from its page otherwise. */
   hermesToken: string | null;
   /** Folder of the SQLite database and the key pepper. */
@@ -29,6 +33,8 @@ export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
     hermesUrl: env.HERMES_URL?.trim().replace(/\/+$/, "") || null,
     hermesApi: (env.HERMES_API?.trim() || "http://127.0.0.1:9119").replace(/\/+$/, ""),
     hermesToken: env.HERMES_DASHBOARD_SESSION_TOKEN?.trim() || null,
+    hermesApiServer: (env.HERMES_API_SERVER_URL?.trim() || "http://127.0.0.1:8642").replace(/\/+$/, ""),
+    hermesApiServerKey: env.HERMES_API_SERVER_KEY?.trim() || null,
     dataDir: path.resolve(env.DATA_DIR?.trim() || ".data"),
     hermesBin: env.HERMES_BIN?.trim() || path.join(os.homedir(), ".local/bin/hermes"),
     hermesHome: path.resolve(env.HERMES_HOME?.trim() || path.join(os.homedir(), ".hermes")),

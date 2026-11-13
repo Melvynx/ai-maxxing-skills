@@ -7,7 +7,8 @@
 #   dashboard status              service state, health, local address
 #   dashboard logs [lines]        the last lines of the service log
 #   dashboard key [name]          new API key for dashboard-cli, saved in ~/.config/dashboard/env, never printed
-#   dashboard hermes <path>       GET a Hermes API path (e.g. /api/cron/jobs) and print the JSON; the token stays hidden
+#   dashboard chat                turn on Hermes's API Server (local only) and give its key to the dashboard, for the Chat page
+#   dashboard hermes <path>     GET a Hermes API path (e.g. /api/cron/jobs) and print the JSON; the token stays hidden
 #   dashboard member list | add <email> [admin|member] [--invite] | remove <email>
 #                                 who may sign in (email + 6-digit code); --invite emails them the link
 # The code is in ~/projects/dashboard (DASHBOARD_DIR to change it). DASHBOARD_OWNER (the owner's email, always admin),
@@ -212,6 +213,34 @@ EOF
     (cd "$DIR" && DATA_DIR="$data" node scripts/new-key.mjs "$KEY_FILE" "$name" "http://127.0.0.1:$PORT")
     ;;
 
+  chat)
+    # The Chat page talks to Hermes's API Server (local only, 127.0.0.1). Turns it on once, with its own key,
+    # and gives the dashboard that key. Rerun keeps the same key.
+    henv="${HERMES_HOME:-$HOME/.hermes}/.env"
+    [ -f "$henv" ] || { echo "no Hermes settings in $henv: install Hermes first" >&2; exit 3; }
+    $SUDO test -f "$ENV_FILE" || { echo "run 'dashboard deploy' first" >&2; exit 3; }
+    akey="$(sed -n 's/^API_SERVER_KEY=//p' "$henv" | tail -1)"
+    [ -n "$akey" ] || akey="$(openssl rand -hex 32)"
+    aport="$(sed -n 's/^API_SERVER_PORT=//p' "$henv" | tail -1)"; aport="${aport:-8642}"
+    tmp="$(mktemp)"
+    grep -v -E '^API_SERVER_(ENABLED|HOST|PORT|KEY)=' "$henv" > "$tmp" || true
+    printf 'API_SERVER_ENABLED=true\nAPI_SERVER_HOST=127.0.0.1\nAPI_SERVER_PORT=%s\nAPI_SERVER_KEY=%s\n' "$aport" "$akey" >> "$tmp"
+    install -m 600 "$tmp" "$henv"; rm -f "$tmp"
+    set_setting HERMES_API_SERVER_URL "http://127.0.0.1:$aport"
+    set_setting HERMES_API_SERVER_KEY "$akey"
+    hermes gateway restart >/dev/null 2>&1 || true
+    ok=""
+    for _ in $(seq 1 30); do
+      # The key goes to curl through a file descriptor, never on its command line.
+      if curl -fsS --max-time 3 -H @<(printf 'Authorization: Bearer %s\n' "$akey") "http://127.0.0.1:$aport/v1/models" >/dev/null 2>&1; then ok=1; break; fi
+      sleep 1
+    done
+    unset akey
+    [ -n "$ok" ] || { echo "Hermes's API Server does not answer on 127.0.0.1:$aport (try 'hermes gateway restart')" >&2; exit 5; }
+    $SUDO systemctl restart dashboard.service
+    echo "chat ok: Hermes's API Server on 127.0.0.1:$aport, the dashboard has its key"
+    ;;
+
   hermes)
     path="${2:-}"
     [[ "$path" == /api/* ]] || { echo "usage: dashboard hermes /api/<path>" >&2; exit 2; }
@@ -246,7 +275,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
     [ -z "$cmd" ] || exit 2
     ;;
 esac

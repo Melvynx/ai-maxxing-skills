@@ -15,11 +15,20 @@ The dashboard signs people in itself with Better Auth on Convex (`convex/`): an 
 - `/login` is the sign-in page; `/api/auth/*` passes the sign-in calls to Convex (`src/server/auth.ts`), so the browser only talks to the dashboard. Every page needs a session (`src/routes/__root.tsx` sends anyone else to `/login`); `/api/v1/*` keeps its API keys. Never add another way in.
 
 - `getViewer()` from `@/server/viewer` returns `{ email, role }`. `role` is `"admin"` or `"member"`; `requireViewer()` throws when nobody is signed in; a removed member is out at once.
-- Admins see everything. Members see every module, but not System monitoring (Conversations, Infra, Models, the Hermes link), the API keys page or the Team page.
+- Admins see everything. Members see every module, but not the Chat, System monitoring (Conversations, Infra, Models, the Hermes link), the API keys page or the Team page.
 - **Team** (`/team`, built in, `convex/members.ts`): the list of who can sign in, with their role. An admin adds a member (with or without an invite email) or removes one. Admins never change from there, nobody removes themself and the owner is never removed: to make someone an admin, the owner asks Hermes (`dashboard member add <email> admin`).
 - API keys and Team sit in the account menu at the bottom of the rail (`KEYS` and `TEAM` in `src/components/hub/sidebar.tsx`), with the theme and sign out. Modules never go there (they go in `ITEMS`).
 - A module or action that only admins should have: call `requireAdmin()` at the top of its server function (it throws for a member), and hide its sidebar line or button when `Route.useLoaderData()` or the root loader's `viewer.role` is not `"admin"`. Hiding alone is not enough: always check on the server too.
 - A module whose data is per person (my tasks, my notes): store `getViewer().email` with each row and filter on it.
+
+## Chat (built in)
+
+`/chat`, admins only, right under the modules in the sidebar (`CHAT` in `src/components/hub/sidebar.tsx`, with a badge for answers not read yet). The owner talks to Hermes from the dashboard, with every tool Hermes has.
+
+- It goes through Hermes's API Server (`HERMES_API_SERVER_URL`, default `http://127.0.0.1:8642`, and its key `HERMES_API_SERVER_KEY` in `/etc/dashboard.env`). `dashboard chat` turns that server on and writes both settings; without the key the page says the chat is not set up.
+- Server code in `src/server/chat/` (`hermes-api.ts` the client, `chat.ts` the runs and the instructions given to Hermes, `store.ts` the conversations in SQLite tables `chat_conversations` and `chat_runs`, `files.ts` and `media.ts` the attached files and images, `titler.ts` the titles). Screen in `src/components/chat/` and `src/routes/chat.tsx`. Each person has their own Hermes session (`dashboard:<email>`).
+- Answers stream live, with the tools Hermes uses, a time estimate, stop, attached files and images, a model picker, rename and archive.
+- Rich blocks Hermes can write (taught in `RICH_HINT`, `src/server/chat/chat.ts`): ` ```chart ` (bar, line, area or donut, drawn in SVG by `components/chat/chart.tsx`), ` ```stats ` (key-number tiles), ` ```video ` (a player) and ` ```html-live ` (a small page run in a sandbox). A new block type: a parser and a component in `components/chat/`, a branch in `RichPre` (`markdown.tsx`), a line in `RICH_HINT`, a test.
 
 ## System monitoring (built in)
 
@@ -65,6 +74,7 @@ Change it in place. To remove one, delete its route and its lines in `ITEMS`, `S
 - `dashboard status`: service state, health, public `url`, local address.
 - `dashboard logs`: the last lines of the service log.
 - `dashboard hermes <path>`: a Hermes API answer as JSON.
+- `dashboard chat`: turns on Hermes's API Server (local only) and gives its key to the dashboard, for the Chat page. Safe to rerun.
 - `dashboard key`: a new key for `dashboard-cli`, saved in `~/.config/dashboard/env` (the old one stops working).
 - `dashboard-cli get|post|delete <path> [json]`: call the dashboard API with that key. `dashboard-cli get /api/v1/whoami` checks the key.
 - Local work: `pnpm dev` (port 3000), `pnpm typecheck`, `pnpm test`.

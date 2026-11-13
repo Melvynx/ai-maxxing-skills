@@ -6,6 +6,9 @@ import { HubFrame } from "./sidebar";
 const signOut = vi.hoisted(() => vi.fn(async () => ({})));
 vi.mock("@/lib/auth-client", () => ({ authClient: { signOut } }));
 
+// The chat's unread poller is tested on its own (components/chat).
+vi.mock("@/components/chat/pulse", () => ({ ChatPulseProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+
 // The rail links with the router; a plain link is enough to read it here.
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (

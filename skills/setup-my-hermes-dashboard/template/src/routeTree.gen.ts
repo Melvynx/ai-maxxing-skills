@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ModelsRouteImport } from './routes/models'
@@ -20,9 +21,15 @@ import { Route as InfraIndexRouteImport } from './routes/infra.index'
 import { Route as InfraAuditRouteImport } from './routes/infra.audit'
 import { Route as InfraHealthRouteImport } from './routes/infra.health'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiHermesChatFilesRouteImport } from './routes/api/hermes-chat/files'
+import { Route as ApiHermesChatFrameRouteImport } from './routes/api/hermes-chat/frame'
+import { Route as ApiHermesChatMediaRouteImport } from './routes/api/hermes-chat/media'
+import { Route as ApiHermesChatRunsRouteImport } from './routes/api/hermes-chat/runs'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiV1InfraRouteImport } from './routes/api/v1/infra'
 import { Route as ApiV1WhoamiRouteImport } from './routes/api/v1/whoami'
+import { Route as ApiHermesChatRunsIdActionRouteImport } from './routes/api/hermes-chat/runs.$id.$action'
+import { Route as ApiHermesChatRunsIdEventsRouteImport } from './routes/api/hermes-chat/runs.$id.events'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -32,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiKeysRoute = ApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversationsRoute = ConversationsRouteImport.update({
@@ -79,6 +91,26 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHermesChatFilesRoute = ApiHermesChatFilesRouteImport.update({
+  id: '/api/hermes-chat/files',
+  path: '/api/hermes-chat/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHermesChatFrameRoute = ApiHermesChatFrameRouteImport.update({
+  id: '/api/hermes-chat/frame',
+  path: '/api/hermes-chat/frame',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHermesChatMediaRoute = ApiHermesChatMediaRouteImport.update({
+  id: '/api/hermes-chat/media',
+  path: '/api/hermes-chat/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHermesChatRunsRoute = ApiHermesChatRunsRouteImport.update({
+  id: '/api/hermes-chat/runs',
+  path: '/api/hermes-chat/runs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
   id: '/api/v1/health',
   path: '/api/v1/health',
@@ -94,10 +126,23 @@ const ApiV1WhoamiRoute = ApiV1WhoamiRouteImport.update({
   path: '/api/v1/whoami',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHermesChatRunsIdActionRoute =
+  ApiHermesChatRunsIdActionRouteImport.update({
+    id: '/$id/$action',
+    path: '/$id/$action',
+    getParentRoute: () => ApiHermesChatRunsRoute,
+  } as any)
+const ApiHermesChatRunsIdEventsRoute =
+  ApiHermesChatRunsIdEventsRouteImport.update({
+    id: '/$id/events',
+    path: '/$id/events',
+    getParentRoute: () => ApiHermesChatRunsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/chat': typeof ChatRoute
   '/conversations': typeof ConversationsRoute
   '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
@@ -107,13 +152,20 @@ export interface FileRoutesByFullPath {
   '/infra/health': typeof InfraHealthRoute
   '/infra/': typeof InfraIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/hermes-chat/files': typeof ApiHermesChatFilesRoute
+  '/api/hermes-chat/frame': typeof ApiHermesChatFrameRoute
+  '/api/hermes-chat/media': typeof ApiHermesChatMediaRoute
+  '/api/hermes-chat/runs': typeof ApiHermesChatRunsRouteWithChildren
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
+  '/api/hermes-chat/runs/$id/$action': typeof ApiHermesChatRunsIdActionRoute
+  '/api/hermes-chat/runs/$id/events': typeof ApiHermesChatRunsIdEventsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/chat': typeof ChatRoute
   '/conversations': typeof ConversationsRoute
   '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
@@ -123,14 +175,21 @@ export interface FileRoutesByTo {
   '/infra/health': typeof InfraHealthRoute
   '/infra': typeof InfraIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/hermes-chat/files': typeof ApiHermesChatFilesRoute
+  '/api/hermes-chat/frame': typeof ApiHermesChatFrameRoute
+  '/api/hermes-chat/media': typeof ApiHermesChatMediaRoute
+  '/api/hermes-chat/runs': typeof ApiHermesChatRunsRouteWithChildren
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
+  '/api/hermes-chat/runs/$id/$action': typeof ApiHermesChatRunsIdActionRoute
+  '/api/hermes-chat/runs/$id/events': typeof ApiHermesChatRunsIdEventsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/chat': typeof ChatRoute
   '/conversations': typeof ConversationsRoute
   '/login': typeof LoginRoute
   '/models': typeof ModelsRoute
@@ -140,15 +199,22 @@ export interface FileRoutesById {
   '/infra/health': typeof InfraHealthRoute
   '/infra/': typeof InfraIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/hermes-chat/files': typeof ApiHermesChatFilesRoute
+  '/api/hermes-chat/frame': typeof ApiHermesChatFrameRoute
+  '/api/hermes-chat/media': typeof ApiHermesChatMediaRoute
+  '/api/hermes-chat/runs': typeof ApiHermesChatRunsRouteWithChildren
   '/api/v1/health': typeof ApiV1HealthRoute
   '/api/v1/infra': typeof ApiV1InfraRoute
   '/api/v1/whoami': typeof ApiV1WhoamiRoute
+  '/api/hermes-chat/runs/$id/$action': typeof ApiHermesChatRunsIdActionRoute
+  '/api/hermes-chat/runs/$id/events': typeof ApiHermesChatRunsIdEventsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/api-keys'
+    | '/chat'
     | '/conversations'
     | '/login'
     | '/models'
@@ -158,13 +224,20 @@ export interface FileRouteTypes {
     | '/infra/health'
     | '/infra/'
     | '/api/auth/$'
+    | '/api/hermes-chat/files'
+    | '/api/hermes-chat/frame'
+    | '/api/hermes-chat/media'
+    | '/api/hermes-chat/runs'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
+    | '/api/hermes-chat/runs/$id/$action'
+    | '/api/hermes-chat/runs/$id/events'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api-keys'
+    | '/chat'
     | '/conversations'
     | '/login'
     | '/models'
@@ -174,13 +247,20 @@ export interface FileRouteTypes {
     | '/infra/health'
     | '/infra'
     | '/api/auth/$'
+    | '/api/hermes-chat/files'
+    | '/api/hermes-chat/frame'
+    | '/api/hermes-chat/media'
+    | '/api/hermes-chat/runs'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
+    | '/api/hermes-chat/runs/$id/$action'
+    | '/api/hermes-chat/runs/$id/events'
   id:
     | '__root__'
     | '/'
     | '/api-keys'
+    | '/chat'
     | '/conversations'
     | '/login'
     | '/models'
@@ -190,14 +270,21 @@ export interface FileRouteTypes {
     | '/infra/health'
     | '/infra/'
     | '/api/auth/$'
+    | '/api/hermes-chat/files'
+    | '/api/hermes-chat/frame'
+    | '/api/hermes-chat/media'
+    | '/api/hermes-chat/runs'
     | '/api/v1/health'
     | '/api/v1/infra'
     | '/api/v1/whoami'
+    | '/api/hermes-chat/runs/$id/$action'
+    | '/api/hermes-chat/runs/$id/events'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
+  ChatRoute: typeof ChatRoute
   ConversationsRoute: typeof ConversationsRoute
   LoginRoute: typeof LoginRoute
   ModelsRoute: typeof ModelsRoute
@@ -207,6 +294,10 @@ export interface RootRouteChildren {
   InfraHealthRoute: typeof InfraHealthRoute
   InfraIndexRoute: typeof InfraIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiHermesChatFilesRoute: typeof ApiHermesChatFilesRoute
+  ApiHermesChatFrameRoute: typeof ApiHermesChatFrameRoute
+  ApiHermesChatMediaRoute: typeof ApiHermesChatMediaRoute
+  ApiHermesChatRunsRoute: typeof ApiHermesChatRunsRouteWithChildren
   ApiV1HealthRoute: typeof ApiV1HealthRoute
   ApiV1InfraRoute: typeof ApiV1InfraRoute
   ApiV1WhoamiRoute: typeof ApiV1WhoamiRoute
@@ -226,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/api-keys'
       fullPath: '/api-keys'
       preLoaderRoute: typeof ApiKeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversations': {
@@ -291,6 +389,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hermes-chat/files': {
+      id: '/api/hermes-chat/files'
+      path: '/api/hermes-chat/files'
+      fullPath: '/api/hermes-chat/files'
+      preLoaderRoute: typeof ApiHermesChatFilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hermes-chat/frame': {
+      id: '/api/hermes-chat/frame'
+      path: '/api/hermes-chat/frame'
+      fullPath: '/api/hermes-chat/frame'
+      preLoaderRoute: typeof ApiHermesChatFrameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hermes-chat/media': {
+      id: '/api/hermes-chat/media'
+      path: '/api/hermes-chat/media'
+      fullPath: '/api/hermes-chat/media'
+      preLoaderRoute: typeof ApiHermesChatMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hermes-chat/runs': {
+      id: '/api/hermes-chat/runs'
+      path: '/api/hermes-chat/runs'
+      fullPath: '/api/hermes-chat/runs'
+      preLoaderRoute: typeof ApiHermesChatRunsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/health': {
       id: '/api/v1/health'
       path: '/api/v1/health'
@@ -312,12 +438,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1WhoamiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hermes-chat/runs/$id/$action': {
+      id: '/api/hermes-chat/runs/$id/$action'
+      path: '/$id/$action'
+      fullPath: '/api/hermes-chat/runs/$id/$action'
+      preLoaderRoute: typeof ApiHermesChatRunsIdActionRouteImport
+      parentRoute: typeof ApiHermesChatRunsRoute
+    }
+    '/api/hermes-chat/runs/$id/events': {
+      id: '/api/hermes-chat/runs/$id/events'
+      path: '/$id/events'
+      fullPath: '/api/hermes-chat/runs/$id/events'
+      preLoaderRoute: typeof ApiHermesChatRunsIdEventsRouteImport
+      parentRoute: typeof ApiHermesChatRunsRoute
+    }
   }
 }
+
+interface ApiHermesChatRunsRouteChildren {
+  ApiHermesChatRunsIdActionRoute: typeof ApiHermesChatRunsIdActionRoute
+  ApiHermesChatRunsIdEventsRoute: typeof ApiHermesChatRunsIdEventsRoute
+}
+
+const ApiHermesChatRunsRouteChildren: ApiHermesChatRunsRouteChildren = {
+  ApiHermesChatRunsIdActionRoute: ApiHermesChatRunsIdActionRoute,
+  ApiHermesChatRunsIdEventsRoute: ApiHermesChatRunsIdEventsRoute,
+}
+
+const ApiHermesChatRunsRouteWithChildren =
+  ApiHermesChatRunsRoute._addFileChildren(ApiHermesChatRunsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
+  ChatRoute: ChatRoute,
   ConversationsRoute: ConversationsRoute,
   LoginRoute: LoginRoute,
   ModelsRoute: ModelsRoute,
@@ -327,6 +481,10 @@ const rootRouteChildren: RootRouteChildren = {
   InfraHealthRoute: InfraHealthRoute,
   InfraIndexRoute: InfraIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiHermesChatFilesRoute: ApiHermesChatFilesRoute,
+  ApiHermesChatFrameRoute: ApiHermesChatFrameRoute,
+  ApiHermesChatMediaRoute: ApiHermesChatMediaRoute,
+  ApiHermesChatRunsRoute: ApiHermesChatRunsRouteWithChildren,
   ApiV1HealthRoute: ApiV1HealthRoute,
   ApiV1InfraRoute: ApiV1InfraRoute,
   ApiV1WhoamiRoute: ApiV1WhoamiRoute,

@@ -44,6 +44,11 @@
   --brand-ink: oklch(0.457 0.24 277.023);
   --brand-soft: oklch(0.962 0.018 272.314);
   --chart: oklch(0.511 0.262 276.966);
+  /* The other series of a chart in the Chat (teal, amber, rose, sky): far apart in hue, same weight. */
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.666 0.179 58.318);
+  --chart-4: oklch(0.586 0.222 17.585);
+  --chart-5: oklch(0.588 0.158 241.966);
 
   /* The drawn mark (brand.tsx, favicon): same in light and dark. */
   --mark-from: #6366f1;
@@ -102,6 +107,10 @@
   --brand-ink: oklch(0.785 0.115 274.713);
   --brand-soft: oklch(0.585 0.233 277.117 / 14%);
   --chart: oklch(0.673 0.182 276.935);
+  --chart-2: oklch(0.777 0.152 181.912);
+  --chart-3: oklch(0.828 0.189 84.429);
+  --chart-4: oklch(0.712 0.194 13.428);
+  --chart-5: oklch(0.746 0.16 232.661);
 
   --good: oklch(0.792 0.153 163);
   --good-soft: oklch(0.696 0.17 162.48 / 10%);
@@ -180,6 +189,10 @@
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
   --color-chart: var(--chart);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   --color-good: var(--good);
   --color-good-soft: var(--good-soft);

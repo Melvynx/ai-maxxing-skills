@@ -4,7 +4,7 @@ import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 /** One key per module. A new module adds its key here, a drawing in DRAWINGS and a name in SECTION_NAMES. */
-export type Section = "hermes" | "conversations" | "infra" | "models" | "team";
+export type Section = "hermes" | "chat" | "conversations" | "infra" | "models" | "team";
 
 /** Tile shared by every mark, in the --mark-* colors of styles.css; `public/favicon.svg` is the Hermes drawing on the same tile. */
 function Tile({ className, section, children }: { className?: string; section: Section; children: React.ReactNode }) {
@@ -32,6 +32,13 @@ const DRAWINGS: Record<Section, React.ReactNode> = {
       <rect x="11" y="14.75" width="10" height="3.5" rx="1.2" className="fill-(--mark-softer)" />
       <path d="M24 10.4c2.6-.2 4.2-1.5 4.9-3.6-2.2.5-3.8.4-4.9-.2z" className="fill-(--mark-soft)" />
       <path d="M8 10.4c-2.6-.2-4.2-1.5-4.9-3.6 2.2.5 3.8.4 4.9-.2z" className="fill-(--mark-soft)" />
+    </>
+  ),
+  // A chat bubble with a spark: talking to Hermes.
+  chat: (
+    <>
+      <path d="M8 7.5h16a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5h-8.5L10 25.5v-4H8A2.5 2.5 0 0 1 5.5 19v-9A2.5 2.5 0 0 1 8 7.5z" fill="#fff" />
+      <path d="M16 10.3l1.15 3.15 3.15 1.15-3.15 1.15L16 18.9l-1.15-3.15-3.15-1.15 3.15-1.15z" className="fill-(--mark-ink)" />
     </>
   ),
   // Two speech bubbles.
@@ -83,6 +90,7 @@ export function SectionMark({ section, className }: { section: Section; classNam
 
 export const SECTION_NAMES: Record<Section, string> = {
   hermes: BRAND.name,
+  chat: "Chat",
   conversations: "Conversations",
   infra: "Infra",
   models: "Models",

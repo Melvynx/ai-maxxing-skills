@@ -4,6 +4,8 @@ import { DropdownMenu, Tooltip } from "radix-ui";
 import * as React from "react";
 
 import { BrandMark, SectionMark, type Section } from "@/components/brand";
+import { ChatPulseProvider } from "@/components/chat/pulse";
+import { useChatPulse } from "@/components/chat/pulse-context";
 import { useTheme } from "@/components/theme-provider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { authClient } from "@/lib/auth-client";
@@ -21,7 +23,7 @@ export const savedMonitoringOpen = () => readCookie(MONITORING_COOKIE) !== "clos
 
 type Item = {
   /** Every page path; a new module adds its own. */
-  to: "/" | "/api-keys" | "/conversations" | "/infra" | "/models" | "/team";
+  to: "/" | "/api-keys" | "/chat" | "/conversations" | "/infra" | "/models" | "/team";
   label: string;
   hint: string;
   section?: Exclude<Section, "hermes">;
@@ -34,6 +36,9 @@ type Item = {
  * page in src/routes. The dashboard ships with none: the owner asks their agent for the ones they want.
  */
 export const ITEMS: Item[] = [{ to: "/", label: "Home", hint: "Your agent at a glance" }];
+
+/** Built in, admins only, right under Home: the chat with Hermes (src/components/chat, src/server/chat). */
+export const CHAT: Item = { to: "/chat", label: "Chat", hint: "Talk to Hermes from the dashboard", section: "chat" };
 
 /**
  * Built in, admins only, in the "System monitoring" group at the bottom of the rail: the agent's conversations, the
@@ -52,7 +57,7 @@ const TEAM: Item = { to: "/team", label: "Team", hint: "Who can sign in, and the
 const isActive = (pathname: string, to: Item["to"]) => (to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`));
 
 export function currentItem(pathname: string): Item | undefined {
-  return [...ITEMS, ...MONITORING, KEYS, TEAM].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
+  return [...ITEMS, CHAT, ...MONITORING, KEYS, TEAM].find((item) => item.to !== "/" && isActive(pathname, item.to)) ?? (pathname === "/" ? ITEMS[0] : undefined);
 }
 
 const FOCUS = "outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
@@ -86,7 +91,7 @@ function RailTip({ show, label, hint, children }: { show: boolean; label: string
   );
 }
 
-function NavLink({ item, collapsed, onNavigate }: { item: Item; collapsed: boolean; onNavigate?: () => void }) {
+function NavLink({ item, collapsed, onNavigate, badge = 0 }: { item: Item; collapsed: boolean; onNavigate?: () => void; badge?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const active = isActive(pathname, item.to);
   return (
@@ -96,7 +101,7 @@ function NavLink({ item, collapsed, onNavigate }: { item: Item; collapsed: boole
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
         title={collapsed ? undefined : item.hint}
-        className={cn(ROW, active ? ACTIVE : IDLE, collapsed && "justify-center px-0")}
+        className={cn(ROW, "relative", active ? ACTIVE : IDLE, collapsed && "justify-center px-0")}
         data-testid={`hub-nav-${item.to === "/" ? "home" : item.to.slice(1)}`}
       >
         {item.icon ? (
@@ -107,17 +112,31 @@ function NavLink({ item, collapsed, onNavigate }: { item: Item; collapsed: boole
           <House className="size-5 p-0.5" aria-hidden />
         )}
         <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+        {badge ? (
+          <span
+            className={cn(
+              "grid h-4.5 min-w-4.5 place-items-center rounded-full bg-brand px-1 text-[0.6875rem] font-semibold text-brand-foreground tabular-nums",
+              collapsed ? "absolute top-0.5 right-1 h-3.5 min-w-3.5 text-[0.5625rem]" : "ml-auto",
+            )}
+            aria-label={`${badge} new answer${badge > 1 ? "s" : ""}`}
+            data-testid="hub-nav-badge"
+          >
+            {badge > 9 ? "9+" : badge}
+          </span>
+        ) : null}
       </Link>
     </RailTip>
   );
 }
 
-function Nav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function Nav({ collapsed, admin, onNavigate }: { collapsed: boolean; admin: boolean; onNavigate?: () => void }) {
+  const { unread } = useChatPulse();
   return (
     <nav aria-label="Sections" className="grid gap-1" data-testid="hub-nav">
       {ITEMS.map((item) => (
         <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
+      {admin ? <NavLink item={CHAT} collapsed={collapsed} onNavigate={onNavigate} badge={unread.length} /> : null}
     </nav>
   );
 }
@@ -345,6 +364,7 @@ export function HubFrame({
   const CollapseIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
   const collapseLabel = collapsed ? "Expand the sidebar" : "Collapse the sidebar";
   return (
+    <ChatPulseProvider admin={admin}>
     <Tooltip.Provider delayDuration={300} skipDelayDuration={200}>
       <div className="flex min-h-dvh">
         <aside
@@ -360,7 +380,7 @@ export function HubFrame({
               </button>
             </RailTip>
           </div>
-          <Nav collapsed={collapsed} />
+          <Nav collapsed={collapsed} admin={admin} />
           {admin ? (
             <div className="mt-auto">
               <Monitoring collapsed={collapsed} open={monitoringOpen} onToggle={toggleMonitoring} hermesUrl={hermesUrl} />
@@ -383,7 +403,7 @@ export function HubFrame({
                 <div className="flex h-9 items-center px-1">
                   <HomeLink onNavigate={() => setMenuOpen(false)} />
                 </div>
-                <Nav collapsed={false} onNavigate={() => setMenuOpen(false)} />
+                <Nav collapsed={false} admin={admin} onNavigate={() => setMenuOpen(false)} />
                 {admin ? (
                   <div className="mt-auto">
                     <Monitoring collapsed={false} open={monitoringOpen} onToggle={toggleMonitoring} hermesUrl={hermesUrl} onNavigate={() => setMenuOpen(false)} />
@@ -401,5 +421,6 @@ export function HubFrame({
         </div>
       </div>
     </Tooltip.Provider>
+    </ChatPulseProvider>
   );
 }
