@@ -225,14 +225,15 @@ function AccountMenu({ collapsed, viewer, onNavigate }: { collapsed: boolean; vi
           <button
             type="button"
             className={cn(
-              "flex h-11 w-full items-center gap-2.5 rounded-lg px-1.5 text-start transition-colors duration-150 ease-out hover:bg-accent data-[state=open]:bg-accent",
+              // A boxed card, like the account button of the other apps: border, card background, a light shadow.
+              "flex h-12 w-full items-center gap-2.5 rounded-lg border bg-card px-2 text-start shadow-panel transition-colors duration-150 ease-out hover:bg-accent data-[state=open]:bg-accent",
               FOCUS,
-              collapsed && "justify-center px-0",
+              collapsed && "mx-auto size-10 justify-center px-0",
             )}
             title={collapsed ? undefined : `${email} (${role})`}
             data-testid="hub-account"
           >
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand/15 text-xs font-semibold uppercase text-brand" aria-hidden>
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-brand/15 text-xs font-semibold uppercase text-brand" aria-hidden>
               {viewer.email ? viewer.email.charAt(0) : <UserRound className="size-4" />}
             </span>
             <span className={cn("grid min-w-0 flex-1", collapsed && "sr-only")}>
@@ -361,7 +362,7 @@ export function HubFrame({
               <Monitoring collapsed={collapsed} open={monitoringOpen} onToggle={toggleMonitoring} hermesUrl={hermesUrl} />
             </div>
           ) : null}
-          <div className={cn("border-t pt-2.5", !admin && "mt-auto")}>
+          <div className={cn("pt-2.5", !admin && "mt-auto")}>
             <AccountMenu collapsed={collapsed} viewer={viewer} />
           </div>
         </aside>
