@@ -8,13 +8,14 @@
 #   hermes.sh style < block                put the owner's "## Output style" block (from stdin) in Hermes's SOUL.md
 #                                          and Claude Code's ~/.claude/CLAUDE.md, replacing the old one
 #   hermes.sh autonomy                     Hermes acts without asking first and shows each tool it uses in the chat
+#   hermes.sh accounts                     every 15 minutes, the Claude account with the most quota left for its week goes first
 #   hermes.sh skills <domain> <dir>        install cf and the tool skills of <dir> in ~/.agents/skills, read by Hermes and Claude Code
 #   hermes.sh catalog                      the ai-maxxing skills that work on a server, installed or not, with what each does
 #   hermes.sh add <skill|base|all>...      install those skills from the ai-maxxing package (kept up to date in ~/.cache);
 #                                          base is the default pack, all is every skill of the catalog
 #   hermes.sh update                       reinstall every skill this script installed, from the latest package
 #   hermes.sh remove <skill>...            take out skills this script installed (moved to ~/.cache/removed-skills)
-#   hermes.sh check                        one line per part: claude, hermes, model, gateway, dashboard, style, autonomy, skills
+#   hermes.sh check                        one line per part: claude, hermes, model, accounts, gateway, dashboard, style, autonomy, skills
 # Exit codes: 0 ok, 2 bad usage, 3 missing install, 4 unknown skill, 5 Claude Code not logged in, 6 Hermes cannot answer.
 set -euo pipefail
 
@@ -27,6 +28,10 @@ SKILLS="$HOME/.agents/skills"
 MARK=.setup-vps
 PKG="$HOME/.cache/ai-maxxing-skills"
 DOMAIN_FILE="$HOME/.config/hermes-setup/domain"
+# The watch of the Claude accounts: its command, the end of its crontab line, what it last saw.
+ACCOUNTS_BIN=/usr/local/bin/hermes-accounts
+ACCOUNTS_MARK="# hermes-setup accounts"
+ACCOUNTS_HOME="${HERMES_HOME:-$HOME/.hermes}"
 # Skills of the package that only make sense on the owner's computer (browser sign-ins, their own Chrome, setting up this server).
 LOCAL_ONLY='^(connect-vps|install-skills|dev-browser|setup-.*)$'
 # The default pack of Hermes: one name per line in skills/setup-vps/hermes-pack of the package.
@@ -196,6 +201,25 @@ EOF
     echo "autonomy ok: approvals $(hermes config get approvals.mode | tail -1), tool lines $(hermes config get display.platforms.telegram.tool_progress | tail -1)"
     ;;
 
+  accounts)
+    need_hermes
+    # A server set up before this command existed takes the watch from the package.
+    if [ ! -x "$ACCOUNTS_BIN" ]; then
+      pull_pkg
+      $SUDO install -m 755 "$PKG/skills/setup-vps/scripts/claude-accounts.py" "$ACCOUNTS_BIN"
+    fi
+    command -v crontab >/dev/null 2>&1 \
+      || { $SUDO apt-get update -qq && DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y -qq cron >/dev/null; }
+    mkdir -p "$ACCOUNTS_HOME/logs"
+    home_env=""; [ -n "${HERMES_HOME:-}" ] && home_env="HERMES_HOME=$HERMES_HOME "
+    line="*/15 * * * * ${home_env}flock -n /tmp/hermes-accounts-$(id -u).lock timeout 240 $ACCOUNTS_BIN >> $ACCOUNTS_HOME/logs/claude-accounts.log 2>&1 $ACCOUNTS_MARK"
+    # One line in the login user's crontab, replacing the one of an earlier run.
+    { crontab -l 2>/dev/null | grep -vF "$ACCOUNTS_MARK" || true; echo "$line"; } | crontab -
+    # A first run now, so the dashboard has something to show.
+    seen="$("$ACCOUNTS_BIN" 2>&1 | tail -1 || true)"
+    echo "accounts ok: checked every 15 minutes. ${seen#* * }"
+    ;;
+
   skills)
     domain="${2:-}"; dir="${3:-}"
     [ -n "$domain" ] && [ -d "$dir" ] || { echo "usage: $0 skills <domain> <folder of skills>" >&2; exit 2; }
@@ -293,6 +317,11 @@ EOF
     echo "claude=$(command -v claude >/dev/null && { claude_json | jq -r 'if .is_error == false then "logged in" else "not logged in" end' 2>/dev/null || echo "not logged in"; } || echo missing)"
     echo "hermes=$(hermes --version 2>/dev/null | head -1 || echo missing)"
     echo "model=$(hermes config get model.provider 2>/dev/null | tail -1) $(hermes config get model.default 2>/dev/null | tail -1) $(hermes config get agent.reasoning_effort 2>/dev/null | tail -1)"
+    if crontab -l 2>/dev/null | grep -qF "$ACCOUNTS_MARK"; then
+      echo "accounts=watched, $(jq -r '.accounts | length' "$ACCOUNTS_HOME/cache/claude-pool-priority.json" 2>/dev/null || echo 0) seen"
+    else
+      echo "accounts=not watched (run '$0 accounts')"
+    fi
     echo "gateway=$(systemctl --user is-active hermes-gateway 2>/dev/null || systemctl is-active hermes-gateway 2>/dev/null || echo inactive)"
     echo "dashboard=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9119/ || echo down)"
     soul="$(dirname "$(hermes config path 2>/dev/null)")/SOUL.md"
@@ -302,7 +331,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,18p' "$0" >&2
+    sed -n '2,19p' "$0" >&2
     exit 2
     ;;
 esac

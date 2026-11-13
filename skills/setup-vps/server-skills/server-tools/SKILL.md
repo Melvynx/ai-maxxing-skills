@@ -14,6 +14,7 @@ This is the owner's server, running 24/7. Every tool below is already signed in:
 | Put an app online with HTTPS and the sign-in page | `expose` | `expose status` |
 | Who can sign in (email + code, admin or member) | `expose user` | `expose user list` |
 | The agent itself: model, chat, dashboard | `hermes-setup` | `hermes-setup check` |
+| Which Claude account answers first (the one with the most weekly quota left, checked every 15 minutes) | `hermes-setup accounts` turns the watch on | `hermes-accounts --dry-run` |
 | Who may talk to the agent on Discord (the `Hermes access` role; they join the server first) | `hermes-discord access add\|remove <username>` | `hermes-discord access list` |
 | More skills from the ai-maxxing package | `hermes-setup add <skill>`, see the `ai-maxxing-skills` skill | `hermes-setup catalog` |
 
@@ -41,4 +42,5 @@ People sign in with their email and a 6-digit code sent by Lumail (`expose statu
 ## Rules
 
 - Ask the owner before anything that can cut access or break what runs: SSH or firewall settings, a reboot, deleting files, containers or databases, an OS upgrade, anything public or paid.
+- Never set the order of the Claude accounts by hand (`hermes auth priority`): the watch puts the account with the best delta first (% of its week gone minus % of its quota used) and would undo it. To add an account, the owner runs `hermes auth add anthropic --type oauth --label <name> --no-browser` in their own Terminal.
 - Delete with `trash <path>` when it is installed, never `rm -rf` on anything of value.

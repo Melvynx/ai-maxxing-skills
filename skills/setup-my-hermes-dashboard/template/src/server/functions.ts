@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { getApp } from "@/server/app";
+import { claudeAccountsFile, readClaudeAccounts, type ClaudeAccounts } from "@/server/claude-accounts";
 import { toConversations, type Conversation } from "@/server/conversations";
 import { SCOPES, type PublicKey } from "@/server/db/api-keys";
 import { gateEmail, type Access, type GateMode, type GateResult } from "@/server/gate";
@@ -105,12 +106,14 @@ export const getConversations = createServerFn({ method: "GET" }).handler(async 
   return { now: Date.now(), conversations: data === null ? null : toConversations(data) };
 });
 
-/** Null for a member. `models` is null when Hermes does not answer. */
-export type ModelsPage = { models: ModelsData | null };
+/** Null for a member. `models` is null when Hermes does not answer; `accounts` when its Claude accounts are not watched. */
+export type ModelsPage = { now: number; models: ModelsData | null; accounts: ClaudeAccounts | null };
 
 export const getModels = createServerFn({ method: "GET" }).handler(async (): Promise<ModelsPage | null> => {
   if (getViewer().role !== "admin") return null;
-  return { models: await orNull(readModels(getApp().hermes)) };
+  const { hermes, settings } = getApp();
+  const [models, accounts] = await Promise.all([orNull(readModels(hermes)), readClaudeAccounts(claudeAccountsFile(settings.hermesHome))]);
+  return { now: Date.now(), models, accounts };
 });
 
 /** Hermes's main model: used from the next conversation on. */

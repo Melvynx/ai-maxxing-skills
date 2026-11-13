@@ -7,8 +7,9 @@ import { AdminsOnly, Dot, Empty, Page, Unavailable } from "@/components/hub/page
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { count } from "@/lib/format";
+import { ago, count, until } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { ClaudeAccount, ClaudeAccounts } from "@/server/claude-accounts";
 import { getModels, setModel } from "@/server/functions";
 import type { CurrentModel, ModelsData, Provider } from "@/server/models";
 
@@ -38,10 +39,10 @@ function ModelsPage() {
       </Page>
     );
   }
-  return <Models data={data.models} />;
+  return <Models data={data.models} accounts={data.accounts} now={data.now} />;
 }
 
-function Models({ data }: { data: ModelsData }) {
+function Models({ data, accounts, now }: { data: ModelsData; accounts: ClaudeAccounts | null; now: number }) {
   const [query, setQuery] = React.useState("");
   const needle = query.trim().toLowerCase();
   const connected = data.providers.filter((p) => p.connected);
@@ -58,6 +59,8 @@ function Models({ data }: { data: ModelsData }) {
     <Page section="models" hint={HINT} actions={search} testId="models">
       <div className="grid gap-6">
         {data.current ? <InUse model={data.current} providerName={current?.name ?? data.current.provider} /> : <Empty title="No model set">Pick one below.</Empty>}
+
+        {accounts ? <Accounts data={accounts} now={now} /> : null}
 
         <section className="grid gap-3" aria-label="Connected" data-testid="models-connected">
           <h2 className="text-sm font-semibold">
@@ -105,6 +108,83 @@ function InUse({ model, providerName }: { model: CurrentModel; providerName: str
         </div>
       ) : null}
     </section>
+  );
+}
+
+const percent = (value: number) => Math.round(Math.max(0, Math.min(100, value)));
+const signed = (value: number) => `${value < 0 ? "−" : "+"}${Math.abs(Math.round(value))}`;
+
+/** The Claude accounts Hermes answers with, in the order it tries them, with the numbers that set the order. */
+function Accounts({ data, now }: { data: ClaudeAccounts; now: number }) {
+  const several = data.accounts.length > 1;
+  return (
+    <section className="grid grid-cols-[minmax(0,1fr)] gap-3" aria-label="Claude accounts" data-testid="models-claude-accounts">
+      <div className="grid gap-1">
+        <h2 className="text-sm font-semibold">
+          Claude accounts <span className="font-normal text-muted-foreground">· {data.accounts.length}</span>
+        </h2>
+        <p className="text-sm text-pretty text-muted-foreground">
+          {several
+            ? "Hermes answers with the first one. Every 15 minutes, the account with the best delta (% of its week gone minus % of its quota used) moves first."
+            : "How much of its weekly quota your Claude account has used. With a second account, the one with the most quota left answers first: ask Hermes to add one."}
+        </p>
+      </div>
+      <ul className="divide-y rounded-xl border bg-card shadow-panel">
+        {data.accounts.map((account, index) => (
+          <AccountRow key={account.id} account={account} first={several && index === 0} position={index + 1} now={now} />
+        ))}
+      </ul>
+      <p className="text-xs text-muted-foreground">Checked {ago(data.checkedAt, now)}.</p>
+    </section>
+  );
+}
+
+function AccountRow({ account, first, position, now }: { account: ClaudeAccount; first: boolean; position: number; now: number }) {
+  const used = percent(account.used);
+  const elapsed = percent(account.elapsed);
+  const ahead = account.delta >= 0;
+  return (
+    <li className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] sm:items-center sm:gap-6" data-testid="claude-account-row">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-6 shrink-0 place-items-center rounded-full border text-xs text-muted-foreground tabular-nums">{position}</span>
+        <div className="grid min-w-0 gap-0.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="min-w-0 truncate text-sm font-medium">{account.email ?? account.label}</span>
+            {first ? (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-good-line bg-good-soft px-2 py-0.5 text-xs font-medium text-good" data-testid="claude-account-first">
+                <Dot tone="good" className="size-1.5" />
+                Used first
+              </span>
+            ) : null}
+            {account.full ? <span className="shrink-0 rounded-md border border-bad-line bg-bad-soft px-2 py-0.5 text-xs font-medium text-bad">Quota used up</span> : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-mono">{account.label}</span>
+            {account.resetsAt ? ` · new week ${until(account.resetsAt, now)}` : ""}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-1.5">
+        <div className="flex items-baseline justify-between gap-3 text-xs tabular-nums">
+          <span>
+            <span className="font-medium">{used}% used</span>
+            <span className="text-muted-foreground"> · {elapsed}% of the week gone</span>
+          </span>
+          <span className={cn("shrink-0 font-medium", ahead ? "text-good" : "text-warn")} title="% of the week gone minus % of the quota used">
+            delta {signed(account.delta)}
+          </span>
+        </div>
+        {/* The bar is the quota used; the tick is where the week is. A bar short of the tick has quota to spare. SVG attributes: the page's CSP allows no inline style. */}
+        <div className="relative" role="img" aria-label={`${used}% of the weekly quota used, ${elapsed}% of the week gone`}>
+          <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="block h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden focusable="false">
+            <rect x="0" y="0" width={used} height="6" className={account.full ? "fill-bad-dot" : ahead ? "fill-good-dot" : "fill-warn-dot"} />
+          </svg>
+          <svg viewBox="0 0 100 14" preserveAspectRatio="none" className="absolute inset-x-0 -top-1 h-3.5 w-full" aria-hidden focusable="false">
+            <rect x={Math.max(0, Math.min(99.3, elapsed - 0.35))} y="0" width="0.7" height="14" className="fill-foreground" />
+          </svg>
+        </div>
+      </div>
+    </li>
   );
 }
 
