@@ -131,10 +131,12 @@ function LoginPage() {
           </div>
         </div>
 
-        <p className="mx-auto max-w-[22rem] text-center text-xs leading-5 text-muted-foreground">
-          <LockKeyhole className="mr-1.5 inline size-3.5 -translate-y-px align-middle" aria-hidden />
-          Only people invited to {BRAND.name} can sign in. No password to remember, and you stay signed in as long as you come back within a week.
-        </p>
+        <div className="mx-auto flex max-w-[22rem] flex-col items-center gap-2 text-center text-xs leading-5 text-muted-foreground">
+          <LockKeyhole className="size-3.5" aria-hidden />
+          <p className="text-balance">
+            Only people invited to {BRAND.name} can sign in. No password to remember, and you stay signed in as long as you come back within a week.
+          </p>
+        </div>
       </div>
     </main>
   );
