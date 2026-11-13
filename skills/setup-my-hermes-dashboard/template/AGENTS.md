@@ -6,10 +6,11 @@ The owner's personal dashboard, next to their Hermes agent. It ships with no mod
 - Runs on the server as the `dashboard` service on `127.0.0.1:8794`, published at its `url` (see `dashboard status`) with `expose add ... --own-signin`: the dashboard signs people in itself. Never bind another address, never open a port.
 - Data: `$DATA_DIR/dashboard.sqlite3` (`~/.local/share/dashboard` on the server). Settings: `/etc/dashboard.env`.
 - Never print a key, a token or the Hermes session token. Never delete the database or `key-pepper`.
+- Brand: the name, tagline and logo are in `src/lib/brand.ts` (`BRAND`, `pageTitle()`, `<BrandMark />`), the colors are the `--brand*` and `--mark-*` tokens of `src/styles.css`. Never write "Hermes" or a hex color in a page. To dress the dashboard in the owner's brand, follow [BRANDING.md](BRANDING.md).
 
 ## Who is signed in
 
-The dashboard signs people in itself with Better Auth on Convex (`convex/`): an email, then a 6-digit code sent by Lumail (`convex/email.ts`), a session of 30 days renewed once a day. Only emails on the Team list get a code; `DASHBOARD_OWNER` (the owner's email, a Convex variable set by `dashboard deploy`) is always an admin. No IP is let in without signing in. On the server: `dashboard member list`, `dashboard member add <email> [admin|member] --invite`, `dashboard member remove <email>`.
+The dashboard signs people in itself with Better Auth on Convex (`convex/`): an email, then a 6-digit code sent by Lumail (`convex/email.ts`), a session renewed each day it is used, so it never ends while the dashboard is opened, and ends after 7 days without a visit. Only emails on the Team list get a code; `DASHBOARD_OWNER` (the owner's email, a Convex variable set by `dashboard deploy`) is always an admin. No IP is let in without signing in. On the server: `dashboard member list`, `dashboard member add <email> [admin|member] --invite`, `dashboard member remove <email>`.
 
 - `/login` is the sign-in page; `/api/auth/*` passes the sign-in calls to Convex (`src/server/auth.ts`), so the browser only talks to the dashboard. Every page needs a session (`src/routes/__root.tsx` sends anyone else to `/login`); `/api/v1/*` keeps its API keys. Never add another way in.
 

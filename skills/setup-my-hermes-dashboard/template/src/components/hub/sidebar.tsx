@@ -3,10 +3,11 @@ import { ArrowUpRight, ChevronDown, ChevronsUpDown, House, KeyRound, LogOut, Men
 import { DropdownMenu, Tooltip } from "radix-ui";
 import * as React from "react";
 
-import { SectionMark, type Section } from "@/components/brand";
+import { BrandMark, SectionMark, type Section } from "@/components/brand";
 import { useTheme } from "@/components/theme-provider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { authClient } from "@/lib/auth-client";
+import { BRAND } from "@/lib/brand";
 import { readCookie, writeCookie } from "@/lib/cookie";
 import { cn } from "@/lib/utils";
 import type { Viewer } from "@/server/viewer";
@@ -302,8 +303,8 @@ async function signOut() {
 function HomeLink({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   return (
     <Link to="/" onClick={onNavigate} className={cn("flex min-w-0 items-center gap-2.5 rounded-lg", FOCUS)} aria-label="Dashboard home">
-      <SectionMark section="hermes" className="size-7" />
-      <span className={cn("truncate text-[0.9375rem] font-semibold tracking-[-0.01em]", collapsed && "sr-only")}>Hermes</span>
+      <BrandMark className="size-7" />
+      <span className={cn("truncate text-[0.9375rem] font-semibold tracking-[-0.01em]", collapsed && "sr-only")}>{BRAND.name}</span>
     </Link>
   );
 }
@@ -378,7 +379,7 @@ export function HubFrame({
                 </button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[min(18rem,85vw)] gap-4 bg-sidebar p-3" data-testid="hub-sheet">
-                <SheetTitle className="sr-only">Hermes</SheetTitle>
+                <SheetTitle className="sr-only">{BRAND.name}</SheetTitle>
                 <div className="flex h-9 items-center px-1">
                   <HomeLink onNavigate={() => setMenuOpen(false)} />
                 </div>
@@ -394,7 +395,7 @@ export function HubFrame({
               </SheetContent>
             </Sheet>
             <HomeLink collapsed />
-            <span className="truncate text-sm font-semibold">{current?.label ?? "Hermes"}</span>
+            <span className="truncate text-sm font-semibold">{current?.label ?? BRAND.name}</span>
           </div>
           {children}
         </div>

@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Copy, KeyRound } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/brand";
 
 import { Empty, Table } from "@/components/hub/page";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { createKey, listKeys, revokeKey } from "@/server/functions";
 
 export const Route = createFileRoute("/api-keys")({
   loader: () => listKeys(),
-  head: () => ({ meta: [{ title: "API keys · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("API keys") }] }),
   component: ApiKeysPage,
 });
 

@@ -1,10 +1,11 @@
 import { createRootRoute, HeadContent, Outlet, redirect, Scripts } from "@tanstack/react-router";
 import * as React from "react";
 
-import { SectionMark } from "@/components/brand";
+import { BrandMark } from "@/components/brand";
 import { HubFrame, savedCollapsed, savedMonitoringOpen } from "@/components/hub/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND } from "@/lib/brand";
 import { SIGNED_OUT } from "@/lib/session";
 import { savedTheme } from "@/lib/theme";
 import { getSession, type Session } from "@/server/functions";
@@ -42,15 +43,15 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "color-scheme", content: "light dark" },
-      { title: "Hermes" },
+      { title: BRAND.name },
       { name: "description", content: DESCRIPTION },
-      { name: "application-name", content: "Hermes" },
-      { name: "apple-mobile-web-app-title", content: "Hermes" },
+      { name: "application-name", content: BRAND.name },
+      { name: "apple-mobile-web-app-title", content: BRAND.name },
       // One tag only (TanStack keeps a single meta per name); lib/theme.ts switches it with the theme.
       { name: "theme-color", content: "#f9f9fa" },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Hermes" },
-      { property: "og:title", content: "Hermes" },
+      { property: "og:site_name", content: BRAND.name },
+      { property: "og:title", content: BRAND.name },
       { property: "og:description", content: DESCRIPTION },
     ],
     links: [
@@ -72,7 +73,7 @@ export const Route = createRootRoute({
 function Fallback({ title, detail, alert, testId }: { title: string; detail: string; alert?: boolean; testId?: string }) {
   return (
     <main className="mx-auto grid min-h-[70dvh] max-w-sm place-content-center justify-items-center gap-3 p-6 text-center" role={alert ? "alert" : undefined} data-testid={testId}>
-      <SectionMark section="hermes" className="mb-2 size-9" />
+      <BrandMark className="mb-2 size-9" />
       <h1 className="text-lg font-semibold tracking-[-0.01em]">{title}</h1>
       <p className="text-sm text-muted-foreground">{detail}</p>
       <a className="mt-2 inline-flex h-8 items-center rounded-lg border bg-card px-3 text-meta font-medium shadow-panel hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none" href="/">

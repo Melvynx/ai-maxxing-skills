@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Check, ChevronDown, Search } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/brand";
 
 import { AdminsOnly, Dot, Empty, Page, Unavailable } from "@/components/hub/page";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,7 @@ import type { CurrentModel, ModelsData, Provider } from "@/server/models";
 
 export const Route = createFileRoute("/models")({
   loader: () => getModels(),
-  head: () => ({ meta: [{ title: "Models · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Models") }] }),
   component: ModelsPage,
 });
 

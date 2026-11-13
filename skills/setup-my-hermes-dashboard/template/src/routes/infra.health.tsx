@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { RefreshCw, Sparkles } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/brand";
 
 import { Dot } from "@/components/hub/page";
 import { AdminsOnly, FixButton, FixList, HistoryStrip, InfraPage, openFixFor, toneBox, toneText, useRefreshWhile } from "@/components/infra/parts";
@@ -13,7 +14,7 @@ import { CATEGORIES, isOpen, type Check, type Fix } from "@/server/infra/model";
 
 export const Route = createFileRoute("/infra/health")({
   loader: () => getInfraHealth(),
-  head: () => ({ meta: [{ title: "Infra · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Infra") }] }),
   component: HealthPage,
 });
 

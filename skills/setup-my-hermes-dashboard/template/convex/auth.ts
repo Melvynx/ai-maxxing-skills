@@ -17,7 +17,7 @@ const SIGN_IN = "/sign-in/email-otp";
 
 /**
  * Sign-in by email code only: no password, no sign-up. A code is sent only to a member (see members.ts) and the
- * session lasts 30 days, renewed once a day while the dashboard is used.
+ * session has no end while it is used (renewed once a day of use) and ends after 7 days without a visit.
  */
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
@@ -25,7 +25,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
     secret: process.env.BETTER_AUTH_SECRET,
     trustedOrigins: [siteUrl()],
     database: authComponent.adapter(ctx),
-    session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
+    session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
     hooks: {
       // Before a code is sent or checked: a per-email limit, then the member check. Someone who is not a member gets
       // the same answer as a member (no way to find out who has access), but no code.

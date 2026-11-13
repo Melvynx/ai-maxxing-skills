@@ -17,4 +17,6 @@ Run everything here, on the server. It takes about ten minutes, mostly the first
 8. Online: `expose add dashboard.__DOMAIN__ 8794 --own-signin`. Exit code 4 means that address already points elsewhere: ask the owner for another name such as `home.__DOMAIN__`, and redo step 5 with that `DASHBOARD_URL`. Then `expose status` lists the site as `own-signin` and no line starting with `UNPROTECTED`.
 9. Check: `curl -s -o /dev/null -w '%{http_code}' https://dashboard.__DOMAIN__` answers `307` (its sign-in page) after a minute.
 
+10. Their brand: ask the owner "Do you want it in your own brand? Send me your website, or your logo, main color and font." If yes, follow `~/projects/dashboard/BRANDING.md`.
+
 Then tell the owner in 3 lines: the dashboard is at `https://dashboard.__DOMAIN__` (they sign in with their email and a code), its Infra page watches the server (a check every 15 minutes, an audit every morning, a "Fix" button that sends you the task), and they can ask you any module ("my latest conversations", "my crons", "today's sales"), each one saved on their GitHub (`hermes-dashboard`). Their next conversation (`/new`) knows how to build modules. When they ask to share it, `dashboard member add <email> --invite` lets that person in by email code: a member sees the modules, not Hermes, the API keys or the Team page (where admins add and remove members).

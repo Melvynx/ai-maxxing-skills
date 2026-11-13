@@ -1,7 +1,7 @@
 ---
 name: dashboard
-description: Build, change or remove a module of the owner's personal web dashboard, and push data to it. Use when the owner asks to see something on their dashboard, add a page or a card to it, or have a cron post a report there.
-version: 1.1.0
+description: Build, change or remove a module of the owner's personal web dashboard, push data to it, or dress it in their brand. Use when the owner asks to see something on their dashboard, add a page or a card to it, have a cron post a report there, or put it in their colors, logo or font.
+version: 1.2.0
 author: ai-maxxing
 license: MIT
 platforms: [linux]
@@ -22,6 +22,8 @@ The owner has a personal web dashboard next to you. Every module on it is one th
 4. Ship with `dashboard deploy`. It typechecks, tests and builds before restarting, and keeps the old version online if anything fails: read the error, fix it, deploy again.
 5. Commit and push: `cd ~/projects/dashboard && git add -A && git commit -m "<module>: <what it shows>" && git push`.
 6. Answer the owner in one or two lines: what the module shows and its address (the `url` line of `dashboard status`, plus the module path).
+
+When the owner asks for the dashboard in their own brand ("my colors", "my logo", "my site is acme.com"), follow `~/projects/dashboard/BRANDING.md`: get the name, logo, main color and font from their site or from them, show what you found, apply it, `dashboard deploy`, commit and push.
 
 To push data from a cron or a task (a morning report, today's numbers), the module needs a write route (step 5 of the recipe). Then `dashboard-cli post /api/v1/<name> '<json>'`. If `dashboard-cli get /api/v1/whoami` says there is no key, run `dashboard key` once.
 

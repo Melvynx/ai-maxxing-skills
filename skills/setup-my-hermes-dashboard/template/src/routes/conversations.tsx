@@ -4,10 +4,11 @@ import { AdminsOnly, Dot, Empty, Page, Table, Unavailable } from "@/components/h
 import { Badge } from "@/components/ui/badge";
 import { ago, count, dateTime } from "@/lib/format";
 import { getConversations, type ConversationsPage as Data } from "@/server/functions";
+import { pageTitle } from "@/lib/brand";
 
 export const Route = createFileRoute("/conversations")({
   loader: () => getConversations(),
-  head: () => ({ meta: [{ title: "Conversations · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Conversations") }] }),
   component: ConversationsPage,
 });
 

@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Play } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/brand";
 
 import { Dot, Empty, Unavailable } from "@/components/hub/page";
 import { AdminsOnly, FixButton, FixList, InfraPage, openFixFor, useRefreshWhile, verdictTone, VerdictPill } from "@/components/infra/parts";
@@ -13,7 +14,7 @@ import { isOpen, type AuditReport, type Fix } from "@/server/infra/model";
 
 export const Route = createFileRoute("/infra/audit")({
   loader: () => getInfraAudit(),
-  head: () => ({ meta: [{ title: "Daily audit · Infra · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Daily audit", "Infra") }] }),
   component: AuditPage,
 });
 

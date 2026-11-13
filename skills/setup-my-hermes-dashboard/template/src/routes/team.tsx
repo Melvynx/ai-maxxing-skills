@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/brand";
 
 import { AdminsOnly, Empty, Page, Table } from "@/components/hub/page";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { addMember, getTeam, removeMember, type TeamPage as TeamData } from "@/s
 
 export const Route = createFileRoute("/team")({
   loader: () => getTeam(),
-  head: () => ({ meta: [{ title: "Team · Hermes" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Team") }] }),
   component: TeamPage,
 });
 
